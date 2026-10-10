@@ -31,6 +31,7 @@
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/pipeline.h"
+#include "flaaklypa/profile.h"
 #include "flaaklypa/puzzle.h"
 #include "flaaklypa/sceneindex.h"
 #include "flaaklypa/scenes.h"
@@ -63,7 +64,7 @@ enum {
 	kTimerIdle = 1
 };
 
-MenuScene::MenuScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0) {
+MenuScene::MenuScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0), _current(0) {
 }
 
 void MenuScene::onInit(int arg) {
@@ -76,12 +77,104 @@ void MenuScene::onInit(int arg) {
 		defineAnim(b->highlight, false, true, b->hotspot, b->x, b->y, -10);
 	}
 
+	// FUN_00417700: the profile name box (0x120,0x200) 0xe0x0x3a, z 0x28
+	_nameFont.load("Amerigo BT_18_");
+	defineSurfaceAnim("profilename", 0xe0, 0x3a, _vm->_screen->format.RGBToColor(0, 0xff, 0))->add(0x120, 0x200, 0x28);
+
 	playAnim("wind");
 	playAnim("radar");
 	playAnim("wheel_1");
 	playAnim("wheel_2");
 	setTimer(kTimerIdle, 5000);
 	setAmp(1);
+	listProfiles(true);
+}
+
+// ---- profiles --------------------------------------------------------------
+
+// FUN_004177c0: lists the profiles and shows the one used last (or the first);
+// without any profile the player has to create one first.
+void MenuScene::listProfiles(bool latest) {
+	_profiles = _vm->listProfiles();
+	int index = 0;
+	if (latest) {
+		// FUN_00411000: the first of the most recently used
+		for (uint i = 1; i < _profiles.size(); i++)
+			if (_profiles[index].lastUsed < _profiles[i].lastUsed)
+				index = i;
+	}
+	if (_profiles.empty()) {
+		showProfile(0);
+		createProfile();
+		return;
+	}
+	showProfile(index);
+}
+
+// FUN_00417810
+void MenuScene::showProfile(int index) {
+	_current = index;
+	Graphics::ManagedSurface *s = anim("profilename")->surface();
+	s->fillRect(Common::Rect(s->w, s->h), s->format.RGBToColor(0, 0xff, 0));
+	if (index >= 0 && index < (int)_profiles.size())
+		_nameFont.drawStringCentred(*s, Common::Rect(s->w, s->h), _profiles[index].name);
+}
+
+// FUN_00417f50: the previous / next player
+void MenuScene::cycleProfile(int delta) {
+	if (_profiles.empty())
+		return;
+	int n = _profiles.size();
+	showProfile(((_current + delta) % n + n) % n);
+}
+
+// FUN_0040d860: the buttons that leave the menu make the profile shown the
+// active one first.
+void MenuScene::useProfile() {
+	if (_current >= 0 && _current < (int)_profiles.size())
+		_vm->selectProfile(_profiles[_current].slot);
+}
+
+// FUN_00417a20
+void MenuScene::createProfile() {
+	if (_profiles.size() > 0x3f) {
+		_vm->messageBox("interfaceh:WARNING", "menu:MAXPROFILES", MessageBox::kButtonOk);
+		return;
+	}
+	// TODO: the name entry and birthday dialogs
+	debug(1, "Menu: creating a profile is not implemented yet");
+}
+
+// FUN_00417f80
+void MenuScene::removeProfile() {
+	if (_current < 0 || _current >= (int)_profiles.size())
+		return;
+	Common::String text = Common::String::format(_vm->getString("menu:REMOVEPROFILE").c_str(), _profiles[_current].name.c_str());
+	if (_vm->messageBox("interfaceh:WARNING", text, MessageBox::kButtonYes | MessageBox::kButtonNo) != MessageBox::kButtonYes)
+		return;
+	_vm->removeProfile(_profiles[_current].slot);
+	listProfiles(false);
+}
+
+// FUN_00418070 / FUN_0040cac0(2): Start continues on the story page visited
+// last, in scene table order on a tie (the prologue for a new player).
+void MenuScene::startStory() {
+	static const char *const kStoryPages[] = {
+		"intro", "yard", "desk", "pee", "house", "tvroom", "garage", "morning", "town",
+		"outtent", "intent", "buildacar", "tvstation", "goodbye", "outro"
+	};
+	useProfile();
+	Profile *profile = _vm->profile();
+	const char *page = kStoryPages[0];
+	int64 best = -1;
+	for (const char *p : kStoryPages) {
+		int64 t = profile ? profile->lastVisit(p) : 0;
+		if (best < t) {
+			best = t;
+			page = p;
+		}
+	}
+	_vm->changeScene(page, 0);
 }
 
 void MenuScene::highlight(int hotspot) {
@@ -135,6 +228,7 @@ void MenuScene::onMouseDown(int hotspot, int x, int y) {
 }
 
 void MenuScene::onMouseUp(int hotspot, int x, int y) {
+	// FUN_00417e90
 	switch (hotspot) {
 	case 1:
 		_vm->showHelp();
@@ -143,14 +237,47 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 		confirmQuit();
 		break;
 	case 5:
-		// TODO: the original starts the story with the intro scene
-		_vm->changeScene("yard", 0);
+		startStory();
 		break;
 	case 6:
+		useProfile();
 		_vm->changeScene("sceneindex", 0);
 		break;
-	default:
+	case 8: {
+		// FUN_004180a0: the race needs Il Tempo Gigante built far enough:
+		// at least 8 parts fitted (the second int of buildacar's 20 byte
+		// value 0)
+		useProfile();
+		byte car[20];
+		int32 fitted = 0;
+		if (_vm->profile() && _vm->profile()->getRecord("buildacar", Profile::kRecordValue, 0, car, sizeof(car)))
+			fitted = (int32)READ_LE_UINT32(car + 4);
+		if (fitted < 8)
+			_vm->messageBox("menu:RACE_TITLE", "menu:RACE_LOCKED", MessageBox::kButtonOk);
+		else
+			debug(1, "Menu: the race menu is not implemented");
+		break;
+	}
+	case 9:
+		createProfile();
+		break;
+	case 10:
+		removeProfile();
+		break;
+	case 11:
+		cycleProfile(-1);
+		break;
+	case 12:
+		cycleProfile(1);
+		break;
+	case 3:  // options (FUN_00418140)
+	case 4:  // high scores (mainscore)
+	case 7:  // tournament
+	case 13: // credits
+		useProfile();
 		debug(1, "Menu: button %d not implemented", hotspot);
+		break;
+	default:
 		break;
 	}
 }

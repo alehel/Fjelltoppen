@@ -23,6 +23,7 @@
 
 #include "common/formats/ini-file.h"
 
+#include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/font.h"
 #include "flaaklypa/scene.h"
 
@@ -57,7 +58,20 @@ private:
 	void highlight(int hotspot);
 	void setAmp(int level);
 	void confirmQuit();
+
+	// The player profiles (FUN_004177c0 ff.)
+	void listProfiles(bool latest);
+	void showProfile(int index);
+	void cycleProfile(int delta);
+	void useProfile();
+	void createProfile();
+	void removeProfile();
+	void startStory();
+
 	int _highlighted;
+	Common::Array<FlaaklypaEngine::ProfileInfo> _profiles;
+	int _current;            ///< the profile shown (DAT_00578314)
+	BitmapFont _nameFont;
 };
 
 /** Story page 1: the yard (tunet). */
