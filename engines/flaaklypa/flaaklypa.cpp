@@ -149,6 +149,15 @@ int FlaaklypaEngine::showHelp(const char *file) {
 	return dlg.run();
 }
 
+int32 FlaaklypaEngine::getSceneValue(const Common::String &scene, int key, int32 def) const {
+	Common::String id = Common::String::format("%s/%d", scene.c_str(), key);
+	return _sceneValues.contains(id) ? (int32)atoi(_sceneValues[id].c_str()) : def;
+}
+
+void FlaaklypaEngine::setSceneValue(const Common::String &scene, int key, int32 value) {
+	_sceneValues[Common::String::format("%s/%d", scene.c_str(), key)] = Common::String::format("%d", value);
+}
+
 void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
 	switch (key.keycode) {
 	case Common::KEYCODE_TAB:

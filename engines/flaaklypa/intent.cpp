@@ -82,7 +82,7 @@ void IntentScene::onInit(int arg) {
 	// The original restarts the track even when it is already playing (FUN_0040b1f0(name, 1)).
 	playMusic("track10");
 	_chessCount = 0;
-	// TODO: fact module init (fact.ini, hotspots 100..113)
+	initFacts();
 
 	addCharacter(kCharSoline, kHotspotSoline);
 	setCharacterAnims(kCharSoline, kSolineIdle, kSolineBored, nullptr);
@@ -192,10 +192,7 @@ void IntentScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->startGame("puzzle");
 		break;
 	default:
-		if (hotspot >= 100 && hotspot <= 113) {
-			// TODO: fact page (fact.ini, handled by the fact module in the original)
-			debug(1, "Intent: fact page for hotspot %d (TODO)", hotspot);
-		}
+		// 100..113: fact pages (fact.ini, the fact module)
 		break;
 	}
 }

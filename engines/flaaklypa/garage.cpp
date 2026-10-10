@@ -68,9 +68,8 @@ enum {
 	kHotspotClip009 = 24,
 	kHotspotClip003 = 25,
 	kHotspotClip007 = 26,
-	kHotspotCarPart = 27,
-	kHotspotFactFirst = 200, ///< fact.ini: hotspot= 200..213 (the fact module intercepts these clicks)
-	kHotspotFactLast = 213
+	kHotspotCarPart = 27
+	// 200..213: fact pages (fact.ini, the fact module)
 };
 
 bool GarageScene::_carPartFound = false;
@@ -112,7 +111,8 @@ void GarageScene::onInit(int arg) {
 
 	_count008 = 0;
 	_count009 = 0;
-	// FUN_0041dbf0: fact module (fact.ini), FUN_004094d0 subtitles, FUN_0040a910 callbacks: engine / TODO
+	initFacts();
+	// FUN_004094d0 subtitles, FUN_0040a910 callbacks: engine / TODO
 
 	addCharacter(kCharSolan, kHotspotSolan);
 	setCharacterAnims(kCharSolan, kSolanIdle, kSolanBored, kSolanReaction);
@@ -196,10 +196,6 @@ void GarageScene::onMouseDown(int hotspot, int x, int y) {
 		removeAnim("carpart");
 		break;
 	default:
-		if (hotspot >= kHotspotFactFirst && hotspot <= kHotspotFactLast) {
-			// TODO: fact page (fact.ini, handled by the fact module in the original)
-			debug(1, "garage: fact page hotspot %d", hotspot);
-		}
 		break;
 	}
 }

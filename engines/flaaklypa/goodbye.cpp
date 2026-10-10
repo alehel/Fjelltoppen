@@ -57,8 +57,8 @@ void GoodbyeScene::onInit(int arg) {
 	// (arg 1 on return), it is only reset when the page is entered afresh.
 	if (arg == 0)
 		_fireworkCount = 0;
-	// TODO: fact module init (FUN_0041dbf0, lang2/goodbye/fact.ini of add-on
-	// set 2, hotspots 141..147).
+	// lang2/goodbye/fact.ini of add-on set 2, hotspots 141..147
+	initFacts();
 	// FUN_0040b1f0("track14", 1): the 1 restarts the track even when it is
 	// already playing.
 	_vm->_music->stop();
@@ -73,9 +73,7 @@ void GoodbyeScene::onMouseDown(int hotspot, int x, int y) {
 	// FUN_00416080
 	if (hotspot == 1)
 		_vm->startGame("textinvader");
-	else if (hotspot >= kHotspotFactFirst && hotspot <= kHotspotFactLast)
-		// The fact module (FUN_0041dbf0) handles these, not the page.
-		debug(1, "Goodbye: TODO: fact page %d", hotspot); // TODO: fact page
+	// kHotspotFactFirst..Last: the fact module handles these, not the page.
 }
 
 void GoodbyeScene::onRightClick(int x, int y) {

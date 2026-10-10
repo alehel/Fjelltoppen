@@ -19,10 +19,12 @@
  *
  */
 #include "common/debug.h"
+#include "common/formats/ini-file.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 
 #include "flaaklypa/cursor.h"
+#include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
@@ -32,7 +34,7 @@ namespace Flaaklypa {
 
 Scene::Scene(FlaaklypaEngine *vm, const SceneDef *def) : _vm(vm), _def(def), _name(def->name),
 	_backdrop(nullptr), _mask(nullptr), _cursorTable(def->cursors), _cursorMode(kCursorNormal),
-	_lastHotspot(-1), _seqList(nullptr) {
+	_lastHotspot(-1), _seqList(nullptr), _factsActive(false), _factsFound(0) {
 	_singleList[0] = _singleList[1] = nullptr;
 	if (def->anims)
 		for (const AnimDef *a = def->anims; a->name; a++)
@@ -40,6 +42,9 @@ Scene::Scene(FlaaklypaEngine *vm, const SceneDef *def) : _vm(vm), _def(def), _na
 }
 
 Scene::~Scene() {
+	// FUN_0041df50 (close): the facts found so far go to the profile
+	if (_factsActive)
+		_vm->setSceneValue(_name, kProfileKeyFacts, _factsFound);
 	for (auto *a : _anims)
 		delete a;
 	for (auto *d : _dynDefs)
@@ -599,6 +604,9 @@ void Scene::handleEvent(const Common::Event &event) {
 		debug(1, "Scene %s: click on hotspot %d at %d,%d", _name.c_str(), h, event.mouse.x, event.mouse.y);
 		characterClicked(h);
 		onMouseDown(h, event.mouse.x, event.mouse.y);
+		// The fact module's handler runs after the scene's (priority -10)
+		if (_factsActive)
+			factClicked(h);
 		break;
 	}
 	case Common::EVENT_LBUTTONUP: {
@@ -645,6 +653,54 @@ void Scene::dispatchAnimFinished(Anim *a) {
 	sequenceAnimFinished(a);
 	for (auto &c : _characters)
 		characterAnimFinished(c, a);
+}
+
+// ---- fact pages ------------------------------------------------------------
+
+void Scene::initFacts() {
+	// FUN_0041dbf0
+	_facts.clear();
+	Common::INIFile ini;
+	if (resources()->loadIni(_name, "fact.ini", ini)) {
+		for (const auto &section : ini.getSections()) {
+			Fact f;
+			f.title = section.name;
+			const Common::INIFile::KeyValue *kv = section.getKey("hotspot");
+			f.hotspot = kv ? atoi(Resources::iniValue(kv->value).c_str()) : -1;
+			// FUN_0041dde0: text0, text1, ... up to the first missing key,
+			// separated by an empty line
+			for (int i = 0; (kv = section.getKey(Common::String::format("text%d", i))) != nullptr; i++) {
+				if (i)
+					f.text += "\n\n";
+				f.text += Resources::iniValue(kv->value);
+			}
+			_facts.push_back(f);
+		}
+	}
+	_factsFound = _vm->getSceneValue(_name, kProfileKeyFacts);
+	_factsActive = true;
+	debug(1, "Scene %s: %d fact pages, found mask 0x%x", _name.c_str(), _facts.size(), _factsFound);
+}
+
+void Scene::factClicked(int hotspot) {
+	// FUN_0041dcb0 / FUN_0041dd40: the first section with that hotspot
+	for (uint i = 0; i < _facts.size(); i++) {
+		if (_facts[i].hotspot != hotspot)
+			continue;
+		_vm->messageBox(_facts[i].title, _facts[i].text, MessageBox::kButtonOk);
+		// FUN_0041dd20 / FUN_0041dd30: one bit per section; finding the last
+		// one is rewarded once
+		const uint32 all = (1u << (_facts.size() & 0x1f)) - 1;
+		if (_factsFound != all) {
+			_factsFound |= 1u << (i & 0x1f);
+			if (_factsFound == all) {
+				// TODO: the award dialog (FUN_0041c120: awarddlg:TITLE_FACT /
+				// DESC_FACT, FUN_0041bb20 with a car part)
+				debug(1, "Scene %s: all fact pages found (TODO: award dialog)", _name.c_str());
+			}
+		}
+		return;
+	}
 }
 
 void Scene::update() {

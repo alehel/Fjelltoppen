@@ -292,11 +292,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		break;
 	default:
 		// Hotspots 100..113 are fact pages (fact.ini), handled by the fact
-		// module (FUN_0041dbf0), not by the page.
-		if (hotspot >= 100 && hotspot <= 113) {
-			// TODO: fact page
-			debug(1, "tvroom: fact page %d", hotspot);
-		}
+		// module, not by the page.
 		break;
 	}
 }

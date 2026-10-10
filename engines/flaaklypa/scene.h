@@ -37,6 +37,11 @@ namespace Flaaklypa {
 class FlaaklypaEngine;
 class Resources;
 
+/** Profile key of the fact pages found in a scene (a bit per fact.ini section). */
+enum {
+	kProfileKeyFacts = 100
+};
+
 /** A NULL terminated list of animation names (an "anim list" of the original). */
 typedef const char *const *AnimList;
 
@@ -153,6 +158,13 @@ public:
 	void setTimer(int id, uint32 delayMs, int data = 0);
 	void killTimer(int id);
 
+	// ---- fact pages (FACT module)
+	/**
+	 * Loads the scene's fact.ini (FUN_0041dbf0, story page init): a click on
+	 * a section's hotspot shows its text in a message box.
+	 */
+	void initFacts();
+
 	// ---- misc
 	int hotspotAt(int x, int y) const;
 	void playMusic(const char *name);
@@ -220,6 +232,7 @@ private:
 	Character *findCharacter(int id);
 	void characterPlayNext(Character &c, int list);
 	void sequenceAnimFinished(Anim *anim);
+	void factClicked(int hotspot);
 	void sequenceClear();
 	bool groupBusy(uint32 group) const;
 	void setGroupState(uint32 group, int state);
@@ -242,6 +255,15 @@ private:
 
 	AnimList _seqList;
 	AnimQueue _seq;
+
+	struct Fact {
+		Common::String title;
+		int hotspot;
+		Common::String text;
+	};
+	Common::Array<Fact> _facts;
+	bool _factsActive;
+	uint32 _factsFound;  ///< bit per fact.ini section, profile key 100
 };
 
 } // End of namespace Flaaklypa

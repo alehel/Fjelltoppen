@@ -136,7 +136,7 @@ void OuttentScene::onInit(int arg) {
 	_grassCount = 0;
 	_dreamNarrationCount = 0;
 
-	// TODO: fact pages (FUN_0041dbf0, hotspots 201..214, see onMouseDown)
+	initFacts();
 
 	addCharacter(kCharSolan, kHotspotSolan);
 	setCharacterList(kCharSolan, 1, kSolanIdle);
@@ -221,10 +221,8 @@ void OuttentScene::onMouseDown(int hotspot, int x, int y) {
 		removeAnim("3dglasses");
 		break;
 	default:
-		// Hotspots 201..214 belong to the fact module (FUN_0041dbf0's
-		// callback), which opens the matching fact.ini page.
-		if (hotspot >= kHotspotFactFirst && hotspot <= kHotspotFactLast)
-			debug(1, "Outtent: TODO fact page %d", hotspot);
+		// Hotspots 201..214 belong to the fact module, which opens the
+		// matching fact.ini page.
 		break;
 	}
 }

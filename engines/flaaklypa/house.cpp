@@ -84,7 +84,7 @@ void HouseScene::onInit(int arg) {
 	debug(1, "House: TODO random ambience clip");
 
 	_countWindow = _countBench = _countDoor = 0;
-	// TODO: fact pages (fact.ini, hotspots 100..116) are handled by the fact module
+	initFacts();
 	_audiopairsHotspot = 0;
 
 	addCharacter(kCharSolan, kHotspotSolan);

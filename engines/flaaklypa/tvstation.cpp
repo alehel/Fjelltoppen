@@ -81,9 +81,9 @@ TvstationScene::TvstationScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene
 
 void TvstationScene::onInit(int arg) {
 	playMusic("ambience5");
-	// FUN_004094d0 subtitles, FUN_0041dbf0 fact module: the fact pages of
-	// fact.ini (hotspots 200..211) are handled by that module.
-	// TODO: fact pages
+	// FUN_004094d0 subtitles; the fact pages of fact.ini (hotspots
+	// 200..211) are handled by the fact module.
+	initFacts();
 	setTimer(kTimerMonitor, kMonitorStillDelay);
 	setTimer(kTimerLights, kLightsDelay);
 

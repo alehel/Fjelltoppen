@@ -84,7 +84,7 @@ void PeeScene::onInit(int arg) {
 	playMusic("track3");
 	newFlight();
 	_bushCount = 0;
-	// TODO: fact module (FUN_0041dbf0, fact.ini hotspots 200..206)
+	initFacts();
 
 	// The butterfly clips are not in the scene tables: the original renames
 	// a single animation structure (0x5b8960) on the fly.
@@ -189,10 +189,7 @@ void PeeScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->changeScene("desk", 1);
 		break;
 	default:
-		if (hotspot >= kHotspotFactFirst && hotspot <= kHotspotFactLast) {
-			// TODO: fact page (handled by the fact module in the original)
-			debug(1, "PeeScene: fact page %d", hotspot);
-		}
+		// 200..207: fact pages (fact.ini, the fact module)
 		break;
 	}
 }

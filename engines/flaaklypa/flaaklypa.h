@@ -88,6 +88,7 @@ private:
 	uint32 _freezeStart = 0;
 	uint32 _frozenTotal = 0;
 	Common::Point _mousePos;
+	Common::StringMap _sceneValues;  ///< "<scene>/<key>" -> value, see getSceneValue()
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
 
@@ -172,6 +173,15 @@ public:
 	 * the key (Scene::handlesKey()).
 	 */
 	void globalKey(const Common::KeyState &key);
+
+	/**
+	 * A per scene value of the player profile (PROFILE module, record type
+	 * 0x402: FUN_00411e70 reads, FUN_00411e40 writes the current scene's
+	 * key). Kept in memory for the session until the .pfl profiles are
+	 * ported.
+	 */
+	int32 getSceneValue(const Common::String &scene, int key, int32 def = 0) const;
+	void setSceneValue(const Common::String &scene, int key, int32 value);
 	/**
 	 * Modal message box (FUN_00421310 / FUN_00420f40) with a title line, a
 	 * word wrapped text and the buttons given by the MessageBox::kButton*

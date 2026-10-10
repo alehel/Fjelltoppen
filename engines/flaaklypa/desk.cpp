@@ -89,7 +89,7 @@ void DeskScene::onInit(int arg) {
 	// narration) is read here (FUN_00411e70(1, &DAT_005b8748, 4)); kept in a
 	// static for now.
 	debug(1, "Desk: narration count %d (profile key 1 not read)", _narrationCount);
-	// TODO: fact module init (FUN_0041dbf0)
+	initFacts();
 
 	addCharacter(kCharSolan, kHotspotSolan);
 	setCharacterZ(kCharSolan, 5);

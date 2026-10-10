@@ -74,6 +74,7 @@ YardScene::YardScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 
 void YardScene::onInit(int arg) {
 	playMusic("track1");
+	initFacts();
 
 	addCharacter(kCharSolan, kHotspotSolan);
 	setCharacterZ(kCharSolan, 5);

@@ -6,7 +6,7 @@ sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
 The menu (partly), the scene index, every story page except `buildacar`,
 the message box, navigator and help dialogs and 15 sub games work (see the
-checklist at the end). Not done: the fact and award dialogs, profiles and
+checklist at the end). Not done: the award dialog, profiles and
 high scores, `buildacar`, the remaining sub games and activities, racing.
 
 ## The game
@@ -215,7 +215,7 @@ F1..F11). Engine: `Scene::handlesKey()` and
 ### Hotspot index ranges (story pages)
 
 1..3 sub game/activity entries, 55..99 animation hotspots, 100..150 misc,
-151..199 fact pages (`fact.ini` `hotspot=`), 251/252 the characters,
+151..199 or 200..214 fact pages (`fact.ini` `hotspot=`), 251/252 the characters,
 254/255 hidden 3D glasses / car part bitmaps.
 
 ### Audio
@@ -1343,6 +1343,21 @@ while a dialog is open waits until it closes.
     step by one line. The port also scrolls with the mouse wheel.
   * OK (`button_0`/`_1` at 383,365), Enter and Escape close the dialog
     (result 1); the scene closing under it gives 2.
+* **Fact pages** (FACT module, "Faktatek"): ten story pages (yard, desk,
+  garage, house, intent, outtent, pee, tvroom, tvstation, goodbye) call
+  `FUN_0041dbf0` in their init. It loads the page's `fact.ini` and
+  registers a handler at priority -10, so it sees the mouse downs the page
+  passes on: a click on a section's `hotspot=` (`FUN_0041dcb0` /
+  `FUN_0041dd40`, the first matching section) opens the message box with
+  the section name as title and `text0`, `text1`, ... joined by empty
+  lines (`FUN_0041dde0`), OK button. Each section found sets bit n of the
+  page's profile key 100 (read at init, written at close by
+  `FUN_0041df50`); the click that completes the mask shows the award
+  dialog `awarddlg:TITLE_FACT` / `DESC_FACT` (`FUN_0041c120`, TODO with
+  the profiles). Without a `fact.ini` the module would use a table of
+  `fact:TITLE` strings (`FUN_0041def0`), which no Gold page has. Engine:
+  `Scene::initFacts()`; the profile values live in memory for now
+  (`FlaaklypaEngine::getSceneValue()`).
 * Word wrap (`FUN_00402530`, used by the message box and the help): a
   line grows one character at a time until its width reaches the limit
   or a `\n`, then ends at the first blank after the last word that fit;
@@ -1378,9 +1393,7 @@ plays one clip, and no state machine.
 * State across visits: the car part flag (profile key 0 of the page in the
   original, a static here) and the two variant masks.
 * TODO: profile get/set of the car part, the award dialog
-  (`FUN_0041c150`), the fact pages (the fact module `FUN_0041dbf0`
-  intercepts hotspots 200..213 in the original; the engine only logs
-  them).
+  (`FUN_0041c150`).
 ## Story page `house` ("På tunet")
 
 Reodor's house (`S04`, handler `FUN_00425160`, `house.cpp`, `HouseScene`).
@@ -1410,12 +1423,12 @@ next `tvroom`, previous `desk`.
   18 `S04AN-SS-015b`; two variants picked without repeats (`FUN_0040a150`):
   5 `S04AN-SS-002a`/`002c`, 14 `S04AN-SS-015c`/`015d`, 15
   `S04AN-SS-013b`/`013c`. Hotspots 100..116 are fact pages
-  (`lang/house/fact.ini`, handled by the fact module: TODO).
+  (`lang/house/fact.ini`, handled by the fact module).
 * State: the three "pick without repeats" counters are reset at init, the
   three masks are globals and survive a visit (static members).
 * Clips of this page are spread over `data/house`, `data1..3/house` and
   `lang1/house` (the intro, narration and the longer dialogue clips).
-* TODO: ambience clip, fact pages, profile (car part / 3D glasses found),
+* TODO: ambience clip, profile (car part / 3D glasses found),
   award dialogs, the navigator dialog itself (engine stub).
 
 ## Story page `intent` ("I sjeikens telt")
@@ -1458,7 +1471,7 @@ Hotspots:
   all three, kills the wake up timer.
 
 TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged), profile key 0 /
-3D scene 9 checks and the award dialogs, fact pages, the `chess` sub game.
+3D scene 9 checks and the award dialogs, the `chess` sub game.
 
 ## Story page `desk` ("Reodors stue")
 
@@ -1508,7 +1521,7 @@ navigator result -> `424dc0`, 0x11f -> `424d30`). Engine: `desk.cpp`.
   intro is the running sequence (a space abort sends no 0x11f in the
   original either). Profile key 1 is a static member for now.
 * Not done: profile (key 0 car part found, key 1 counter, the visit
-  counter gating the narration), award dialog, fact module, the
+  counter gating the narration), award dialog, the
   navigator's 0x7d2 override (needs a result callback from
   `showNavigator()`).
 
@@ -1557,8 +1570,8 @@ reel on top, a fuse box on the wall, and one character (clips
 * State across visits: none in the page itself; profile: car part found
   (static member for now), collection count, session count.
 * TODO: profile collection mask (reel count fixed to 1), session counter
-  (NAR-002 always plays), car part flag in the profile, award dialog, fact
-  pages, the movie player.
+  (NAR-002 always plays), car part flag in the profile, award dialog, the
+  movie player.
 
 ## Story page `morning` ("Solan på tokt")
 
@@ -1701,7 +1714,7 @@ and the glasses `FUN_0041b8c0(5)`; the port keeps both in static members
 until profiles exist.
 
 TODO: music volume (`FUN_0040b410`, no music volume API yet), the award
-dialogs, profile, fact pages; `gallery` and `draughts` are not ported yet
+dialogs, profile; `gallery` and `draughts` are not ported yet
 (`startGame` warns).
 
 ## Story page `outtent` ("Foran sjeikens telt")
@@ -1745,7 +1758,7 @@ class with `defineAnim`, the scene table has no entries for them).
 * State across visits: only the three random pick masks (`DAT_005b87a4`,
   `5b8798`, `5b87a0`); the pick counters and the narration counter are reset
   on init.
-* Not done: profile (car part flag, 3D scene 8), award dialogs, fact pages,
+* Not done: profile (car part flag, 3D scene 8), award dialogs,
   music volume factors, `balloonhunt` and `mahjong` (not ported). The page
   never starts `town` itself (no reference in its handler); `town`
   (`FUN_00426f30`) is a cutscene that returns here (or to `buildacar` with
@@ -1776,7 +1789,7 @@ Handler `FUN_00415f50` (`goodbye.cpp`). A night sky over Flåklypa; music
   the original one press skips both narrations, since `NAR-002` is
   already added when it is checked.
 * Hotspots: 1 `textinvader` (word game, add-on set 2); 141..147 fact pages
-  of `lang2/goodbye/fact.ini`, handled by the fact module (TODO).
+  of `lang2/goodbye/fact.ini`, handled by the fact module.
   Right click: navigator (next `outro`, previous `tvstation`).
 * Both hotspot 1 and the fact hotspots exist only in the add-on set 2 mask
   `data2/goodbye/hotspots.bmp`; the base `data/goodbye/hotspots.bmp` is
@@ -1787,7 +1800,7 @@ Handler `FUN_00415f50` (`goodbye.cpp`). A night sky over Flåklypa; music
   game cannot be started from the page. Same for `desk`, `house`,
   `intent`, `outtent` (masks), `menu` / `sceneindex` (data3 backdrop and
   bitmaps), `common/language.ini` and `outro/credits.ini` (lang3).
-* TODO: profile (session counter), fact module.
+* TODO: profile (session counter).
 
 ## Story page `outro` ("Epilog")
 
@@ -1877,7 +1890,7 @@ its own hotspot numbering, not the 55..99/251.. ranges of the other pages.
   uses `Anim::setHitRadius()`.
 * TODO: profile (car part only while page key 0 is 0, set to 1 when found;
   3D glasses only while 3D scene 3 is not found), the award dialogs
-  (`FUN_0041c150`, `FUN_0041c1b0(3)`), the fact pages, activity `fence`.
+  (`FUN_0041c150`, `FUN_0041c1b0(3)`), activity `fence`.
 
 ## Scene index (`sceneindex`)
 
