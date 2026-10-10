@@ -64,11 +64,24 @@ enum {
 	kTimerIdle = 1
 };
 
-MenuScene::MenuScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0), _current(0) {
+MenuScene::MenuScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0), _current(0), _tooltip(this) {
 }
+
+// The tooltip texts of the buttons (0x49c948), given to the tooltip module
+// instead of a scene callback; the default delay of 1.5 s.
+static const struct {
+	int hotspot;
+	const char *text;
+} kTooltips[] = {
+	{ 5, "menu:START" }, { 6, "menu:INDEX" }, { 8, "menu:RACE" }, { 7, "menu:TOURNAMENT" },
+	{ 9, "menu:PROFILE_NEW" }, { 10, "menu:PROFILE_REMOVE" }, { 12, "menu:PROFILE_NEXT" },
+	{ 11, "menu:PROFILE_PREV" }, { 4, "menu:HIGHSCORE" }, { 3, "menu:OPTIONS" },
+	{ 13, "menu:CREDITS" }, { 1, "interfaceh:HELP" }, { 2, "menu:EXIT" }
+};
 
 void MenuScene::onInit(int arg) {
 	playMusic("theme");
+	_tooltip.start(hotspotAt(_vm->mousePos().x, _vm->mousePos().y));
 	addAnim("title", Anim::kDefaultPos, Anim::kDefaultPos, 10);
 
 	for (const Button *b = _buttons; b->hotspot; b++) {
@@ -200,6 +213,7 @@ void MenuScene::highlight(int hotspot) {
 
 void MenuScene::onMouseMove(int hotspot, int x, int y) {
 	highlight(hotspot);
+	_tooltip.hotspotChanged(hotspot);
 	if (hotspot > 0 && hotspot < 14)
 		setAmp(1);
 }
@@ -222,6 +236,7 @@ void MenuScene::setAmp(int level) {
 }
 
 void MenuScene::onMouseDown(int hotspot, int x, int y) {
+	_tooltip.hide();
 	setAmp(2);
 	if (hotspot == 14)
 		playAnim("specific");
@@ -314,6 +329,16 @@ void MenuScene::onAnimFinished(Anim *a) {
 		playAnim("idle");
 	} else if (n != "title") {
 		a->remove();
+	}
+}
+
+void MenuScene::onUpdate() {
+	int h = _tooltip.poll();
+	for (const auto &t : kTooltips) {
+		if (t.hotspot == h) {
+			Common::Point p = _vm->mousePos();
+			_tooltip.show(_vm->getString(t.text), p.x, p.y);
+		}
 	}
 }
 

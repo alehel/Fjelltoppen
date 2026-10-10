@@ -23,6 +23,7 @@
 
 #include "common/formats/ini-file.h"
 
+#include "flaaklypa/button.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/font.h"
 #include "flaaklypa/scene.h"
@@ -45,6 +46,7 @@ public:
 	bool handlesKey(const Common::KeyState &key) override;
 	void onAnimFinished(Anim *anim) override;
 	void onTimer(int id, int data) override;
+	void onUpdate() override;
 
 private:
 	struct Button {
@@ -72,6 +74,7 @@ private:
 	Common::Array<FlaaklypaEngine::ProfileInfo> _profiles;
 	int _current;            ///< the profile shown (DAT_00578314)
 	BitmapFont _nameFont;
+	Tooltip _tooltip;
 };
 
 /** The start screen: the Caprino logo clip, then the birthday greeting. */
