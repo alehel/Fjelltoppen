@@ -47,6 +47,7 @@ namespace Flaaklypa {
 class Cursor;
 class Dialog;
 class Music;
+class Profile;
 class Resources;
 class Scene;
 
@@ -88,7 +89,8 @@ private:
 	uint32 _freezeStart = 0;
 	uint32 _frozenTotal = 0;
 	Common::Point _mousePos;
-	Common::StringMap _sceneValues;  ///< "<scene>/<key>" -> value, see getSceneValue()
+	int _profileSlot = -1;         ///< save slot of _profile
+	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
 
@@ -109,6 +111,7 @@ public:
 	Cursor *_cursor = nullptr;
 	Music *_music = nullptr;
 	Dialog *_dialog = nullptr;     ///< the modal dialog receiving the input, if any
+	Profile *_profile = nullptr;   ///< the active player profile (DAT_0054eaa0), if any
 
 public:
 	FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDesc);
@@ -174,11 +177,39 @@ public:
 	 */
 	void globalKey(const Common::KeyState &key);
 
+	// ---- player profiles (PROFILE module)
+	//
+	// A profile is the original's .pfl file, kept in a ScummVM save slot
+	// (the description is the profile's name). The active one is written
+	// back after changes at the next scene change and when the engine ends.
+
+	struct ProfileInfo {
+		int slot;
+		Common::String name;
+		uint32 lastUsed;
+	};
+	/** The profiles, sorted by name like FUN_00410d20. */
+	Common::Array<ProfileInfo> listProfiles();
+	/** Makes a profile the active one and stamps it as used (FUN_00411ef0). */
+	bool selectProfile(int slot);
+	/** Creates and saves a profile (FUN_00411060); returns its slot or -1. */
+	int createProfile(const Common::String &name, int month, int day);
+	/** Deletes a profile; the active one is dropped first (FUN_00417f80). */
+	void removeProfile(int slot);
+	Profile *profile() const { return _profile; }
+	int profileSlot() const { return _profileSlot; }
+	/** Marks the active profile as changed; it is saved at the next scene change. */
+	void profileChanged() { _profileDirty = true; }
+	/** Writes the active profile if it changed. */
+	void flushProfile();
+	/** The time stamps of the profile: seconds since 1970 (time()). */
+	static uint32 profileTime();
+
 	/**
-	 * A per scene value of the player profile (PROFILE module, record type
-	 * 0x402: FUN_00411e70 reads, FUN_00411e40 writes the current scene's
-	 * key). Kept in memory for the session until the .pfl profiles are
-	 * ported.
+	 * A value a scene keeps in the active profile (record type 0x402:
+	 * FUN_00411e70 reads, FUN_00411e40 writes the current scene's key).
+	 * Without a profile reads give def and writes are lost, as in the
+	 * original.
 	 */
 	int32 getSceneValue(const Common::String &scene, int key, int32 def = 0) const;
 	void setSceneValue(const Common::String &scene, int key, int32 value);
@@ -215,27 +246,21 @@ public:
 		    (f == kSupportsReturnToLauncher);
 	};
 
+	// Profiles are saved automatically; the save slots are only loaded
+	// from the launcher (which selects the profile).
 	bool canLoadGameStateCurrently(Common::U32String *msg = nullptr) override {
 		return false;
 	}
 	bool canSaveGameStateCurrently(Common::U32String *msg = nullptr) override {
 		return false;
 	}
-
-	/**
-	 * Uses a serializer to allow implementing savegame
-	 * loading and saving using a single method
-	 */
-	Common::Error syncGame(Common::Serializer &s);
-
-	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override {
-		Common::Serializer s(nullptr, stream);
-		return syncGame(s);
+	int getAutosaveSlot() const override {
+		return -1;
 	}
-	Common::Error loadGameStream(Common::SeekableReadStream *stream) override {
-		Common::Serializer s(stream, nullptr);
-		return syncGame(s);
-	}
+
+	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
+	Common::Error loadGameState(int slot) override;
 };
 
 extern FlaaklypaEngine *g_engine;

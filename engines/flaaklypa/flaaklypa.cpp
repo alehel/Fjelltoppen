@@ -24,6 +24,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
 #include "flaaklypa/music.h"
+#include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scenes.h"
 
@@ -37,6 +38,8 @@
 #include "engines/util.h"
 #include "common/file.h"
 #include "common/formats/ini-file.h"
+#include "common/savefile.h"
+#include "engines/metaengine.h"
 #include "graphics/framelimiter.h"
 #include "graphics/pixelformat.h"
 #include "image/png.h"
@@ -51,6 +54,7 @@ FlaaklypaEngine::FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDes
 }
 
 FlaaklypaEngine::~FlaaklypaEngine() {
+	delete _profile;
 	delete _scene;
 	delete _language;
 	delete _music;
@@ -150,12 +154,147 @@ int FlaaklypaEngine::showHelp(const char *file) {
 }
 
 int32 FlaaklypaEngine::getSceneValue(const Common::String &scene, int key, int32 def) const {
-	Common::String id = Common::String::format("%s/%d", scene.c_str(), key);
-	return _sceneValues.contains(id) ? (int32)atoi(_sceneValues[id].c_str()) : def;
+	return _profile ? _profile->getValue(scene, key, def) : def;
 }
 
 void FlaaklypaEngine::setSceneValue(const Common::String &scene, int key, int32 value) {
-	_sceneValues[Common::String::format("%s/%d", scene.c_str(), key)] = Common::String::format("%d", value);
+	if (!_profile || _profile->getValue(scene, key, value + 1) == value)
+		return;
+	_profile->setValue(scene, key, value);
+	profileChanged();
+}
+
+// ---- profiles ----------------------------------------------------------------
+
+uint32 FlaaklypaEngine::profileTime() {
+	// time(): days since 1970-01-01 of the civil date (H. Hinnant's
+	// days_from_civil), local time like ScummVM's clock
+	TimeDate t;
+	g_system->getTimeAndDate(t);
+	int y = t.tm_year + 1900;
+	const int m = t.tm_mon + 1;
+	y -= m <= 2;
+	const int era = (y >= 0 ? y : y - 399) / 400;
+	const int yoe = y - era * 400;
+	const int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + t.tm_mday - 1;
+	const int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+	const int days = era * 146097 + doe - 719468;
+	return (uint32)days * 86400 + t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec;
+}
+
+Common::Array<FlaaklypaEngine::ProfileInfo> FlaaklypaEngine::listProfiles() {
+	Common::Array<ProfileInfo> list;
+	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
+	for (const auto &desc : saves) {
+		Common::ScopedPtr<Common::InSaveFile> in(_saveFileMan->openForLoading(getSaveStateName(desc.getSaveSlot())));
+		Profile p;
+		if (!in || !p.load(*in))
+			continue;
+		ProfileInfo info;
+		info.slot = desc.getSaveSlot();
+		info.name = p.name();
+		info.lastUsed = p.lastUsed();
+		list.push_back(info);
+	}
+	// FUN_00410d20 sorts by name (_stricmp)
+	Common::sort(list.begin(), list.end(), [](const ProfileInfo &a, const ProfileInfo &b) {
+		return a.name.compareToIgnoreCase(b.name) < 0;
+	});
+	return list;
+}
+
+bool FlaaklypaEngine::selectProfile(int slot) {
+	if (_profile && slot == _profileSlot) {
+		_profile->setLastUsed(profileTime());
+		profileChanged();
+		return true;
+	}
+	Common::ScopedPtr<Common::InSaveFile> in(_saveFileMan->openForLoading(getSaveStateName(slot)));
+	Profile *p = new Profile();
+	if (!in || !p->load(*in)) {
+		warning("Cannot load the profile in slot %d", slot);
+		delete p;
+		return false;
+	}
+	flushProfile();
+	delete _profile;
+	_profile = p;
+	_profileSlot = slot;
+	// FUN_00411ef0: the profile is stamped with the time it was last used
+	_profile->setLastUsed(profileTime());
+	_profileDirty = true;
+	flushProfile();
+	debug(1, "Profile '%s' (slot %d) selected", _profile->name().c_str(), slot);
+	return true;
+}
+
+int FlaaklypaEngine::createProfile(const Common::String &name, int month, int day) {
+	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
+	int slot = 0;
+	for (; slot <= getMetaEngine()->getMaximumSaveSlot(); slot++) {
+		bool used = false;
+		for (const auto &desc : saves)
+			used |= desc.getSaveSlot() == slot;
+		if (!used)
+			break;
+	}
+	if (slot > getMetaEngine()->getMaximumSaveSlot())
+		return -1;
+	Profile p(name, month, day, profileTime());
+	Common::OutSaveFile *out = _saveFileMan->openForSaving(getSaveStateName(slot));
+	if (!out)
+		return -1;
+	p.save(*out);
+	getMetaEngine()->appendExtendedSave(out, 0, p.name(), false);
+	out->finalize();
+	bool ok = !out->err();
+	delete out;
+	debug(1, "Profile '%s' created in slot %d", p.name().c_str(), slot);
+	return ok ? slot : -1;
+}
+
+void FlaaklypaEngine::removeProfile(int slot) {
+	// FUN_00417f80: removing the active profile deactivates it (FUN_00410c80);
+	// the original keeps the file as <name>.bak
+	if (_profile && slot == _profileSlot) {
+		delete _profile;
+		_profile = nullptr;
+		_profileSlot = -1;
+		_profileDirty = false;
+	}
+	getMetaEngine()->removeSaveState(_targetName.c_str(), slot);
+}
+
+void FlaaklypaEngine::flushProfile() {
+	if (!_profile || !_profileDirty)
+		return;
+	_profileDirty = false;
+	Common::Error err = saveGameState(_profileSlot, _profile->name());
+	if (err.getCode() != Common::kNoError)
+		warning("Cannot save the profile '%s' (slot %d)", _profile->name().c_str(), _profileSlot);
+}
+
+Common::Error FlaaklypaEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
+	if (!_profile)
+		return Common::kWritingFailed;
+	_profile->save(*stream);
+	return stream->err() ? Common::kWritingFailed : Common::kNoError;
+}
+
+Common::Error FlaaklypaEngine::loadGameStream(Common::SeekableReadStream *stream) {
+	Profile *p = new Profile();
+	if (!p->load(*stream)) {
+		delete p;
+		return Common::kReadingFailed;
+	}
+	delete _profile;
+	_profile = p;
+	return Common::kNoError;
+}
+
+Common::Error FlaaklypaEngine::loadGameState(int slot) {
+	// A save slot is a profile: loading it from the launcher selects it.
+	return selectProfile(slot) ? Common::kNoError : Common::kReadingFailed;
 }
 
 void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
@@ -303,6 +442,13 @@ void FlaaklypaEngine::switchScene() {
 	}
 	debug(1, "Entering scene %s (arg %d)", name.c_str(), arg);
 	_scene = scene;
+	// FUN_0040ccd0 -> FUN_00412030: the profile counts the visit before the
+	// scene's init
+	if (_profile) {
+		_profile->enterScene(name, profileTime());
+		_profileDirty = true;
+	}
+	flushProfile();
 	// The original resets the cursor while ending the previous scene
 	// (FUN_0040c930) and sends the init event last (FUN_0040c8e0), so a
 	// sequence started by the init keeps the cursor hidden.
@@ -441,6 +587,40 @@ Common::Error FlaaklypaEngine::run() {
 	_cursor = new Cursor();
 	_music = new Music();
 
+	// Development aid: "profile_import=<path>" adds an original .pfl file as
+	// a new profile.
+	if (ConfMan.hasKey("profile_import")) {
+		Common::FSNode node(Common::Path(ConfMan.get("profile_import"), '/'));
+		Common::ScopedPtr<Common::SeekableReadStream> in(node.createReadStream());
+		Profile p;
+		if (in && p.load(*in)) {
+			int slot = createProfile(p.name(), p.birthMonth(), p.birthDay());
+			if (slot >= 0) {
+				_profile = new Profile(p);
+				_profileSlot = slot;
+				_profileDirty = true;
+				flushProfile();
+				debug(1, "Imported profile '%s' into slot %d", p.name().c_str(), slot);
+			}
+		} else {
+			warning("Cannot import the profile %s", ConfMan.get("profile_import").c_str());
+		}
+	}
+
+	// FUN_0040e830: the profile used last is active from the start; a save
+	// slot chosen in the launcher selects that profile instead.
+	if (ConfMan.hasKey("save_slot")) {
+		selectProfile(ConfMan.getInt("save_slot"));
+	} else if (!_profile) {
+		Common::Array<ProfileInfo> profiles = listProfiles();
+		const ProfileInfo *latest = nullptr;
+		for (const auto &p : profiles)
+			if (!latest || p.lastUsed > latest->lastUsed)
+				latest = &p;
+		if (latest)
+			selectProfile(latest->slot);
+	}
+
 	changeScene(ConfMan.hasKey("start_scene") ? ConfMan.get("start_scene") : "menu", 0);
 	if (ConfMan.hasKey("random_seed"))
 		_randomSource.setSeed(ConfMan.getInt("random_seed"));
@@ -458,13 +638,9 @@ Common::Error FlaaklypaEngine::run() {
 	while (!shouldQuit())
 		runFrame();
 
+	flushProfile();
 	return Common::kNoError;
 }
 
-Common::Error FlaaklypaEngine::syncGame(Common::Serializer &s) {
-	// Saving is not implemented yet. The original keeps per player state in
-	// common/profiles/*.pfl inside the data directory.
-	return Common::kUnknownError;
-}
 
 } // End of namespace Flaaklypa

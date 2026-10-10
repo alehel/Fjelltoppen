@@ -37,6 +37,10 @@ public:
 	 */
 	bool hasFeature(MetaEngineFeature f) const override;
 
+	// One save slot per player profile; the original allows 64 profiles.
+	int getMaximumSaveSlot() const override { return 63; }
+	int getAutosaveSlot() const override { return -1; }
+
 	const ADExtraGuiOptionsMap *getAdvancedExtraGuiOptions() const override;
 };
 

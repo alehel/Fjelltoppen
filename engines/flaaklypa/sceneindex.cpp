@@ -22,6 +22,7 @@
 #include "graphics/screen.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sceneindex.h"
 
@@ -221,17 +222,21 @@ void SceneindexScene::selectTab(int tab) {
 		Common::String b0 = name + "_0", b1 = name + "_1", b2 = name + "_2";
 		_buttons.add(kButtonScene0 + i, x, y, b0.c_str(), b1.c_str(), b2.c_str(), nullptr, "", false);
 
-		// TODO: profile (FUN_00411370(name)): a scene the player has not
-		// reached yet is disabled ("_2" bitmap, tooltip "hidden in scene
-		// <hint>"). Until there is a profile every scene counts as reached.
-		int state = 1;
+		// FUN_00411370: a scene the player has not visited yet is disabled
+		// ("_2" bitmap, tooltip "hidden in scene <hint>"); state<n> overrides
+		Profile *profile = _vm->profile();
+		int state = profile ? profile->visits(name) : 0;
 		state = iniInt(sec, Common::String::format("state%d", i), state);
 		_buttons.setState(kButtonScene0 + i, state < 1 ? SceneButtons::kStateDisabled : SceneButtons::kStateNormal);
 
 		if (medals) {
-			// TODO: profile (FUN_004115c0(name)): the best medal won in the
-			// game, 1 bronze .. 4 platinum, shown over the thumbnail (z 1).
+			// FUN_004115c0(name, 0): the medal of the game's high score table
+			// (the first value of its 0x401 record), 1 bronze .. 4 platinum,
+			// shown over the thumbnail (z 1)
 			int level = 0;
+			byte table[0x58];
+			if (profile && profile->getRecord(name, Profile::kRecordScores, 0, table, sizeof(table)))
+				level = (int32)READ_LE_UINT32(table);
 			if (level > 0 && level < 5)
 				_slots[i] = _buttons.showBitmap(slot, medalNames[level], true, 0, x, y, 1);
 		}
