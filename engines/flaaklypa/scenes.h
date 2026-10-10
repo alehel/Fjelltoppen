@@ -41,6 +41,7 @@ public:
 	void onMouseDown(int hotspot, int x, int y) override;
 	void onMouseUp(int hotspot, int x, int y) override;
 	void onKey(const Common::KeyState &key) override;
+	bool handlesKey(const Common::KeyState &key) override;
 	void onAnimFinished(Anim *anim) override;
 	void onTimer(int id, int data) override;
 
@@ -96,7 +97,6 @@ public:
 	void onInit(int arg) override;
 	void onMouseDown(int hotspot, int x, int y) override;
 	void onRightClick(int x, int y) override;
-	void onKey(const Common::KeyState &key) override;
 
 private:
 	int pickVariant(int &count, int &mask, int n);

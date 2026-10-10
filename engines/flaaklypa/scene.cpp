@@ -617,6 +617,10 @@ void Scene::handleEvent(const Common::Event &event) {
 		if (event.kbd.keycode == Common::KEYCODE_SPACE && !handlesKey(event.kbd))
 			stopSequence();
 		onKey(event.kbd);
+		// The global keys (FUN_0040d300) run after the scene's handler,
+		// unless it consumed the key.
+		if (!handlesKey(event.kbd))
+			_vm->globalKey(event.kbd);
 		break;
 	case Common::EVENT_KEYUP:
 		onKeyUp(event.kbd);

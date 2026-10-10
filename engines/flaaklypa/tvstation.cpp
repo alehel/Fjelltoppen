@@ -210,8 +210,6 @@ void TvstationScene::onKey(const Common::KeyState &key) {
 			removeAnim("S12AN-NAR-001");
 		if (isAnimAdded("S12AN-NAR-002"))
 			removeAnim("S12AN-NAR-002");
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

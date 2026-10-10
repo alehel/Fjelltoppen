@@ -266,10 +266,6 @@ void ButterflyScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void ButterflyScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
 
 // FUN_0043a820: the start clip was clicked.
 void ButterflyScene::startGame() {
@@ -797,9 +793,5 @@ void ButtercolScene::onMouseDown(int hotspot, int x, int y) {
 	}
 }
 
-void ButtercolScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->changeScene("butterfly", 0);
-}
 
 } // End of namespace Flaaklypa

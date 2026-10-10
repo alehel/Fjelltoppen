@@ -208,9 +208,6 @@ void PeeScene::onKey(const Common::KeyState &key) {
 			removeAnim("S03AN-NAR-001");
 		if (isAnimAdded("S03AN-NAR-002"))
 			removeAnim("S03AN-NAR-002");
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		// The original's global key handler (FUN_0040d300) does this.
-		_vm->changeScene("menu");
 	}
 }
 

@@ -160,6 +160,11 @@ void MenuScene::onKey(const Common::KeyState &key) {
 		confirmQuit();
 }
 
+bool MenuScene::handlesKey(const Common::KeyState &key) {
+	// The handler returns 1 for Escape only.
+	return key.keycode == Common::KEYCODE_ESCAPE;
+}
+
 // FUN_00417d70: the exit button and Escape ask "menu:QUIT" first.
 void MenuScene::confirmQuit() {
 	if (_vm->messageBox("interfaceh:WARNING", "menu:QUIT", MessageBox::kButtonYes | MessageBox::kButtonNo) == MessageBox::kButtonYes)

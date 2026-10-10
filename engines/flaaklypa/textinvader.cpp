@@ -473,11 +473,20 @@ int TextinvaderScene::checkTyped() const {
 // character of the key event when isalpha() or '-' (C locale: only the
 // ASCII letters) and lower cases it, so words with æ, ø or å cannot be
 // finished in the original either.
+bool TextinvaderScene::handlesKey(const Common::KeyState &key) {
+	// The handler returns 1 when FUN_0044cfe0 says the key's virtual key
+	// code is a letter for isalpha() or 0x2d (VK_INSERT): A..Z and the codes
+	// 0x61..0x7a, which are the keypad keys and F1..F11. So typing never
+	// pauses (P) and F1 opens no help here.
+	Common::KeyCode k = key.keycode;
+	return (k >= Common::KEYCODE_a && k <= Common::KEYCODE_z) ||
+		(k >= Common::KEYCODE_KP1 && k <= Common::KEYCODE_KP9) ||
+		k == Common::KEYCODE_KP_MULTIPLY || k == Common::KEYCODE_KP_PLUS || k == Common::KEYCODE_KP_MINUS ||
+		k == Common::KEYCODE_KP_PERIOD || k == Common::KEYCODE_KP_DIVIDE ||
+		(k >= Common::KEYCODE_F1 && k <= Common::KEYCODE_F11) || k == Common::KEYCODE_INSERT;
+}
+
 void TextinvaderScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->endGame();
-		return;
-	}
 	if (!_running)
 		return;
 	int c = key.ascii;

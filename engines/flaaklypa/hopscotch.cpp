@@ -700,11 +700,6 @@ void HopscotchScene::onMouseUp(int hotspot, int x, int y) {
 	buttonUp(x, y);
 }
 
-void HopscotchScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // FUN_0043c980 (0x110).
 void HopscotchScene::onAnimFinished(Anim *a) {
 	const Common::String n(a->name());

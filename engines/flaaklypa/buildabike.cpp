@@ -298,12 +298,6 @@ void BuildabikeScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void BuildabikeScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-	else if (key.keycode == Common::KEYCODE_TAB)
-		debug(1, "Buildabike: scene index not implemented");
-}
 
 void BuildabikeScene::onAnimFinished(Anim *a) {
 	const Common::String n(a->name());

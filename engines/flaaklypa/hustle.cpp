@@ -484,11 +484,6 @@ void HustleScene::buttonPressed(int id) {
 	}
 }
 
-void HustleScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // The original handler returns 1 for the space bar so the shuffle cannot be
 // skipped.
 bool HustleScene::handlesKey(const Common::KeyState &key) {

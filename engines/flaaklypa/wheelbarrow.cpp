@@ -671,10 +671,6 @@ void WheelbarrowScene::onMouseDown(int hotspot, int x, int y) {
 // FUN_0044f640: key down. Left/right start walking, up tips the
 // wheelbarrow when Solan stands at the basket with something in it.
 void WheelbarrowScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->endGame();
-		return;
-	}
 	if (key.keycode == Common::KEYCODE_LEFT)
 		_leftHeld = true;
 	else if (key.keycode == Common::KEYCODE_RIGHT)

@@ -260,8 +260,6 @@ void YardScene::onKey(const Common::KeyState &key) {
 				removeAnim(c);
 		updateProps();
 		updateCursorTable();
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

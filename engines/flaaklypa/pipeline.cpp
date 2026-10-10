@@ -1053,11 +1053,6 @@ void PipelineScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void PipelineScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // FUN_00449ef0: puts the dragged part back into its store slot.
 void PipelineScene::returnPiece() {
 	if (_selected < 0)

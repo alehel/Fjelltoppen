@@ -217,8 +217,6 @@ void IntentScene::onKey(const Common::KeyState &key) {
 			killTimer(kTimerWakeUp);
 			_wakeUpTimer = false;
 		}
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

@@ -227,13 +227,6 @@ void AudiopairsScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void AudiopairsScene::onKey(const Common::KeyState &key) {
-	// The scene's own key handler (0x432fd0) is empty; Esc is handled by the
-	// framework of the original (help.ini: "Esc" leaves the game).
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // ---- keys ---------------------------------------------------------------
 
 // FUN_00428ff0: shows a key in a colour. The bitmap depends on the row

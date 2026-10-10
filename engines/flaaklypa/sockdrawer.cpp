@@ -498,11 +498,6 @@ void SockdrawerScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void SockdrawerScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // ---- animation events ----------------------------------------------------
 
 // FUN_0044c190

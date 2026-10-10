@@ -165,6 +165,14 @@ public:
 	 */
 	int showHelp(const char *file = "help.ini");
 	/**
+	 * The keys every scene shares (FUN_0040d300, an event handler that runs
+	 * after the scene's): Tab opens the scene index, Escape leaves the scene
+	 * (endGame()), P pauses with a message box, F1 opens the help, F8 shows
+	 * the version. Scene::handleEvent() calls it unless the scene consumed
+	 * the key (Scene::handlesKey()).
+	 */
+	void globalKey(const Common::KeyState &key);
+	/**
 	 * Modal message box (FUN_00421310 / FUN_00420f40) with a title line, a
 	 * word wrapped text and the buttons given by the MessageBox::kButton*
 	 * flags (0 = OK); "title"/"text" are language.ini keys or plain text.

@@ -304,11 +304,6 @@ void WhackamoleScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void WhackamoleScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // ---- game ----------------------------------------------------------------
 
 // FUN_0044df40: the start sign was clicked.

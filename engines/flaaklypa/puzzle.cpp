@@ -201,11 +201,6 @@ void PuzzleScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void PuzzleScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // ---- gems ----------------------------------------------------------------
 
 Mesh3D *PuzzleScene::meshFor(int type) {

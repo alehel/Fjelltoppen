@@ -208,11 +208,4 @@ void GarageScene::onRightClick(int x, int y) {
 	_vm->showNavigator("morning", "tvroom");
 }
 
-void GarageScene::onKey(const Common::KeyState &key) {
-	// The original handles Escape globally (FUN_0040d300); the page itself
-	// has no key handler.
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->changeScene("menu");
-}
-
 } // End of namespace Flaaklypa

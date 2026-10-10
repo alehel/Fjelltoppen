@@ -191,6 +191,27 @@ hotspot change, 0x116 button pressed (button id, from the BUTTON module),
 on mouse down. The producers are `FUN_0040c590` (0x105) .. `FUN_0040c770`
 (0x106) in the EVENT module.
 
+### Event handler chain and the global keys
+
+`FUN_0040ebc0(priority, handler)` registers module handlers; events go
+from the highest priority down until one returns 1. Dialogs sit at 0x32,
+the cursor and another system handler at 100 (both pass keys on), the
+scene at 0, the modules at -10 (BUTTON, tooltip, CHAR, ...; the CHAR
+module passes everything on) and the global key handler `LAB_0040d2c0`
+at -100. So the global keys (`FUN_0040d300`, key = Windows virtual key
+code) work wherever the scene's handler returns 0 for the key: Tab opens
+the scene index (`FUN_0040cd70("sceneindex")`, which asks first in a
+running sub game), Escape leaves for the parent (`FUN_0040cc30`), P
+shows `gamec:PAUSE`/`PAUSEMESSAGE`, F1 the help, F2 saves
+`ScreenShot%04d.jpg` (not ported; ScummVM has its own), F5 redraws, F8
+shows `gamec:VERSIONMESSAGE` with "May 10 2010" and "1.03". It also
+feeds the typed cheat codes (`FUN_0040ae60`). Handlers that return 1:
+menu (Escape: asks `menu:QUIT`), scene index (Tab), intro and morning
+(space), town (Escape), hustle (space), textinvader (every key whose
+virtual key code is a letter for `isalpha()`: A..Z, the keypad and
+F1..F11). Engine: `Scene::handlesKey()` and
+`FlaaklypaEngine::globalKey()`.
+
 ### Hotspot index ranges (story pages)
 
 1..3 sub game/activity entries, 55..99 animation hotspots, 100..150 misc,
@@ -1359,8 +1380,7 @@ plays one clip, and no state machine.
 * TODO: profile get/set of the car part, the award dialog
   (`FUN_0041c150`), the fact pages (the fact module `FUN_0041dbf0`
   intercepts hotspots 200..213 in the original; the engine only logs
-  them). Escape to the menu is done by the page although the original does
-  it globally (`FUN_0040d300`).
+  them).
 ## Story page `house` ("På tunet")
 
 Reodor's house (`S04`, handler `FUN_00425160`, `house.cpp`, `HouseScene`).
@@ -1564,7 +1584,7 @@ random ambience clip (`FUN_0040b0f0`, TODO). Narration `S07AN-NAR-001` and
   (`interfaceh:WARNING` / `morning:RIDEDOWN`, type 0xc) whether to help
   Solan down the mountain: YES (4) starts the sub game `mountain`, any
   other answer goes to the page `town` (both through `GAME_Start`).
-  Escape goes to the menu (globally in the original).
+  Escape goes to the menu (global key).
 * State: none kept across visits; the page has no profile calls.
 * TODO: the ambience clip; the message box answer (the dialog is a stub on
   this branch, the page assumes YES); the `mountain` sub game itself
@@ -1588,7 +1608,7 @@ table.
   end.
 * Space goes to `yard` at once (the handler returns 1, so the framework does
   not abort the sequence first). Right click opens the navigator (next
-  `yard`, no previous page). Escape does nothing.
+  `yard`, no previous page). Escape goes to the menu (global key).
 * State across visits: none.
 * TODO: the ambience player belongs in the SOUND module (FUN_0040b0f0 also
   registers a module callback that stops the clips on close); `house` has a
@@ -1932,7 +1952,8 @@ and tooltip modules are in `button.cpp`). Music `theme`.
 `autoclick=t:x,y;t:x,y,m` (synthetic clicks, `m` = move only, `d` = press
 only, `u` = release only for drags, `r` = right click, t in ms after
 start), `autokey=t:key[:hold];...` (key press at t held for hold ms, default
-100; `left`, `right`, `up`, `down`, `space`, `esc`, `tab`, `return`, a
+100; `left`, `right`, `up`, `down`, `space`, `esc`, `tab`, `return`, `f1`,
+`f8`, a
 character, or a string of characters typed one after the other with `~` =
 Escape), `random_seed` (deterministic boards), `autohold` (beemaze: held
 arrow keys), `test_msgbox=<title>|<text>` (opens a message box with OK and

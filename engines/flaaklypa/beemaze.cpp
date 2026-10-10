@@ -375,10 +375,6 @@ static int keyDir(const Common::KeyState &key) {
 }
 
 void BeemazeScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->endGame();
-		return;
-	}
 	int d = keyDir(key);
 	if (d)
 		setWanted(d);

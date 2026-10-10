@@ -1961,10 +1961,6 @@ void BugzzzScene::onMouseMove(int hotspot, int x, int y) {
 void BugzzzScene::onKey(const Common::KeyState &key) {
 	if (key.keycode >= 0 && key.keycode < Common::KEYCODE_LAST)
 		_keyDown[key.keycode] = true;
-	if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->endGame();
-		return;
-	}
 	if (_loaded && key.keycode >= Common::KEYCODE_1 && key.keycode <= Common::KEYCODE_4)
 		playerClicked(key.keycode - Common::KEYCODE_1);
 }

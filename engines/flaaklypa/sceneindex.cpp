@@ -269,13 +269,6 @@ bool SceneindexScene::handlesKey(const Common::KeyState &key) {
 	return key.keycode == Common::KEYCODE_TAB;
 }
 
-void SceneindexScene::onKey(const Common::KeyState &key) {
-	// The global keys of FUN_0040d300: Escape leaves for the parent screen.
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		onButton(kButtonExit);
-	else if (key.keycode == Common::KEYCODE_F1)
-		onButton(kButtonHelp);
-}
 
 void SceneindexScene::onButton(int id) {
 	// FUN_00419260 (event 0x116)

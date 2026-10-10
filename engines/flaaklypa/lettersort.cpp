@@ -447,11 +447,6 @@ void LettersortScene::onMouseMove(int hotspot, int x, int y) {
 	highlightButton(hotspot);
 }
 
-void LettersortScene::onKey(const Common::KeyState &key) {
-	if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->endGame();
-}
-
 // FUN_0043e230 (0x105) and the BUTTON module's presses (0x116 -> FUN_0043e370).
 void LettersortScene::onMouseDown(int hotspot, int x, int y) {
 	if (hotspot == kHotspotExit) {

@@ -269,8 +269,6 @@ void DeskScene::onKey(const Common::KeyState &key) {
 		for (const char *c : clips)
 			if (isAnimAdded(c))
 				removeAnim(c);
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

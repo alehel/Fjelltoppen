@@ -229,8 +229,6 @@ void HouseScene::onKey(const Common::KeyState &key) {
 			playAnim("S04AN-SS-008");
 		killTimer(kTimerIntro);
 		killTimer(kTimerWindmill);
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

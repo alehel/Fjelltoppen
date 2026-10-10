@@ -48,7 +48,6 @@ public:
 	void onClose() override;
 	void onMouseDown(int hotspot, int x, int y) override;
 	void onMouseMove(int hotspot, int x, int y) override;
-	void onKey(const Common::KeyState &key) override;
 	void onAnimFinished(Anim *anim) override;
 	void onUpdate() override;
 
@@ -182,7 +181,6 @@ public:
 	void onInit(int arg) override;
 	void onMouseDown(int hotspot, int x, int y) override;
 	void onMouseMove(int hotspot, int x, int y) override;
-	void onKey(const Common::KeyState &key) override;
 
 private:
 	enum {

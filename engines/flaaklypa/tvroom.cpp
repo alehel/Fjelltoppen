@@ -329,8 +329,6 @@ void TvroomScene::onKey(const Common::KeyState &key) {
 		setNormalLists();
 		_sequence = nullptr;
 		stopSequence();
-	} else if (key.keycode == Common::KEYCODE_ESCAPE) {
-		_vm->changeScene("menu");
 	}
 }
 

@@ -44,7 +44,6 @@ public:
 	void onMouseUp(int hotspot, int x, int y) override;
 	void onMouseMove(int hotspot, int x, int y) override;
 	void onRightClick(int x, int y) override;
-	void onKey(const Common::KeyState &key) override;
 	bool handlesKey(const Common::KeyState &key) override;
 	void onUpdate() override;
 

@@ -149,6 +149,33 @@ int FlaaklypaEngine::showHelp(const char *file) {
 	return dlg.run();
 }
 
+void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
+	switch (key.keycode) {
+	case Common::KEYCODE_TAB:
+		changeScene("sceneindex");
+		break;
+	case Common::KEYCODE_ESCAPE:
+		endGame();
+		break;
+	case Common::KEYCODE_p:
+		// The message box freezes the scene until it is closed.
+		messageBox("gamec:PAUSE", "gamec:PAUSEMESSAGE", MessageBox::kButtonOk);
+		break;
+	case Common::KEYCODE_F1:
+		showHelp();
+		break;
+	case Common::KEYCODE_F8:
+		// The build date and version of the Gold edition's v1.2 executable
+		messageBox("gamec:VERSION", Common::String::format(getString("gamec:VERSIONMESSAGE").c_str(), "May 10 2010", "1.03"), MessageBox::kButtonOk);
+		break;
+	default:
+		// F2 saves a JPEG screenshot (FUN_00410410); ScummVM has its own.
+		// F5 redraws the screen. Typed cheat codes (FUN_0040ae60) are up
+		// to the scenes.
+		break;
+	}
+}
+
 int FlaaklypaEngine::messageBox(const Common::String &title, const Common::String &text, int buttons) {
 	debug(1, "Message box (%d): '%s' / '%s'", buttons, getString(title).c_str(), getString(text).c_str());
 	if (!buttons)
@@ -194,7 +221,7 @@ void FlaaklypaEngine::parseAutoClicks() {
 
 // Development aid: "autokey=t:key[:hold];..." presses a key at t ms after
 // start and releases it hold ms later (default 100). key is left, right, up,
-// down, space, esc, tab, return, a single character, or a string of
+// down, space, esc, tab, return, f1, f8, a single character, or a string of
 // characters typed one after the other ('~' stands for Escape).
 void FlaaklypaEngine::parseAutoKeys() {
 	if (!ConfMan.hasKey("autokey"))
@@ -210,6 +237,7 @@ void FlaaklypaEngine::parseAutoKeys() {
 			{ "up", Common::KEYCODE_UP }, { "down", Common::KEYCODE_DOWN },
 			{ "space", Common::KEYCODE_SPACE }, { "esc", Common::KEYCODE_ESCAPE },
 			{ "tab", Common::KEYCODE_TAB }, { "return", Common::KEYCODE_RETURN },
+			{ "f1", Common::KEYCODE_F1 }, { "f8", Common::KEYCODE_F8 },
 			{ nullptr, Common::KEYCODE_INVALID }
 		};
 		AutoKey k;

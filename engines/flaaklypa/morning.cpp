@@ -93,9 +93,6 @@ void MorningScene::onKey(const Common::KeyState &key) {
 	// FUN_00425fb0
 	if (key.keycode == Common::KEYCODE_SPACE)
 		rideDown();
-	// The original handles Escape globally (FUN_0040d300)
-	else if (key.keycode == Common::KEYCODE_ESCAPE)
-		_vm->changeScene("menu");
 }
 
 void MorningScene::onRightClick(int x, int y) {
