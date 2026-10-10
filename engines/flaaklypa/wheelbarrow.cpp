@@ -658,8 +658,7 @@ void WheelbarrowScene::onMouseDown(int hotspot, int x, int y) {
 		startGame(0);
 		break;
 	case kHotspotHelp:
-		// TODO: help dialog (help.ini)
-		debug(1, "Wheelbarrow: help not implemented");
+		_vm->showHelp();
 		break;
 	case kHotspotExit:
 		_vm->endGame();

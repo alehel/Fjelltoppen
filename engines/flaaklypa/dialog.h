@@ -71,6 +71,7 @@ protected:
 		Common::String label;
 		int state;
 		bool hover;
+		bool transparent;  ///< colour key = pixel (0,0) of the bitmap
 		Common::Rect rect() const;
 	};
 
@@ -84,7 +85,7 @@ protected:
 	 * Adds a push button at a position relative to the dialog with up to three
 	 * bitmaps (normal, pressed, disabled) and an optional centred label.
 	 */
-	void addButton(int id, int x, int y, const char *dir, const char *normal, const char *pressed, const char *disabled, const Common::String &label = "");
+	void addButton(int id, int x, int y, const char *dir, const char *normal, const char *pressed, const char *disabled, const Common::String &label = "", bool transparent = true);
 	void setButtonState(int id, int state);
 	Button *findButton(int id);
 	/** The button under the point (pixel exact), or nullptr. */
@@ -99,7 +100,15 @@ protected:
 	/** Left button pressed somewhere else than on an enabled button. */
 	virtual void onMouseDown(int x, int y, bool onDialog) {}
 	virtual void onRightClick(int x, int y) {}
+	/** The mouse moved; leftHeld while the left button is down. */
+	virtual void onMouseMove(int x, int y, bool leftHeld) {}
+	/** Left button released when no button was held down. */
+	virtual void onMouseUp(int x, int y) {}
+	/** Mouse wheel: -1 up, 1 down. */
+	virtual void onWheel(int delta) {}
 	virtual void onKey(const Common::KeyState &key) {}
+	/** Draws the dialog's own elements between its bitmap and its buttons. */
+	virtual void drawContents(Graphics::ManagedSurface &dst) {}
 
 	FlaaklypaEngine *_vm;
 
@@ -113,6 +122,7 @@ private:
 	bool _dim;
 	Common::Array<Button> _buttons;
 	int _pressed;      ///< index of the button held down, -1
+	bool _leftDown;
 	bool _done;
 	int _result;
 	BitmapFont _labelFont;
@@ -170,7 +180,76 @@ private:
 	int _nextArg, _prevArg;
 };
 
-/** Word wraps a text for a font (the original's FONT_WordWrap); "\n" forces a break. */
+/**
+ * The help dialog (FUN_0041e180): the sections of the scene's help.ini as a
+ * topic list on the left and the selected topic's text0, text1, ...
+ * paragraphs word wrapped on the right, with a vertical scroll bar.
+ */
+class HelpDialog : public Dialog {
+public:
+	/** Loads <scene>/<file>; check hasTopics() before running the dialog. */
+	HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const Common::String &file);
+	~HelpDialog() override;
+
+	bool hasTopics() const { return !_topics.empty(); }
+
+protected:
+	void onButton(int id) override;
+	void onMouseDown(int x, int y, bool onDialog) override;
+	void onMouseMove(int x, int y, bool leftHeld) override;
+	void onMouseUp(int x, int y) override;
+	void onWheel(int delta) override;
+	void onKey(const Common::KeyState &key) override;
+	void drawContents(Graphics::ManagedSurface &dst) override;
+
+private:
+	enum {
+		kButtonOk = 0x1389,
+		kButtonNext = 0x138b,
+		kButtonPrev = 0x138c,
+		kButtonUp = 0x138d,  ///< the scroll bar arrows (the original numbers them from 2000)
+		kButtonDown = 0x138e
+	};
+
+	struct Topic {
+		Common::String name;
+		Common::Array<Common::String> paragraphs;
+		Graphics::ManagedSurface *item;  ///< the list entry (FUN_00408530)
+	};
+
+	// List box (FUN_004085a0 ff.)
+	void listSetTop(int top);
+	void listSelect(int index);
+	void listMove(int delta);
+	/** The list row under the point, or -1 (FUN_00407f00). */
+	int listRowAt(int x, int y) const;
+
+	// Text box
+	/** Back to the top of the selected topic (FUN_0041dfb0). */
+	void resetText();
+	/** Draws the selected topic scrolled by whole lines; returns the lines below the box (FUN_0041dfe0). */
+	int layoutText(int scroll);
+
+	// Scroll bar (FUN_00408e20 ff.)
+	void setThumbPos(int y);
+	void setScrollValue(int value);
+	bool hitScrollBar(int x, int y) const;
+
+	Common::Array<Topic> _topics;
+	BitmapFont _font;
+	int _selected, _top, _rows, _rowHeight;
+	Graphics::ManagedSurface *_text;
+	Graphics::ManagedSurface *_thumb;
+	int _thumbY;        ///< centre of the thumb, relative to the dialog
+	int _scrollValue, _scrollMax;
+	bool _dragging;
+};
+
+/**
+ * Word wraps a text for a font like the original's FONT module
+ * (FUN_00402530): a line ends before the word that reaches the width or at
+ * "\n", and one blank after it is skipped.
+ */
 Common::Array<Common::String> wordWrap(const BitmapFont &font, const Common::String &text, int maxWidth);
 
 /**

@@ -459,8 +459,7 @@ void LettersortScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (help.ini)
-		debug(1, "Lettersort: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (hotspot == kHotspotStart) {

@@ -234,8 +234,7 @@ void HopscotchScene::buttonUp(int x, int y) {
 void HopscotchScene::onButton(int id) {
 	switch (id) {
 	case kButtonHelp:
-		// TODO: help dialog (FUN_0041e580, help.ini)
-		debug(1, "Hopscotch: help not implemented");
+		_vm->showHelp();
 		break;
 	case kButtonExit:
 		// FUN_0040cc30 (asks "gamec:SUBGAMEABORT" while a game runs)

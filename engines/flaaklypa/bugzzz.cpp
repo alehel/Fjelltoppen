@@ -1942,8 +1942,7 @@ void BugzzzScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (help.ini)
-		debug(1, "Bugzzz: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (!_loaded)

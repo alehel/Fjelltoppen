@@ -475,8 +475,7 @@ void HustleScene::onMouseUp(int hotspot, int x, int y) {
 // FUN_0043d980 (event 0x116)
 void HustleScene::buttonPressed(int id) {
 	if (id == kHotspotHelp) {
-		// TODO: help dialog (FUN_0041e580, lang/hustle/help.ini)
-		debug(1, "Hustle: help not implemented");
+		_vm->showHelp();
 	} else if (id == kHotspotExit) {
 		// FUN_0040cc30 (asks "gamec:SUBGAMEABORT" while a game runs)
 		_vm->endGame();

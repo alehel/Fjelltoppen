@@ -255,8 +255,7 @@ void TextinvaderScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (FUN_0041e580, help.ini)
-		debug(1, "Textinvader: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (hotspot == kHotspotSign && !_running && !_starting) {

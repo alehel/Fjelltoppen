@@ -139,6 +139,16 @@ void FlaaklypaEngine::showNavigator(const char *next, const char *prev, int next
 	dlg.run();
 }
 
+int FlaaklypaEngine::showHelp(const char *file) {
+	debug(1, "Help: %s/%s", _scene ? _scene->name().c_str() : "-", file);
+	HelpDialog dlg(this, _scene ? _scene->name() : "", file);
+	if (!dlg.hasTopics()) {
+		messageBox("interfaceh:HELP", "help:NOHELP", MessageBox::kButtonOk);
+		return 0;
+	}
+	return dlg.run();
+}
+
 int FlaaklypaEngine::messageBox(const Common::String &title, const Common::String &text, int buttons) {
 	debug(1, "Message box (%d): '%s' / '%s'", buttons, getString(title).c_str(), getString(text).c_str());
 	if (!buttons)

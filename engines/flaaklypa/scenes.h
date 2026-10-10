@@ -55,6 +55,7 @@ private:
 
 	void highlight(int hotspot);
 	void setAmp(int level);
+	void confirmQuit();
 	int _highlighted;
 };
 

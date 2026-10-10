@@ -29,6 +29,7 @@
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/hustle.h"
 #include "flaaklypa/buildabike.h"
+#include "flaaklypa/dialog.h"
 #include "flaaklypa/pipeline.h"
 #include "flaaklypa/puzzle.h"
 #include "flaaklypa/sceneindex.h"
@@ -135,8 +136,11 @@ void MenuScene::onMouseDown(int hotspot, int x, int y) {
 
 void MenuScene::onMouseUp(int hotspot, int x, int y) {
 	switch (hotspot) {
+	case 1:
+		_vm->showHelp();
+		break;
 	case 2:
-		_vm->quitGame();
+		confirmQuit();
 		break;
 	case 5:
 		// TODO: the original starts the story with the intro scene
@@ -153,6 +157,12 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 
 void MenuScene::onKey(const Common::KeyState &key) {
 	if (key.keycode == Common::KEYCODE_ESCAPE)
+		confirmQuit();
+}
+
+// FUN_00417d70: the exit button and Escape ask "menu:QUIT" first.
+void MenuScene::confirmQuit() {
+	if (_vm->messageBox("interfaceh:WARNING", "menu:QUIT", MessageBox::kButtonYes | MessageBox::kButtonNo) == MessageBox::kButtonYes)
 		_vm->quitGame();
 }
 

@@ -443,8 +443,7 @@ void WhackamoleScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (FUN_0041e580) with lang2/whackamole/help.ini
-		debug(1, "Whackamole: help button (dialog not implemented)");
+		_vm->showHelp();
 		return;
 	}
 

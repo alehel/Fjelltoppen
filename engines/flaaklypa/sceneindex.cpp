@@ -287,8 +287,7 @@ void SceneindexScene::onButton(int id) {
 		return;
 	}
 	if (id == kButtonHelp) {
-		// TODO: the help dialog (FUN_0041e580, lang/sceneindex/help.ini)
-		debug(1, "Sceneindex: help is not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (id >= kButtonTab0 && id < kButtonTab0 + (int)_sections.size()) {

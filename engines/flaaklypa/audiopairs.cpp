@@ -547,8 +547,7 @@ void AudiopairsScene::onMouseUp(int hotspot, int x, int y) {
 	if (hotspot == kHotspotExit) {
 		_vm->endGame();
 	} else if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (help.ini, FUN_0041e580)
-		debug(1, "Audiopairs: help not implemented");
+		_vm->showHelp();
 	}
 }
 

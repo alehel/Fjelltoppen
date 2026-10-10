@@ -445,9 +445,7 @@ void SockdrawerScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// Button 1 -> FUN_0041e580: help dialog with help.ini.
-		// TODO: help dialog
-		debug(1, "Sockdrawer: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (hotspot == kHotspotStart) {

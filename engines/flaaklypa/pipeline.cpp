@@ -1000,8 +1000,7 @@ void PipelineScene::removePieces() {
 void PipelineScene::onMouseDown(int hotspot, int x, int y) {
 	switch (hotspot) {
 	case kButtonHelp:
-		// TODO: help dialog (FUN_0041e580, help.ini)
-		debug(1, "Pipeline: help not implemented");
+		_vm->showHelp();
 		return;
 	case kButtonExit:
 		// FUN_0040cc30 (asks "gamec:SUBGAMEABORT" while a game runs)

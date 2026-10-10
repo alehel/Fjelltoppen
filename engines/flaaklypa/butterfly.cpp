@@ -395,8 +395,7 @@ void ButterflyScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (help.ini)
-		debug(1, "Butterfly: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (hotspot == kHotspotAlbum) {
@@ -788,8 +787,7 @@ void ButtercolScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot == kHotspotHelp) {
-		// TODO: help dialog
-		debug(1, "Buttercol: help not implemented");
+		_vm->showHelp();
 		return;
 	}
 	if (hotspot >= kHotspotFirst && hotspot < kHotspotFirst + ButterflyScene::kSpeciesCount) {

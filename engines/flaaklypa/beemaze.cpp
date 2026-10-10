@@ -345,8 +345,7 @@ void BeemazeScene::onMouseDown(int hotspot, int x, int y) {
 	if (hotspot == kHotspotExit) {
 		_vm->endGame();
 	} else if (hotspot == kHotspotHelp) {
-		// TODO: help dialog (help.ini)
-		debug(1, "Beemaze: help not implemented");
+		_vm->showHelp();
 	} else if (hotspot == kHotspotStart) {
 		startGame();
 		removeAnim("start_icon");

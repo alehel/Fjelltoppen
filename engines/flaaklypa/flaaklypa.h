@@ -159,6 +159,12 @@ public:
 	 */
 	void showNavigator(const char *next, const char *prev, int nextArg = 0, int prevArg = 0);
 	/**
+	 * The help dialog (FUN_0041e580 / FUN_0041e180): the topics of the
+	 * current scene's help file, or the "help:NOHELP" message box when it
+	 * has none. Returns 1 for OK, 0 when there was no help.
+	 */
+	int showHelp(const char *file = "help.ini");
+	/**
 	 * Modal message box (FUN_00421310 / FUN_00420f40) with a title line, a
 	 * word wrapped text and the buttons given by the MessageBox::kButton*
 	 * flags (0 = OK); "title"/"text" are language.ini keys or plain text.

@@ -19,6 +19,7 @@
  *
  */
 #include "common/debug.h"
+#include "common/formats/ini-file.h"
 #include "common/system.h"
 #include "graphics/screen.h"
 
@@ -32,34 +33,47 @@ namespace Flaaklypa {
 
 // ---- helpers -------------------------------------------------------------
 
+// FUN_00402640
+static bool isBlank(char c) {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+// FUN_00402530: measures the text from 'start' one character more at a time
+// until it reaches the width or a "\n", then backs up to the first blank
+// after the last word that fit. Returns the offset of the next line
+// relative to 'start' (0 when nothing fits) and the length of this one.
+static uint nextLine(const BitmapFont &font, const Common::String &text, uint start, int maxWidth, uint &len) {
+	const char *p = text.c_str() + start;
+	len = 0;
+	if (!*p)
+		return 0;
+	uint count = 0, lastBreak = 0;
+	bool inWord = !isBlank(*p);
+	for (;;) {
+		if (inWord) {
+			if (isBlank(p[count])) {
+				inWord = false;
+				lastBreak = count;
+			}
+		} else if (!isBlank(p[count])) {
+			inWord = true;
+		}
+		if (font.stringWidth(Common::String(p, count + 1)) >= maxWidth || p[count] == '\n')
+			break;
+		if (!p[++count])
+			break;
+	}
+	if (p[count])
+		count = lastBreak;
+	len = count;
+	return isBlank(p[count]) ? count + 1 : count;
+}
+
 Common::Array<Common::String> wordWrap(const BitmapFont &font, const Common::String &text, int maxWidth) {
 	Common::Array<Common::String> lines;
-	Common::String line, word;
-	for (uint i = 0; i <= text.size(); i++) {
-		char c = i < text.size() ? text[i] : '\n';
-		if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
-			word += c;
-			continue;
-		}
-		if (!word.empty()) {
-			Common::String candidate = line.empty() ? word : line + " " + word;
-			if (!line.empty() && font.stringWidth(candidate) >= maxWidth) {
-				lines.push_back(line);
-				line = word;
-			} else {
-				line = candidate;
-			}
-			word.clear();
-		}
-		if (c == '\n') {
-			lines.push_back(line);
-			line.clear();
-		}
-	}
-	// A trailing newline in the text would add an empty line; the loop's
-	// final '\n' is only the flush.
-	if (!lines.empty() && lines.back().empty() && (text.empty() || text.lastChar() != '\n'))
-		lines.pop_back();
+	uint pos = 0, len;
+	for (uint advance; (advance = nextLine(font, text, pos, maxWidth, len)) != 0; pos += advance)
+		lines.push_back(text.substr(pos, len));
 	return lines;
 }
 
@@ -98,7 +112,7 @@ Common::Rect Dialog::Button::rect() const {
 }
 
 Dialog::Dialog(FlaaklypaEngine *vm, bool dimBackground) : _vm(vm), _surface(nullptr), _hitMask(nullptr),
-	_keyColor(0), _x(0), _y(0), _dim(dimBackground), _pressed(-1), _done(false), _result(0) {
+	_keyColor(0), _x(0), _y(0), _dim(dimBackground), _pressed(-1), _leftDown(false), _done(false), _result(0) {
 	// The BUTTON module labels buttons with the DRAW module's default font.
 	_labelFont.load("Amerigo BT_10_");
 }
@@ -138,7 +152,7 @@ Graphics::ManagedSurface *Dialog::loadBitmap(const char *dir, const char *name) 
 	return s;
 }
 
-void Dialog::addButton(int id, int x, int y, const char *dir, const char *normal, const char *pressed, const char *disabled, const Common::String &label) {
+void Dialog::addButton(int id, int x, int y, const char *dir, const char *normal, const char *pressed, const char *disabled, const Common::String &label, bool transparent) {
 	Button b;
 	b.id = id;
 	b.x = _x + x;
@@ -149,6 +163,7 @@ void Dialog::addButton(int id, int x, int y, const char *dir, const char *normal
 	b.label = label;
 	b.state = kButtonNormal;
 	b.hover = false;
+	b.transparent = transparent;
 	_buttons.push_back(b);
 }
 
@@ -170,7 +185,7 @@ Dialog::Button *Dialog::buttonAt(int x, int y) {
 		const Graphics::ManagedSurface *bm = b.bitmaps[0];
 		if (!bm || !b.rect().contains(x, y))
 			continue;
-		if (bm->getPixel(x - b.x, y - b.y) == bm->getPixel(0, 0))
+		if (b.transparent && bm->getPixel(x - b.x, y - b.y) == bm->getPixel(0, 0))
 			continue;
 		return &b;
 	}
@@ -198,8 +213,10 @@ void Dialog::handleEvent(const Common::Event &event) {
 	switch (event.type) {
 	case Common::EVENT_MOUSEMOVE:
 		updateHover(event.mouse.x, event.mouse.y);
+		onMouseMove(event.mouse.x, event.mouse.y, _leftDown);
 		break;
 	case Common::EVENT_LBUTTONDOWN: {
+		_leftDown = true;
 		updateHover(event.mouse.x, event.mouse.y);
 		Button *b = buttonAt(event.mouse.x, event.mouse.y);
 		if (b && b->state == kButtonNormal) {
@@ -211,6 +228,7 @@ void Dialog::handleEvent(const Common::Event &event) {
 		break;
 	}
 	case Common::EVENT_LBUTTONUP:
+		_leftDown = false;
 		updateHover(event.mouse.x, event.mouse.y);
 		if (_pressed >= 0) {
 			Button &b = _buttons[_pressed];
@@ -219,7 +237,15 @@ void Dialog::handleEvent(const Common::Event &event) {
 			// FUN_00406d40: the click counts when the mouse is still over the button
 			if (b.hover)
 				onButton(b.id);
+		} else {
+			onMouseUp(event.mouse.x, event.mouse.y);
 		}
+		break;
+	case Common::EVENT_WHEELUP:
+		onWheel(-1);
+		break;
+	case Common::EVENT_WHEELDOWN:
+		onWheel(1);
 		break;
 	case Common::EVENT_RBUTTONDOWN:
 		onRightClick(event.mouse.x, event.mouse.y);
@@ -244,6 +270,7 @@ void Dialog::draw(Graphics::ManagedSurface &dst) {
 	}
 	if (_surface)
 		dst.transBlitFrom(*_surface, Common::Point(_x, _y), _keyColor);
+	drawContents(dst);
 	for (auto &b : _buttons) {
 		// FUN_00406840: pressed shows the pressed bitmap only while the mouse is over the button
 		int which = 0;
@@ -254,7 +281,10 @@ void Dialog::draw(Graphics::ManagedSurface &dst) {
 		const Graphics::ManagedSurface *bm = b.bitmaps[which] ? b.bitmaps[which] : b.bitmaps[0];
 		if (!bm)
 			continue;
-		dst.transBlitFrom(*bm, Common::Point(b.x, b.y), bm->getPixel(0, 0));
+		if (b.transparent)
+			dst.transBlitFrom(*bm, Common::Point(b.x, b.y), bm->getPixel(0, 0));
+		else
+			dst.blitFrom(*bm, Common::Point(b.x, b.y));
 		if (!b.label.empty())
 			_labelFont.drawStringCentred(dst, b.rect(), b.label);
 	}
@@ -394,8 +424,7 @@ void NavigatorDialog::onButton(int id) {
 		_vm->changeScene(_next, _nextArg);
 		break;
 	case kButtonHelp:
-		// TODO: the help dialog (FUN_0041e580)
-		debug(1, "Navigator: help dialog not implemented");
+		_vm->showHelp();
 		break;
 	case kButtonExit:
 		_vm->endGame();
@@ -439,6 +468,307 @@ void NavigatorDialog::onKey(const Common::KeyState &key) {
 	default:
 		break;
 	}
+}
+
+// ---- HelpDialog ----------------------------------------------------------
+
+// Layout of FUN_0041e390 / FUN_0041e2a0, relative to the dialog (macros,
+// as constant Rect objects would need global constructors).
+#define kHelpTitle Common::Rect(15, 10, 463, 39)   // 0x49cbb8
+#define kHelpList Common::Rect(15, 56, 134, 348)   // 0x49cbc8
+#define kHelpText Common::Rect(153, 56, 443, 348)  // 0x49cbd8
+#define kHelpScroll Common::Rect(450, 82, 464, 324)
+// The list box's highlight bar (COLORREF 0x3e5167) and the colour key of
+// its item and text bitmaps (0xff00).
+static const byte kHelpHighlight[3] = { 0x67, 0x51, 0x3e };
+
+HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const Common::String &file) :
+	Dialog(vm, true), _selected(0), _top(0), _rows(0), _rowHeight(0), _text(nullptr), _thumb(nullptr),
+	_thumbY(0), _scrollValue(0), _scrollMax(0), _dragging(false) {
+	// FUN_0041e2a0: one topic per section of the scene's help file
+	Common::INIFile ini;
+	if (!_vm->_resources->loadIni(scene, file, ini)) {
+		close(0);
+		return;
+	}
+	for (const auto &section : ini.getSections()) {
+		Topic t;
+		t.name = section.name;
+		t.item = nullptr;
+		// FUN_0041dfe0 shows text0, text1, ... up to the first missing key
+		for (int i = 0;; i++) {
+			const Common::INIFile::KeyValue *kv = section.getKey(Common::String::format("text%d", i));
+			if (!kv)
+				break;
+			t.paragraphs.push_back(Resources::iniValue(kv->value));
+		}
+		_topics.push_back(t);
+	}
+	if (_topics.empty()) {
+		close(0);
+		return;
+	}
+
+	// FUN_0041e180: centred on the screen
+	Graphics::ManagedSurface *backdrop = loadBitmap("help", "backdrop");
+	if (!backdrop) {
+		_topics.clear();
+		close(0);
+		return;
+	}
+	setSurface(backdrop, kScreenWidth / 2 - 0xf2, kScreenHeight / 2 - 0xcf);
+	setHitMask(_vm->_resources->loadMask("common", "dialogue/help/hotspot.bmp"));
+	_font.load("Amerigo BT_10_");
+	const Graphics::PixelFormat &format = backdrop->format;
+	const uint32 key = format.RGBToColor(0, 0xff, 0);
+
+	// FUN_004087a0 / FUN_00408530: each topic name is rendered into its own
+	// bitmap, cut to the size of the list
+	for (auto &t : _topics) {
+		int w = MIN<int>(_font.stringWidth(t.name), kHelpList.width());
+		int h = MIN<int>(_font.height(), kHelpList.height());
+		if (w <= 0 || h <= 0)
+			continue;
+		t.item = new Graphics::ManagedSurface(w, h, format);
+		t.item->fillRect(Common::Rect(w, h), key);
+		_font.drawString(*t.item, 0, 0, t.name);
+	}
+	// FUN_00408160: the row height is the height of the first entry, at
+	// most 32 rows
+	_rowHeight = _topics[0].item ? _topics[0].item->h : _font.height();
+	_rows = MIN<int>(kHelpList.height() / MAX(_rowHeight, 1), 32);
+
+	// FUN_0041e390: title, OK, list arrows, scroll bar
+	BitmapFont titleFont;
+	titleFont.load("Amerigo BT_14_");
+	titleFont.drawStringCentred(*backdrop, kHelpTitle, _vm->getString("interfaceh:HELP"));
+	addButton(kButtonOk, 0x17f, 0x16d, "help", "button_0", "button_1", nullptr, _vm->getString("interfaceh:OK"));
+	addButton(kButtonPrev, 10, 0x16c, "help", "prev_0", "prev_1", nullptr);
+	addButton(kButtonNext, 0x6d, 0x16c, "help", "next_0", "next_1", nullptr);
+	addButton(kButtonUp, 0x1c2, 0x33, "help", "up_0", "up_1", nullptr, "", false);
+	addButton(kButtonDown, 0x1c2, 0x152, "help", "down_0", "down_1", nullptr, "", false);
+	_thumb = loadBitmap("help", "thumb");
+	_text = new Graphics::ManagedSurface(kHelpText.width(), kHelpText.height(), format);
+	setThumbPos(kHelpScroll.top);
+	resetText();
+}
+
+HelpDialog::~HelpDialog() {
+	for (auto &t : _topics)
+		delete t.item;
+	delete _text;
+	delete _thumb;
+}
+
+// ---- list box
+
+void HelpDialog::listSetTop(int top) {
+	// FUN_00407af0: the last page is kept full
+	int count = _topics.size();
+	top = CLIP(top, 0, count - 1);
+	if (count - _rows - top < 0)
+		top = count - _rows;
+	_top = MAX(top, 0);
+}
+
+void HelpDialog::listSelect(int index) {
+	// FUN_00407e60: scrolls the selection into view
+	_selected = CLIP<int>(index, 0, _topics.size() - 1);
+	if (_selected >= _top && _selected < _top + _rows)
+		return;
+	listSetTop(_selected > _top ? _selected + 1 - _rows : _selected);
+}
+
+void HelpDialog::listMove(int delta) {
+	// FUN_00407ab0
+	int index = CLIP<int>(_selected + delta, 0, _topics.size() - 1);
+	if (index != _selected)
+		listSelect(index);
+}
+
+int HelpDialog::listRowAt(int x, int y) const {
+	Common::Rect r = kHelpList;
+	r.translate(this->x(), this->y());
+	if (!r.contains(x, y))
+		return -1;
+	int row = (y - r.top) / _rowHeight + _top;
+	return row < (int)_topics.size() ? row : -1;
+}
+
+// ---- text box
+
+void HelpDialog::resetText() {
+	// FUN_0041dfb0
+	setScrollValue(0);
+	_scrollMax = layoutText(0);
+}
+
+int HelpDialog::layoutText(int scroll) {
+	// FUN_0041dfe0: the paragraphs one under the other, an empty one is one
+	// line high
+	const int lineHeight = _font.height();
+	const uint32 key = _text->format.RGBToColor(0, 0xff, 0);
+	_text->fillRect(Common::Rect(_text->w, _text->h), key);
+	int y = -lineHeight * scroll;
+	for (const auto &para : _topics[_selected].paragraphs) {
+		Common::Array<Common::String> lines = wordWrap(_font, para, kHelpText.width());
+		for (uint i = 0; i < lines.size(); i++)
+			_font.drawString(*_text, 0, y + i * lineHeight, lines[i]);
+		y += MAX<int>(lines.size() * lineHeight, lineHeight);
+	}
+	// Whole lines left below the box, rounded up
+	int below = y - kHelpText.height();
+	return below > 0 ? (below + lineHeight - 1) / lineHeight : 0;
+}
+
+// ---- scroll bar
+
+void HelpDialog::setThumbPos(int y) {
+	// FUN_00408f30: the thumb centre follows y within the bar; the value is
+	// rounded to the nearest step
+	y = CLIP<int>(y, kHelpScroll.top, kHelpScroll.bottom);
+	_thumbY = y;
+	int value = (2 * (y - kHelpScroll.top) * _scrollMax + kHelpScroll.height()) / (2 * kHelpScroll.height());
+	if (value != _scrollValue) {
+		// event 0x117 -> FUN_0041e890
+		_scrollValue = value;
+		layoutText(value);
+	}
+}
+
+void HelpDialog::setScrollValue(int value) {
+	// FUN_00408eb0
+	value = CLIP(value, 0, _scrollMax);
+	if (_scrollMax > 0)
+		setThumbPos(kHelpScroll.height() * value / _scrollMax + kHelpScroll.top);
+	else
+		setThumbPos(0);
+}
+
+bool HelpDialog::hitScrollBar(int x, int y) const {
+	// FUN_004092d0: the bar widened by half the thumb width on each side, or the thumb
+	x -= this->x();
+	y -= this->y();
+	int tw = _thumb ? _thumb->w : 0, th = _thumb ? _thumb->h : 0;
+	Common::Rect bar(kHelpScroll.left - tw / 2, kHelpScroll.top, kHelpScroll.right + tw - tw / 2, kHelpScroll.bottom);
+	int cx = kHelpScroll.left + kHelpScroll.width() / 2;
+	Common::Rect thumb(cx - tw / 2, _thumbY - th / 2, cx - tw / 2 + tw, _thumbY - th / 2 + th);
+	return bar.contains(x, y) || thumb.contains(x, y);
+}
+
+// ---- events (LAB_0041e590)
+
+void HelpDialog::onButton(int id) {
+	// FUN_0041e830
+	switch (id) {
+	case kButtonOk:
+		close(1);
+		break;
+	case kButtonPrev:
+		listSetTop(_top - 1);
+		break;
+	case kButtonNext:
+		listSetTop(_top + 1);
+		break;
+	case kButtonUp:
+		// FUN_00409450: one step per click
+		setScrollValue(_scrollValue - 1);
+		break;
+	case kButtonDown:
+		setScrollValue(_scrollValue + 1);
+		break;
+	default:
+		break;
+	}
+}
+
+void HelpDialog::onMouseDown(int x, int y, bool onDialog) {
+	// FUN_0041e7f0: the scroll bar jumps to the click and starts a drag; a
+	// click on a topic shows it from the top
+	if (hitScrollBar(x, y)) {
+		setThumbPos(y - this->y());
+		_dragging = true;
+		return;
+	}
+	int row = listRowAt(x, y);
+	if (row >= 0) {
+		if (row != _selected)
+			listSelect(row);
+		resetText();
+	}
+}
+
+void HelpDialog::onMouseMove(int x, int y, bool leftHeld) {
+	// event 0x10a -> FUN_00409270
+	if (_dragging && leftHeld)
+		setThumbPos(y - this->y());
+}
+
+void HelpDialog::onMouseUp(int x, int y) {
+	// event 0x10b -> FUN_004092b0: the thumb snaps to its value
+	if (_dragging) {
+		_dragging = false;
+		setScrollValue(_scrollValue);
+	}
+}
+
+void HelpDialog::onWheel(int delta) {
+	// Not in the original: the wheel scrolls the text like the arrows.
+	setScrollValue(_scrollValue + delta);
+}
+
+void HelpDialog::onKey(const Common::KeyState &key) {
+	// FUN_0041e700 / FUN_00407f60: a list key shows the selected topic from the top
+	bool listKey = true;
+	switch (key.keycode) {
+	case Common::KEYCODE_PAGEUP:
+		listSetTop(_top - _rows);
+		break;
+	case Common::KEYCODE_PAGEDOWN:
+		listSetTop(_top + _rows);
+		break;
+	case Common::KEYCODE_END:
+		listSelect(_topics.size() - 1);
+		break;
+	case Common::KEYCODE_HOME:
+		listSelect(0);
+		break;
+	case Common::KEYCODE_UP:
+		listMove(-1);
+		break;
+	case Common::KEYCODE_DOWN:
+		listMove(1);
+		break;
+	default:
+		listKey = false;
+		break;
+	}
+	if (listKey)
+		resetText();
+	if (key.keycode == Common::KEYCODE_RETURN || key.keycode == Common::KEYCODE_KP_ENTER || key.keycode == Common::KEYCODE_ESCAPE)
+		close(1);
+}
+
+void HelpDialog::drawContents(Graphics::ManagedSurface &dst) {
+	const int dx = x(), dy = y();
+	const uint32 key = dst.format.RGBToColor(0, 0xff, 0);
+	// FUN_00407b60: the highlight bar under the selected entry
+	if (_selected >= _top && _selected < _top + _rows) {
+		int ry = dy + kHelpList.top + (_selected - _top) * _rowHeight;
+		dst.fillRect(Common::Rect(dx + kHelpList.left, ry, dx + kHelpList.right, ry + _rowHeight),
+			dst.format.RGBToColor(kHelpHighlight[0], kHelpHighlight[1], kHelpHighlight[2]));
+	}
+	// FUN_00407c00: the visible entries
+	for (int i = 0; i < _rows && _top + i < (int)_topics.size(); i++) {
+		const Graphics::ManagedSurface *item = _topics[_top + i].item;
+		if (item)
+			dst.transBlitFrom(*item, Common::Point(dx + kHelpList.left, dy + kHelpList.top + i * _rowHeight), key);
+	}
+	if (_text)
+		dst.transBlitFrom(*_text, Common::Point(dx + kHelpText.left, dy + kHelpText.top), key);
+	// The scroll bar's thumb is an opaque element centred on its position
+	if (_thumb)
+		dst.blitFrom(*_thumb, Common::Point(dx + kHelpScroll.left + kHelpScroll.width() / 2 - _thumb->w / 2, dy + _thumbY - _thumb->h / 2));
 }
 
 } // End of namespace Flaaklypa
