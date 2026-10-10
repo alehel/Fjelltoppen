@@ -814,7 +814,7 @@ static const AnimDef audiopairsAnims[] = {
 	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static const AnimDef beemazeAnims[] = {
+static const AnimDef balloonhuntAnims[] = {
 	{ "solan", 1, 1, 1, 0, 0, 0, 48, 0x0, 0, 0 },
 	{ "seashore", 1, 0, 0, 1, 0, 0, 0, 0x0, 0, 0 },
 	{ "wind1", 1, 0, 0, 1, 0, 0, 0, 0x0, 0, 0 },
@@ -826,6 +826,10 @@ static const AnimDef beemazeAnims[] = {
 	{ "bane velger", 0, 1, 1, 0, 10, 253, 374, 0x0, 0, 0 },
 	{ "interface bottom", 0, 1, 1, 0, 10, 0, 336, 0x0, 0, 0 },
 	{ "interface top", 0, 1, 1, 0, 0, 0, -1, 0x0, 0, 0 },
+	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+static const AnimDef beemazeAnims[] = {
 	{ "level1a", 1, 1, 1, 0, 0, 232, 294, 0x0, 0, 0 },
 	{ "level1b", 1, 1, 1, 0, 0, 232, 294, 0x0, 0, 0 },
 	{ "level2a", 1, 1, 1, 1, 0, 341, 214, 0x0, 0, 0 },
@@ -1039,12 +1043,16 @@ static const AnimDef lettersortAnims[] = {
 	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static const AnimDef pipelineAnims[] = {
+static const AnimDef mountainAnims[] = {
 	{ "Start interface", 0, 1, 1, 0, 0, 200, 162, 0x0, 0, 0 },
 	{ "interface", 0, 1, 0, 0, 0, 0, 0, 0x0, 0, 0 },
 	{ "solanhead", 0, 1, 1, 0, 0, 240, 26, 0x0, 0, 0 },
 	{ "solanhead", 0, 1, 1, 0, 0, 294, 26, 0x0, 0, 0 },
 	{ "solanhead", 0, 1, 1, 0, 0, 349, 26, 0x0, 0, 0 },
+	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+static const AnimDef pipelineAnims[] = {
 	{ "level01", 0, 1, 1, 0, 0, 0, 0, 0x0, 0, 0 },
 	{ "timer", 0, 1, 0, 0, 0, 150, 20, 0x0, 0, 0 },
 	{ "score", 0, 1, 0, 0, 0, 695, 91, 0x0, 0, 0 },
@@ -1373,11 +1381,15 @@ static const AnimDef slidingAnims[] = {
 	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static const AnimDef racemenuAnims[] = {
+static const AnimDef racingAnims[] = {
 	{ "split", 0, 1, 0, 0, 0, 318, 0, 0x0, 0, 0 },
 	{ "count", 1, 1, 1, 0, 0, 262, 182, 0x0, 0, 0 },
 	{ "count", 1, 1, 1, 0, 0, 101, 182, 0x0, 0, 0 },
 	{ "count", 1, 1, 1, 0, 0, 423, 182, 0x0, 0, 0 },
+	{ nullptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+static const AnimDef racemenuAnims[] = {
 	{ " ", 1, 1, 1, 1, 3, 64, 67, 0x0, 0, 0 },
 	{ " ", 1, 1, 1, 1, 4, 64, 364, 0x0, 0, 0 },
 	{ " ", 1, 1, 1, 1, 5, 468, 364, 0x0, 0, 0 },
@@ -2034,6 +2046,7 @@ const SceneDef sceneDefs[] = {
 	{ "tvstation", "menu", "tvstation:SCENENAME", 2, tvstationAnims, cursors_4c5ff0, 0 }, // handler 0x4279a0
 	{ "yard", "menu", "yard:SCENENAME", 2, yardAnims, cursors_4cb258, 0 }, // handler 0x427fb0
 	{ "audiopairs", "house", "audiopairs:SCENENAME", 3, audiopairsAnims, nullptr, 0 }, // handler 0x428ae0
+	{ "balloonhunt", "outtent", "balloonhunt:SCENENAME", 3, balloonhuntAnims, nullptr, 3 }, // handler 0x429960
 	{ "beemaze", "tvroom", "beemaze:SCENENAME", 3, beemazeAnims, nullptr, 1 }, // handler 0x42f1b0
 	{ "bugzzz", "yard", "bugzzz:TITLE", 3, bugzzzAnims, nullptr, 3 }, // handler 0x432fe0
 	{ "buildabike", "garage", "buildabike:SCENENAME", 3, buildabikeAnims, nullptr, 0 }, // handler 0x4390c0
@@ -2042,6 +2055,7 @@ const SceneDef sceneDefs[] = {
 	{ "hopscotch", "house", "hopscotch:SCENENAME", 3, hopscotchAnims, nullptr, 0 }, // handler 0x43bbd0
 	{ "hustle", "intent", "hustle:SCENENAME", 3, hustleAnims, nullptr, 0 }, // handler 0x43ce20
 	{ "lettersort", "yard", "lettersort:SCENENAME", 3, lettersortAnims, nullptr, 0 }, // handler 0x43db30
+	{ "mountain", "town", "mountain:NAME", 3, mountainAnims, nullptr, 3 }, // handler 0x43fd90
 	{ "pipeline", "outtent", "pipeline:SCENENAME", 3, pipelineAnims, nullptr, 0 }, // handler 0x448410
 	{ "sockdrawer", "desk", "sockdrawer:SCENENAME", 3, sockdrawerAnims, nullptr, 0 }, // handler 0x44b640
 	{ "textinvader", "goodbye", "textinvader:SCENENAME", 3, textinvaderAnims, nullptr, 1 }, // handler 0x44c640
@@ -2060,6 +2074,7 @@ const SceneDef sceneDefs[] = {
 	{ "jigsaw", "yard", "jigsaw:GAMENAME", 4, jigsawAnims, nullptr, 0 }, // handler 0x469960
 	{ "movieplayer", "tvstation", "movieplayer:SCENENAME", 4, movieplayerAnims, nullptr, 0 }, // handler 0x46d480
 	{ "sliding", "garage", "sliding:GAMENAME", 4, slidingAnims, nullptr, 0 }, // handler 0x46dc50
+	{ "racing", "racemenu", "race:SCENENAME", 5, racingAnims, nullptr, 0 }, // handler 0x474780
 	{ "racemenu", "menu", "racemenu:SCENENAME", 1, racemenuAnims, nullptr, 0 }, // handler 0x47ad50
 	{ "anaglyph", "sceneindex", "anaglyph:SCENENAME", 4, anaglyphAnims, nullptr, 0 }, // handler 0x47c630
 	{ "gametrivia", "sceneindex", "gametrivia:SCENENAME", 3, gametriviaAnims, nullptr, 0 }, // handler 0x47e240

@@ -133,6 +133,10 @@ struct SceneDesc {        // e.g. yard at 0x4cb6c8
 };
 ```
 
+Three scenes are 640x480: `racing`, `mountain` and `balloonhunt` (flags 3
+for the two sub games; `FUN_0040ccd0` calls `FUN_0040cb20` for flag bit 1,
+presumably the display mode switch). The scene registry at 0x4a7f08 (58
+pointers, count at 0x4a7ff0) lists them in story order.
 `tools/gen_scenedata.py` extracts these, all animation structures and all
 cursor tables into `scenedata.cpp`; `scenelists.txt` lists the animation
 lists (sequences) of each scene for hand transcription.
