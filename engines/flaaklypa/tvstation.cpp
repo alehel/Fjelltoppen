@@ -217,11 +217,9 @@ void TvstationScene::onAnimFinished(Anim *a) {
 	const Common::String n(a->name());
 	if (n == "S12AN-NAR-001") {
 		a->remove();
-		// The second narration only plays during the profile's first two
-		// sessions (profile key 0x400, counted when the profile is chosen).
-		// TODO: profile: session count
-		int sessions = 0;
-		if (sessions < 2)
+		// The second narration only plays on the first visit of the page
+		// (FUN_00411370 on the current scene).
+		if (visits() < 2)
 			playAnim("S12AN-NAR-002");
 	} else if (n == "S12AN-NAR-002") {
 		a->remove();

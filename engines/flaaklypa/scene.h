@@ -174,6 +174,12 @@ public:
 	 * -1 when all are busy.
 	 */
 	int pickIdleAnim(AnimList list, int count, int randomRange);
+	/**
+	 * How often the player has entered this scene, this visit included
+	 * (FUN_00411370 on the current scene, FUN_00411ed0); 0 without a
+	 * profile. Pages play some narration only while it is below 2.
+	 */
+	int32 visits() const;
 	void playMusic(const char *name);
 
 	// used by Anim

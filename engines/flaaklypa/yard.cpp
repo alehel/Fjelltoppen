@@ -275,8 +275,10 @@ void YardScene::onAnimFinished(Anim *a) {
 	} else if (n == "S01AN-SS-008c") {
 		playAnim("S01AN-NAR-002c");
 	} else if (n == "S01AN-NAR-002d") {
-		// TODO: profile: the closing narration only plays the first two visits
-		setTimer(kTimerNarration3, 8000);
+		// FUN_00428420: the closing narration only on the first visit
+		// (FUN_00411370 on the current scene)
+		if (visits() < 2)
+			setTimer(kTimerNarration3, 8000);
 	} else if (n == "S01AN-SS-009b2") {
 		addAnim("mailbox_1", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 	} else if (n == "S01AN-SS-009f") {

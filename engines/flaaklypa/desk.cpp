@@ -285,10 +285,10 @@ void DeskScene::onSequenceDone() {
 	if (!_introRunning)
 		return;
 	_introRunning = false;
-	// TODO: profile: the narration after the intro only plays the first two
-	// visits (the counter the original reads with FUN_00411370 is below 2).
-	debug(1, "Desk: intro done, narration in 10 s (profile visit counter not read)");
-	setTimer(kTimerNarration, 10000);
+	// FUN_00424d30: the narration after the intro only on the first visit
+	// (FUN_00411370 on the current scene)
+	if (visits() < 2)
+		setTimer(kTimerNarration, 10000);
 }
 
 void DeskScene::onTimer(int id, int data) {

@@ -27,6 +27,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/music.h"
+#include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scene.h"
 
@@ -653,6 +654,10 @@ void Scene::dispatchAnimFinished(Anim *a) {
 	sequenceAnimFinished(a);
 	for (auto &c : _characters)
 		characterAnimFinished(c, a);
+}
+
+int32 Scene::visits() const {
+	return _vm->profile() ? _vm->profile()->visits(_name) : 0;
 }
 
 int Scene::pickIdleAnim(AnimList list, int count, int randomRange) {

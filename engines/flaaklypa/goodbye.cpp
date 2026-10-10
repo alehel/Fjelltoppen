@@ -100,15 +100,10 @@ void GoodbyeScene::onAnimFinished(Anim *a) {
 void GoodbyeScene::narrationFinished(const char *name) {
 	const Common::String n(name);
 	if (n == "S14AN-NAR-001") {
-		// FUN_00411370(profile, &rec): record 0x400 of the profile is
-		// {sessions, lastPlayed}; sessions counts how often the profile has
-		// been chosen (FUN_00412030). The second narration (and with it the
-		// outro) only follows during the first session of a profile; without
-		// a profile the record reads 0 and it always follows.
-		// TODO: profile: sessions counter
-		int sessions = 0;
-		debug(1, "Goodbye: profile sessions = %d (TODO: profile)", sessions);
-		if (sessions < 2)
+		// FUN_00411370 on the current scene: the second narration (and with
+		// it the outro) only follows on the first visit of the page; without
+		// a profile it always follows.
+		if (visits() < 2)
 			playAnim("S14AN-NAR-002");
 	}
 	if (n == "S14AN-NAR-002")
