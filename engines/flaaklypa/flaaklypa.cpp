@@ -659,6 +659,13 @@ Common::Error FlaaklypaEngine::run() {
 	while (!shouldQuit())
 		runFrame();
 
+	// The scene closes like on a scene change, so what it keeps in the
+	// profile is saved too.
+	if (_scene) {
+		_scene->onClose();
+		delete _scene;
+		_scene = nullptr;
+	}
 	flushProfile();
 	return Common::kNoError;
 }
