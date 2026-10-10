@@ -5,6 +5,7 @@ MODULE_OBJS = \
 	archive.o \
 	audiopairs.o \
 	beemaze.o \
+	birthday.o \
 	bugzzz.o \
 	buildabike.o \
 	butterfly.o \
@@ -24,6 +25,7 @@ MODULE_OBJS = \
 	intent.o \
 	intro.o \
 	lettersort.o \
+	logo.o \
 	menu.o \
 	metaengine.o \
 	morning.o \

@@ -655,6 +655,18 @@ void Scene::dispatchAnimFinished(Anim *a) {
 		characterAnimFinished(c, a);
 }
 
+int Scene::pickIdleAnim(AnimList list, int count, int randomRange) {
+	for (int i = 0; i < 100; i++) {
+		int n = _vm->getRandomNumber(randomRange - 1);
+		if (!isAnimPlaying(list[n]))
+			return n;
+	}
+	for (int i = 0; i < count; i++)
+		if (!isAnimPlaying(list[i]))
+			return i;
+	return -1;
+}
+
 // ---- fact pages ------------------------------------------------------------
 
 void Scene::initFacts() {

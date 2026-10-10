@@ -182,13 +182,34 @@ uint32 FlaaklypaEngine::profileTime() {
 	return (uint32)days * 86400 + t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec;
 }
 
+void FlaaklypaEngine::splitProfileTime(uint32 time, int &day, int &year) {
+	// H. Hinnant's civil_from_days
+	const int z = (int)(time / 86400) + 719468;
+	const int era = z / 146097;
+	const int doe = z - era * 146097;
+	const int yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+	const int doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+	const int mp = (5 * doy + 2) / 153;
+	const int m = mp < 10 ? mp + 3 : mp - 9;
+	day = doy - (153 * mp + 2) / 5 + 1;
+	year = yoe + era * 400 + (m <= 2);
+}
+
+bool FlaaklypaEngine::readProfile(int slot, Profile &profile) {
+	Common::ScopedPtr<Common::InSaveFile> in(_saveFileMan->openForLoading(getSaveStateName(slot)));
+	if (!in)
+		return false;
+	// The profile seeks around; a compressed save file is read into memory first.
+	Common::ScopedPtr<Common::SeekableReadStream> mem(in->readStream(in->size()));
+	return mem && profile.load(*mem);
+}
+
 Common::Array<FlaaklypaEngine::ProfileInfo> FlaaklypaEngine::listProfiles() {
 	Common::Array<ProfileInfo> list;
 	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
 	for (const auto &desc : saves) {
-		Common::ScopedPtr<Common::InSaveFile> in(_saveFileMan->openForLoading(getSaveStateName(desc.getSaveSlot())));
 		Profile p;
-		if (!in || !p.load(*in))
+		if (!readProfile(desc.getSaveSlot(), p))
 			continue;
 		ProfileInfo info;
 		info.slot = desc.getSaveSlot();
@@ -209,9 +230,8 @@ bool FlaaklypaEngine::selectProfile(int slot) {
 		profileChanged();
 		return true;
 	}
-	Common::ScopedPtr<Common::InSaveFile> in(_saveFileMan->openForLoading(getSaveStateName(slot)));
 	Profile *p = new Profile();
-	if (!in || !p->load(*in)) {
+	if (!readProfile(slot, *p)) {
 		warning("Cannot load the profile in slot %d", slot);
 		delete p;
 		return false;
@@ -621,7 +641,8 @@ Common::Error FlaaklypaEngine::run() {
 			selectProfile(latest->slot);
 	}
 
-	changeScene(ConfMan.hasKey("start_scene") ? ConfMan.get("start_scene") : "menu", 0);
+	// FUN_0040e7e0: the logo, then the birthday greeting, then the menu
+	changeScene(ConfMan.hasKey("start_scene") ? ConfMan.get("start_scene") : "logo", 0);
 	if (ConfMan.hasKey("random_seed"))
 		_randomSource.setSeed(ConfMan.getInt("random_seed"));
 	parseAutoClicks();

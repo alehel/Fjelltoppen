@@ -1959,6 +1959,81 @@ and tooltip modules are in `button.cpp`). Music `theme`.
   returns to the index (engine `startGame`); the original returns to the
   game's parent page.
 
+## Player profiles (PROFILE module, `profile.cpp`)
+
+The original keeps each player in `<Profiles dir>/<name>.pfl` (registry
+value `Profiles`); the containers ship ten developer profiles in
+`data/common/profiles/`. The port keeps each profile in a ScummVM save
+slot (0..63, the original allows 64 players: `menu:MAXPROFILES`), the
+.pfl bytes followed by ScummVM's extended save header with the name as
+description. `FlaaklypaEngine::readProfile/listProfiles/selectProfile/
+createProfile/removeProfile`; changes mark the profile dirty
+(`profileChanged()`), it is written at the next scene change and when
+the engine ends. Launcher "Load" selects the slot's profile; in-game
+saving and loading are off, autosave too (slot -1).
+
+* **File** (`FUN_00411060` creates, `FUN_00410e10` reads the summary):
+  chunks of a 12 byte header (u32 type, u32 version/key, u32 size) and
+  data. Header 0xface01, version 0x101 or 0x102 (`FUN_00410fe0`), size
+  0xb78 (the fixed chunks). 0x100 (0x24): name (strncpy 0x18), +0x1c
+  birthday month (0 based), +0x20 day. 0x300 (4): `time()` of the last
+  use. 0x301 (0x20): the 8 award counters (below). 0x200 (0xb00): 64
+  scene entries {name[0x24], offset, size} (compared on 0x20 chars,
+  `FUN_00411560`). Then one block per scene, in index order, of records
+  with the same 12 byte header: type 0x400 key 0 {visits, time of the
+  last visit} (`FUN_00412030`, written on every scene change by
+  `FUN_0040ccd0`), 0x401 key n a high score table (0x58 bytes: medal,
+  count, 10 x {time, score}; `FUN_004115c0` expands it with the profile
+  name, `FUN_00411c70` writes it), 0x402 key n a value of the scene
+  (`FUN_00411e70`/`FUN_00411e40` for the current scene,
+  `FUN_00411680`/`FUN_004116c0` for any). Reads fail unless the size
+  matches; a new scene block is appended (`FUN_00411900`), a new record
+  is inserted at the start of its block (`FUN_00411a40` moves the rest of
+  the file), a resized one stays in place. Selecting a profile
+  (`FUN_00411ef0`) stamps 0x300 and upgrades 0x101 files: their track
+  counter (award 3) becomes a mask (`FUN_00411f70`). Without an active
+  profile (`DAT_0054f6f4` = 0) reads give nothing and writes are lost.
+  Removing renames the file to `.bak` (`FUN_00411290`); the port deletes
+  the slot. Verified: importing `Three Amigos.pfl` and saving it gives
+  the same bytes except the version upgrade.
+* **Award counters** (0x301, AWARD module): 0 car parts (count of 62),
+  1 film clips (mask, 18), 2 cars (10), 3 tracks (8), 4 gallery images
+  (31), 5 butterflies (6), 6 bonus (count, 100), 7 3D images (15); items
+  always available at 0x49ca60 (one clip, car and track, the first 8
+  images).
+* **Startup** (`FUN_0040e7e0`): the profile used last (`FUN_0040e830` /
+  `FUN_00411000`: the first with the highest 0x300 time) is active from
+  the start, then `logo` (the Caprino credits clip, no cursor, Tab
+  eaten), its parent `birthday` and that one's parent, the menu.
+* **Birthday** (`FUN_00414fe0`): the players whose birthday is today
+  (`FUN_00414f20` / `FUN_00414e60`, 29 February counts on the 28th in
+  other years); none: on to the menu at once. Else the night sky with
+  stars every 2 s and fireworks every 8 s from 3 s (the goodbye page's
+  `FUN_004161d0` picker), music `track14`, and "`birthday:HI` a`COMMA`
+  b`AND` c`EXCLAMATION`\n`HAPPYBIRTHDAY`" in `Amerigo BT_18_`, lines
+  centred in (200,350)-(600,550) aligned to the bottom, z 0x32. Space
+  leaves, right click opens an empty navigator. Close (`FUN_004154a0`):
+  each of them gets a car part (award dialog `birthday:AWARD_TITLE` /
+  `AWARD_DESC`, TODO) unless the scene value 0 (time of the last
+  present) is on the same day of the month this year.
+* **Menu** (`FUN_00417600`): the name box (0x120,0x200) 0xe0x0x3a, z 0x28,
+  `Amerigo BT_18_` centred, shows the player used last (`FUN_004177c0`);
+  prev/next (11/12) cycle through the players sorted by name, remove
+  (10) asks `menu:REMOVEPROFILE`, create (9, `FUN_00417a20`) asks for a
+  name (`menu:ENTERNAME`, 16 characters) and a birthday; a name already
+  used gives `menu:NAMEUSED`; the ten developer names (table 0x4abca8:
+  capmar, Simon fra Floden, BigFriendlyGiant, SnuppeLuppa, Ca2, demo
+  profile, One, Nr 2, Three Amigos, customer 01) instead install the
+  shipped profile of that name with the `cheat` sound (`FUN_00417bc0`);
+  a new player whose birthday is today goes to `birthday`. Without any
+  player the create dialog opens at once. The buttons that leave the
+  menu (3 options, 4 high scores, 5 start, 6 index, 7 tournament, 8 race,
+  13 credits) first make the player shown the active one
+  (`FUN_0040d860`). Start continues on the story page with the latest
+  visit (`FUN_0040cac0(2)`, scene table order on a tie: the prologue for
+  a new player). Race needs 8 car parts fitted (buildacar's value 0,
+  second int) else `menu:RACE_LOCKED`. Exit and Escape ask `menu:QUIT`.
+
 ## Development aids (config keys in the `[flaaklypa]` section)
 
 `start_scene`, `autoshot` / `autoshot_delay` / `autoshot_quit` (screenshot),
@@ -1970,7 +2045,11 @@ start), `autokey=t:key[:hold];...` (key press at t held for hold ms, default
 character, or a string of characters typed one after the other with `~` =
 Escape), `random_seed` (deterministic boards), `autohold` (beemaze: held
 arrow keys), `test_msgbox=<title>|<text>` (opens a message box with OK and
-Cancel one second after the start; language.ini keys or plain text).
+Cancel one second after the start; language.ini keys or plain text),
+`profile_import=<path>` (adds an original .pfl file as a new profile and
+makes it the active one). Use `savepath=/tmp/...` in test configs so test
+profiles stay out of the real save directory. Without `start_scene` the
+game starts with the logo like the original.
 
 ## Mini game checklist
 

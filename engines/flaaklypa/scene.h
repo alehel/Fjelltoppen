@@ -167,6 +167,13 @@ public:
 
 	// ---- misc
 	int hotspotAt(int x, int y) const;
+	/**
+	 * FUN_004161d0 / FUN_00415680 (goodbye, birthday): a random entry of the
+	 * list that is not playing (up to 100 draws from the first randomRange
+	 * entries), else the first of the count entries that is not playing;
+	 * -1 when all are busy.
+	 */
+	int pickIdleAnim(AnimList list, int count, int randomRange);
 	void playMusic(const char *name);
 
 	// used by Anim

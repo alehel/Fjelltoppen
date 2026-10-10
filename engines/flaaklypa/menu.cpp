@@ -328,6 +328,10 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return nullptr;
 	if (!scumm_stricmp(name, "menu"))
 		return new MenuScene(vm, def);
+	if (!scumm_stricmp(name, "logo"))
+		return new LogoScene(vm, def);
+	if (!scumm_stricmp(name, "birthday"))
+		return new BirthdayScene(vm, def);
 	if (!scumm_stricmp(name, "yard"))
 		return new YardScene(vm, def);
 	if (!scumm_stricmp(name, "garage"))

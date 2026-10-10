@@ -117,28 +117,12 @@ void GoodbyeScene::narrationFinished(const char *name) {
 		removeAnim(name);
 }
 
-// FUN_004161d0 / FUN_00415680: picks a random entry of the list that is
-// not playing (up to 100 draws), else the first one that is not playing,
-// -1 when all are busy. The random draw always uses a range of 7, also for
-// the nine stars (the original passes the count only to the fallback).
-int GoodbyeScene::pickFree(AnimList list, int count, int randomRange) {
-	for (int i = 0; i < 100; i++) {
-		int n = _vm->getRandomNumber(randomRange - 1);
-		if (!isAnimPlaying(list[n]))
-			return n;
-	}
-	for (int i = 0; i < count; i++)
-		if (!isAnimPlaying(list[i]))
-			return i;
-	return -1;
-}
-
 void GoodbyeScene::onTimer(int id, int data) {
 	// FUN_00416140
 	switch (id) {
 	case kTimerFirework: {
 		setTimer(kTimerFirework, kFireworkInterval);
-		int n = pickFree(kFireworks, 7, 7);
+		int n = pickIdleAnim(kFireworks, 7, 7);
 		if (n < 0)
 			break;
 		addAnim(kFireworks[n], Anim::kDefaultPos, Anim::kDefaultPos, n);
@@ -150,7 +134,7 @@ void GoodbyeScene::onTimer(int id, int data) {
 	case kTimerStar: {
 		// FUN_00416210
 		setTimer(kTimerStar, kStarInterval);
-		int n = pickFree(kStars, 9, 7);
+		int n = pickIdleAnim(kStars, 9, 7);
 		if (n < 0)
 			break;
 		addAnim(kStars[n], Anim::kDefaultPos, Anim::kDefaultPos, n - 100);

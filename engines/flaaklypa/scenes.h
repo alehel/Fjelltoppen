@@ -74,6 +74,32 @@ private:
 	BitmapFont _nameFont;
 };
 
+/** The start screen: the Caprino logo clip, then the birthday greeting. */
+class LogoScene : public Scene {
+public:
+	LogoScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	bool handlesKey(const Common::KeyState &key) override;
+	void onAnimFinished(Anim *anim) override;
+};
+
+/** Fireworks and a greeting for the players whose birthday is today; skipped without any. */
+class BirthdayScene : public Scene {
+public:
+	BirthdayScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onClose() override;
+	void onRightClick(int x, int y) override;
+	void onKey(const Common::KeyState &key) override;
+	void onAnimFinished(Anim *anim) override;
+	void onTimer(int id, int data) override;
+
+private:
+	Common::Array<int> _slots;  ///< the profiles having their birthday
+};
+
 /** Story page 1: the yard (tunet). */
 class YardScene : public Scene {
 public:
@@ -335,7 +361,6 @@ public:
 	void onTimer(int id, int data) override;
 
 private:
-	int pickFree(AnimList list, int count, int randomRange);
 	void narrationFinished(const char *name);
 
 	static int _fireworkCount; ///< DAT_0055d000: fireworks launched, reset when the page is entered afresh

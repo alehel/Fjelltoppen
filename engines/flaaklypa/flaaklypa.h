@@ -190,6 +190,8 @@ public:
 	};
 	/** The profiles, sorted by name like FUN_00410d20. */
 	Common::Array<ProfileInfo> listProfiles();
+	/** Reads the profile in a save slot. */
+	bool readProfile(int slot, Profile &profile);
 	/** Makes a profile the active one and stamps it as used (FUN_00411ef0). */
 	bool selectProfile(int slot);
 	/** Creates and saves a profile (FUN_00411060); returns its slot or -1. */
@@ -204,6 +206,8 @@ public:
 	void flushProfile();
 	/** The time stamps of the profile: seconds since 1970 (time()). */
 	static uint32 profileTime();
+	/** The day of the month and the year of a profile time stamp. */
+	static void splitProfileTime(uint32 time, int &day, int &year);
 
 	/**
 	 * A value a scene keeps in the active profile (record type 0x402:
