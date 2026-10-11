@@ -22,6 +22,7 @@
 
 #include "flaaklypa/audiopairs.h"
 #include "flaaklypa/beemaze.h"
+#include "flaaklypa/bouquet.h"
 #include "flaaklypa/bugzzz.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
@@ -469,6 +470,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new OutroScene(vm, def);
 	if (!scumm_stricmp(name, "pee"))
 		return new PeeScene(vm, def);
+	if (!scumm_stricmp(name, "bouquet"))
+		return new BouquetScene(vm, def);
 	if (!scumm_stricmp(name, "sceneindex"))
 		return new SceneindexScene(vm, def);
 	return new Scene(vm, def);

@@ -97,6 +97,7 @@ bool FlaaklypaEngine::confirmLeave() {
 // an exit button.
 static const char *const kImplementedGames[] = {
 	"puzzle",
+	"bouquet",
 	"sockdrawer",
 	"textinvader",
 	"hopscotch",

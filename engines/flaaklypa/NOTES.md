@@ -1564,6 +1564,41 @@ as 0 and changes are lost). Engine: free functions in `award.h` on
   medal bitmap. More than five car parts overflow the original's item
   buffers; the port awards them all and shows five.
 
+## Activity `bouquet` ("Ludvigs blomsterbinderi", from `desk`)
+
+Handler `FUN_0045e0f0` (`bouquet.cpp`). The player arranges flowers in a
+vase; music `activity2`, title `bouquet:SCENENAME` in `Amerigo BT_14_`
+centred in (295,3)-(503,36).
+
+* Flowers: 22 kinds (names at 0x5031b0: `red_rose` .. `yellow_tulip`),
+  picked from the shelf (mask hotspots 100..121). Each kind has five
+  places in the vase, one per vertical zone over it (0x49f6c0: x 442,
+  513, 568, 621, 679, 756, y 104..460); the picture of a place is
+  `bitmap/flowers/<kind>_<place + 1>` at (376,137) + the vase's offset +
+  the place's offset (0x49f7b0, 22 x 5 points). Up to 30 flowers
+  (records of 0xc0 bytes at 0x6a0130, each with its own element, hotspot
+  1000 + n); more give `bouquet:FLOWERSMAX`. While dragged (event 0x109)
+  a flower outside the zones is `bitmap/small/<kind>` centred on the mouse
+  (z 0x1c2), over a zone it jumps to that place. Released over the vase
+  it pushes out the flower of the same kind and place, elsewhere it is
+  thrown away (`FUN_0045ea20`). A click on a flower in the vase picks it
+  up again. z = stacking order + 50, except places 1..3 of the fern and
+  the evergreen (kinds 9, 10): + 400, in front of the vase (z 300). The
+  order is renumbered by -30 when it passes 30 (`FUN_0045e5c0`).
+* Vases: `bitmap/vases/big_<n>` (18) at (499,360) + offset (0x49f718);
+  prev/next (0x1e/0x1f) cycle them, the flowers move along. Clear (0x20)
+  empties the vase, help 1, exit 2.
+* A sailboat and a raceboat take turns sailing by every 180 s, the first
+  after 60..180 s (timer 0).
+* Profile: value 0 = hidden car part (hotspot 4) found; value 1 (0xf8
+  bytes) = {vase, count, kind[30], place[30]}, the flowers in the vase
+  sorted by z, written on close (`FUN_0045e830`) and restored on init
+  (`FUN_0045e530`).
+* Print (3, `FUN_0045ed10`): the original renders the flowers by z and
+  the vase on top onto white and hands the picture to the `activity`
+  scene's print page. Deviation: the port opens ScummVM's print dialog
+  (`g_gui.printImage`) with it.
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2284,7 +2319,7 @@ Activities (`[activity]`, open ended):
 | Done | Scene | Title | Started from | Data |
 |---|---|---|---|---|
 | | gallery | Karakter galleri | tvroom | data |
-| | bouquet | Ludvigs blomsterbinderi | desk | data |
+| x | bouquet | Ludvigs blomsterbinderi | desk | data |
 | | fence | Musikkgjerdet | pee | data |
 | | colorfill | Reodors tegnebord | desk | data2 |
 | | jigsaw | Puslespillet | yard | data |

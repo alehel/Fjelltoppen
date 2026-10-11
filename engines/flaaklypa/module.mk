@@ -7,6 +7,7 @@ MODULE_OBJS = \
 	award.o \
 	beemaze.o \
 	birthday.o \
+	bouquet.o \
 	bugzzz.o \
 	buildabike.o \
 	butterfly.o \
