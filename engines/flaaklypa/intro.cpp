@@ -33,10 +33,6 @@ static const char *const kIntroSeq[] = { "S00AN-SS-001a", "S00AN-SS-001b", "S00A
 static const char *const kRanIdle[] = { "S00AN-RAN-B01", nullptr };                                       // list_4ab868
 static const char *const kRanBored[] = { "S00AN-RAN-001", "S00AN-RAN-002", "S00AN-RAN-003", "S00AN-RAN-004", nullptr }; // list_4ab870
 
-// The ambience clips of the SOUND module (global animation structures at
-// 0x4a68a8, not part of the page's tables).
-static const char *const kAmbience[] = { "../../common/music/ambience1", "../../common/music/ambience2", "../../common/music/ambience3", "../../common/music/ambience4" };
-
 enum {
 	kCharRan = 1
 };
@@ -47,9 +43,7 @@ IntroScene::IntroScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def
 void IntroScene::onInit(int arg) {
 	// FUN_004165c0
 	_vm->_music->stop();
-	for (const char *name : kAmbience)
-		defineAnim(name, true, false, 0, 0, 0, 0, false);
-	playAmbience();
+	startAmbience(); // FUN_0040b0f0
 	addAnim("title", Anim::kDefaultPos, Anim::kDefaultPos, 0);
 
 	// A character without a hotspot: the background element that moves
@@ -58,11 +52,6 @@ void IntroScene::onInit(int arg) {
 	setCharacterList(kCharRan, 1, kRanIdle);
 	setCharacterList(kCharRan, 2, kRanBored);
 	playSequence(kIntroSeq);
-}
-
-void IntroScene::playAmbience() {
-	// FUN_0040b110
-	playAnim(kAmbience[_vm->getRandomNumber(3)]);
 }
 
 void IntroScene::onRightClick(int x, int y) {
@@ -83,15 +72,6 @@ void IntroScene::onKey(const Common::KeyState &key) {
 
 void IntroScene::onAnimFinished(Anim *a) {
 	const Common::String n(a->name());
-
-	// The SOUND module's callback (0x40b180): the next ambience clip.
-	for (const char *name : kAmbience) {
-		if (n == name) {
-			a->remove();
-			playAmbience();
-			return;
-		}
-	}
 
 	// FUN_00416640
 	if (n == "S00AN-NAR-001" || n == "S00AN-NAR-002") {

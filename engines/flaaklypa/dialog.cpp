@@ -438,6 +438,9 @@ NavigatorDialog::NavigatorDialog(FlaaklypaEngine *vm, const char *next, const ch
 void NavigatorDialog::onButton(int id) {
 	// FUN_00421730: the dialog closes before the scene changes
 	close(id);
+	// Event 0x11e (FUN_00421960): the scene may take the choice over
+	if (_vm->scene() && _vm->scene()->onNavigator(id))
+		return;
 	switch (id) {
 	case kButtonPrev:
 		_vm->changeScene(_prev, _prevArg);

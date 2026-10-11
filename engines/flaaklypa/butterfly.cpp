@@ -392,7 +392,8 @@ void ButterflyScene::onAnimFinished(Anim *a) {
 		// FUN_0043b990: the game starts.
 		a->remove();
 		_vm->setGameRunning(true);
-		// TODO: album button disabled (FUN_00406720(4, 2)).
+		// The album button is disabled (FUN_00406720(4, 2); its disabled
+		// image is album_0): see _inGame in highlightButton() / onMouseDown().
 		_levelPoints = _score = _level = 0;
 		_levelStart = 0;
 		memset(_caught, 0, sizeof(_caught));

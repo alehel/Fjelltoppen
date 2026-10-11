@@ -80,6 +80,12 @@ public:
 	virtual void onAnimFinished(Anim *anim) {}
 	virtual void onTimer(int id, int data) {}
 	virtual void onSequenceDone() {}
+	/**
+	 * Event 0x11e: a button of the navigator was chosen
+	 * (NavigatorDialog::kButton*). Returns true when the scene handled it;
+	 * the navigator's own handling (FUN_00421730) is then skipped.
+	 */
+	virtual bool onNavigator(int button) { return false; }
 	/** Called once per frame after the animations have been advanced. */
 	virtual void onUpdate() {}
 	/**
@@ -197,6 +203,12 @@ public:
 	 */
 	int32 visits() const;
 	void playMusic(const char *name);
+	/**
+	 * FUN_0040b0f0: one of the four common/music/ambience clips at random,
+	 * and a new one whenever it ends until the scene closes (the SOUND
+	 * module's handler LAB_0040b180).
+	 */
+	void startAmbience();
 
 	// used by Anim
 	void animAdded(Anim *anim);
@@ -295,6 +307,9 @@ private:
 	Common::Array<Fact> _facts;
 	bool _factsActive;
 	uint32 _factsFound;  ///< bit per fact.ini section, profile key 100
+
+	bool _ambience;      ///< startAmbience() was called
+	void playAmbience();
 };
 
 } // End of namespace Flaaklypa

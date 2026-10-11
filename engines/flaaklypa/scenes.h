@@ -373,6 +373,7 @@ public:
 	void onAnimFinished(Anim *anim) override;
 	void onSequenceDone() override;
 	void onTimer(int id, int data) override;
+	bool onNavigator(int button) override;
 
 private:
 	void updateClock();
@@ -382,7 +383,7 @@ private:
 	void startSingle(const char *name);
 
 	int _pick101Count, _pick102Count, _pick110Count; ///< reset every visit
-	static int _narrationCount; ///< profile key 1 in the original (TODO)
+	int _narrationCount;  ///< DAT_005b8748: profile key 1, counts the leaving for pee and the narration that stops leaving
 	bool _introRunning;
 	int _longFrame, _shortFrame; ///< clock hand frames currently shown
 };
@@ -438,10 +439,6 @@ public:
 	void onKey(const Common::KeyState &key) override;
 	bool handlesKey(const Common::KeyState &key) override;
 	void onAnimFinished(Anim *anim) override;
-
-private:
-	/** FUN_0040b0f0: plays one of the four common/music/ambience clips, the next one when it ends. */
-	void playAmbience();
 };
 
 /** The town ("Flaaklypa bygdeby"): a transition page, the bike ride to `outtent` or the film on the way to `buildacar`. */
@@ -507,7 +504,6 @@ public:
 
 private:
 	int pickNoRepeat(int &count, int &mask, int n);
-	void playAmbience();
 
 	int _cushionsCount, _grassCount, _tableCount; ///< random pick counters, reset on every visit
 	int _dreamNarrationCount;                  ///< the dream narration plays once per visit
@@ -527,7 +523,6 @@ public:
 
 private:
 	void narrationFinished(const char *name);
-
 };
 
 /** The ending page (epilog): Reodor, Solan and Ludvig watch the fireworks, then the credits from credits.ini scroll up. */

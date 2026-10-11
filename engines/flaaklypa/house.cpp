@@ -78,8 +78,7 @@ void HouseScene::onInit(int arg) {
 	// The original restarts the track even when it is already playing
 	// (FUN_0040b1f0("track4", 1)); Music::play() keeps a running track.
 	playMusic("track4");
-	// TODO: FUN_0040b0f0(): a random ambience clip (common/music/ambience1..4)
-	debug(1, "House: TODO random ambience clip");
+	startAmbience(); // FUN_0040b0f0
 
 	_countWindow = _countBench = _countDoor = 0;
 	initFacts();

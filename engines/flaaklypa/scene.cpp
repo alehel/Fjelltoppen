@@ -37,7 +37,7 @@ namespace Flaaklypa {
 
 Scene::Scene(FlaaklypaEngine *vm, const SceneDef *def) : _vm(vm), _def(def), _name(def->name),
 	_backdrop(nullptr), _mask(nullptr), _cursorTable(def->cursors), _cursorMode(kCursorNormal),
-	_lastHotspot(-1), _seqList(nullptr), _subtitles(nullptr), _factsActive(false), _factsFound(0) {
+	_lastHotspot(-1), _seqList(nullptr), _subtitles(nullptr), _factsActive(false), _factsFound(0), _ambience(false) {
 	_singleList[0] = _singleList[1] = nullptr;
 	if (def->anims)
 		for (const AnimDef *a = def->anims; a->name; a++)
@@ -598,6 +598,29 @@ void Scene::playMusic(const char *name) {
 	_vm->_music->play(name);
 }
 
+// The ambience clips of the SOUND module (global animation structures at
+// 0x4a68a8, not part of the scenes' tables).
+static const char *const kAmbience[] = {
+	"../../common/music/ambience1", "../../common/music/ambience2",
+	"../../common/music/ambience3", "../../common/music/ambience4"
+};
+
+void Scene::startAmbience() {
+	// FUN_0040b130: one that is playing stops first
+	for (const char *name : kAmbience) {
+		defineAnim(name, true, false, 0, 0, 0, 0, false);
+		if (isAnimAdded(name))
+			removeAnim(name);
+	}
+	_ambience = true;
+	playAmbience();
+}
+
+void Scene::playAmbience() {
+	// FUN_0040b110
+	playAnim(kAmbience[_vm->getRandomNumber(ARRAYSIZE(kAmbience) - 1)]);
+}
+
 // ---- main loop -----------------------------------------------------------
 
 void Scene::handleEvent(const Common::Event &event) {
@@ -677,6 +700,17 @@ void Scene::dispatchAnimFinished(Anim *a) {
 	sequenceAnimFinished(a);
 	for (auto &c : _characters)
 		characterAnimFinished(c, a);
+	// The SOUND module's handler (LAB_0040b180, priority -10): the next
+	// ambience clip
+	if (_ambience) {
+		for (const char *name : kAmbience) {
+			if (!strcmp(a->name(), name)) {
+				a->remove();
+				playAmbience();
+				break;
+			}
+		}
+	}
 }
 
 int32 Scene::visits() const {

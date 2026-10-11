@@ -167,6 +167,14 @@ private:
  */
 class NavigatorDialog : public Dialog {
 public:
+	/** The buttons, also the choice handed to Scene::onNavigator(). */
+	enum {
+		kButtonPrev = 2001,
+		kButtonNext = 2002,
+		kButtonHelp = 2003,
+		kButtonExit = 2004
+	};
+
 	NavigatorDialog(FlaaklypaEngine *vm, const char *next, const char *prev, int nextArg, int prevArg);
 
 protected:
@@ -176,13 +184,6 @@ protected:
 	void onKey(const Common::KeyState &key) override;
 
 private:
-	enum {
-		kButtonPrev = 2001,
-		kButtonNext = 2002,
-		kButtonHelp = 2003,
-		kButtonExit = 2004
-	};
-
 	Common::String _next, _prev;
 	int _nextArg, _prevArg;
 };

@@ -120,56 +120,10 @@ bool FlaaklypaEngine::confirmLeave() {
 	return !_gameRunning;
 }
 
-// Sub games and activities that have a scene class (see createScene()).
-// Starting one of the others would strand the player on a backdrop without
-// an exit button.
-static const char *const kImplementedGames[] = {
-	"puzzle",
-	"bouquet",
-	"colorfill",
-	"fence",
-	"gallery",
-	"movieplayer",
-	"mahjong",
-	"sockdrawer",
-	"textinvader",
-	"hopscotch",
-	"audiopairs",
-	"whackamole",
-	"butterfly",
-	"wheelbarrow",
-	"lettersort",
-	"hustle",
-	"buildabike",
-	"pipeline",
-	"beemaze",
-	"bugzzz",
-	"jigsaw",
-	"sliding",
-	"draughts",
-	"mountain",
-	"chess",
-	"activity",
-	"balloonhunt",
-	"synonym",
-	"gametrivia",
-	"anaglyph",
-	"mathlab",
-	nullptr
-};
-
-static bool isGameImplemented(const Common::String &name) {
-	for (const char *const *g = kImplementedGames; *g; g++)
-		if (!scumm_stricmp(name.c_str(), *g))
-			return true;
-	return false;
-}
-
 void FlaaklypaEngine::startGame(const Common::String &name) {
-	const SceneDef *def = findSceneDef(name.c_str());
-	if (!def || !isGameImplemented(name)) {
-		// TODO: the other sub games and activities
-		warning("Sub game '%s' is not implemented yet", name.c_str());
+	// FUN_0040cd70; FUN_0040cc70 only logs an unknown scene
+	if (!findSceneDef(name.c_str())) {
+		warning("Scene '%s' not found", name.c_str());
 		return;
 	}
 	changeScene(name, 0);
@@ -886,6 +840,5 @@ Common::Error FlaaklypaEngine::run() {
 	flushProfile();
 	return Common::kNoError;
 }
-
 
 } // End of namespace Flaaklypa

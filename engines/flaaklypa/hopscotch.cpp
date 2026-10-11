@@ -103,8 +103,10 @@ bool HopscotchScene::load() {
 
 // FUN_0043bc90, the init handler.
 void HopscotchScene::onInit(int arg) {
-	// The original stops the music (FUN_0040b2f0); the scene has none.
+	// The original stops the music (FUN_0040b2f0); the scene has the
+	// ambience instead (FUN_0040b0f0).
 	_vm->_music->stop();
+	startAmbience();
 
 	// Score box: a text area at (315, 2)-(506, 31), z -10, showing the
 	// scene title in the small font until a game starts.

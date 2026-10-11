@@ -258,6 +258,16 @@ header and per frame audio chunks. Music and narration
 are 4x4 pixel clips. `electric`, `wind` and the like are sound effects
 played as one element sequences.
 
+**Ambience** (`FUN_0040b0f0`, called by the init of intro, yard, house,
+morning, outtent and hopscotch): stops an ambience clip that is playing
+(`FUN_0040b130`), plays one of the global elements
+`../../common/music/ambience1..4` (0x4a68a8, one shot, sound effect
+channel) at random (`FUN_0040b110`) and registers the handler
+`LAB_0040b180` at -10: when one of them finishes (0x110) the next random
+one starts, on close (0x104) the handler goes and the clips stop
+(`FUN_0040b160`). Engine: `Scene::startAmbience()`, the chaining in
+`Scene::dispatchAnimFinished()` after the scene and the characters.
+
 ## Sub game `puzzle` ("Solines smykkeskrin", add-on set 2)
 
 An Atomica clone (the executable even asserts `ATOMICA_spawnAtoms() != NULL`).
@@ -396,6 +406,8 @@ function in the Ghidra project): 0x103 -> `FUN_0043bc90` init, 0x104 ->
 0x112 -> `43cbc0` frame tick, 0x116 -> `43c910` button. Engine:
 `hopscotch.cpp`. Data: `data/hopscotch.bin` plus `data1/hopscotch.bin` (the
 B/C/D tone sets and Solan's start poses), `lang/hopscotch.bin` (help.ini).
+The init stops the music (`FUN_0040b2f0`) and starts the ambience
+(`FUN_0040b0f0`, see "Audio") instead.
 
 * Flow (`DAT_0066ea48` state): 0 idle, 1 Solan hops the visible part of the
   sequence (`FUN_0043c580`, one hop per 0x110 of his clip), then the
@@ -1339,8 +1351,7 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   the tournament (`FUN_0041f9a0`, its callback 0x43bb90 is not run: no
   start clip again).
 * Engine notes: ticks are frames (60 fps limiter; the original's rate is
-  unknown). The collected flags live in a static of `ButterflyScene` until
-  profiles exist. After game over the start clip is shown again (the
+  unknown). After game over the start clip is shown again (the
   original stays in the end state behind its dialogs). `debug(3)` dumps all
   entity positions once a second.
 * Not done: the album button's disabled state during a game, the
@@ -4243,8 +4254,8 @@ plays one clip, and no state machine.
 Reodor's house (`S04`, handler `FUN_00425160`, `house.cpp`, `HouseScene`).
 Solan (character 1, hotspot 51) and Ludvig (character 2, hotspot 52) idle
 in front of the house; the clips of the two share the group bits 1 and 2.
-Music `track4` (the original restarts it even if it already plays) plus a
-random ambience clip (`FUN_0040b0f0`, TODO). Navigator (right click):
+Music `track4` (the original restarts it even if it already plays) plus the
+random ambience clips (`FUN_0040b0f0`). Navigator (right click):
 next `tvroom`, previous `desk`.
 
 * Init with arg 0 (coming from the menu/navigator): the cursor is hidden and
@@ -4272,7 +4283,6 @@ next `tvroom`, previous `desk`.
   three masks are globals and survive a visit (`Globals::house`).
 * Clips of this page are spread over `data/house`, `data1..3/house` and
   `lang1/house` (the intro, narration and the longer dialogue clips).
-* TODO: ambience clip.
 
 ## Story page `intent` ("I sjeikens telt")
 
@@ -4313,8 +4323,6 @@ Hotspots:
 * Space: removes 006b, restores the music volume and the default lists of
   all three, kills the wake up timer.
 
-TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged).
-
 ## Story page `desk` ("Reodors stue")
 
 Reodor's workshop, story page 2 (navigator: next `house`, previous `yard`).
@@ -4354,18 +4362,21 @@ navigator result -> `424dc0`, 0x11f -> `424d30`). Engine: `desk.cpp`.
   changes to `pee`. 151..169 are fact pages (fact module, not handled by
   the page handler).
 * Space removes `S02AN-NAR-001` / `S02AN-NAR-002` (the framework aborts
-  the sequence). Right click: navigator `house` / `yard`; when the result
-  is 0x7d2 (back to the yard) and profile key 1 is still 0, the
-  navigator closes, `S02AN-NAR-002` plays instead and key 1 is
-  incremented, else the default navigator handling (`FUN_00421730`).
+  the sequence). Right click: navigator, next `house`, previous `yard`
+  (`FUN_00421560`: the first argument is the next page, button 0x7d2).
+  The navigator sends its button to the scene (0x11e, `FUN_00421960`):
+  when it is 0x7d2 (next, to `house`) and profile key 1 (read into
+  `DAT_005b8748` at init, 0 without) is still 0, `FUN_00424dc0` closes
+  the navigator, plays `S02AN-NAR-002` as a one clip sequence instead of
+  leaving and stores key 1 + 1; else the navigator's own handling
+  (`FUN_00421730`). So the first try to move on before Solan went out to
+  pee gets the narration; leaving for `pee` counts as well. Only the desk
+  handles 0x11e. Engine: `Scene::onNavigator()`, called by
+  `NavigatorDialog::onButton()`.
 * Engine notes: the original's 0x11f carries the finished list; the
   engine's `onSequenceDone()` has none, so the scene remembers whether the
   intro is the running sequence (a space abort sends no 0x11f in the
-  original either). Profile key 1 is a static member for now.
-* Not done: profile (key 0 car part found, key 1 counter, the visit
-  counter gating the narration), award dialog, the
-  navigator's 0x7d2 override (needs a result callback from
-  `showNavigator()`).
+  original either).
 
 ## Story page `tvstation` ("TV-stasjonen")
 
@@ -4391,8 +4402,7 @@ reel on top, a fuse box on the wall, and one character (clips
   random tries, then the first free one, then monitor 1) gets a new random
   still. Timer 2: with probability 1/3 the `lights` clip plays (0,359).
 * Hotspots: 1 reel (hotspot of the `reel_NN` bitmap, `DAT_005b8a38`) ->
-  `movieplayer` activity (`FUN_0040cd70("movieplayer")`, via `startGame`,
-  not implemented yet); 2 the fuse box: `fuse`; 4 the crank on the desk
+  `movieplayer` activity (`FUN_0040cd70("movieplayer")`, via `startGame`); 2 the fuse box: `fuse`; 4 the crank on the desk
   front: `S12AN-SS-002` (a character clip, starts when his current clip
   ends); 11..13 three of the six red panel buttons (map 10..15; 10, 14, 15
   do nothing): 11 monitor 3 still removed, sequence `monitor3a`,
@@ -4409,9 +4419,8 @@ reel on top, a fuse box on the wall, and one character (clips
   gets replaced (dead code, they are bitmaps).
 * Space removes the narrations (the framework stops the sequence); right
   click: navigator `racing` / `buildacar`.
-* State across visits: none in the page itself; profile: car part found
-  (static member for now), collection count, session count.
-* TODO: the movie player.
+* State across visits: none in the page itself; profile: car part found,
+  collection count, session count.
 
 ## Story page `morning` ("Solan på tokt")
 
@@ -4419,8 +4428,8 @@ The morning before the ride down Flåklypatoppen (`S07`, handler
 `FUN_00425d60`, `morning.cpp`, `MorningScene`). A cut scene: no cursor
 table, no hotspots in use, no mouse handlers; the right button goes to
 `FUN_00432fd0`, an empty function shared with the bugzzz module (no
-navigator). Music `track7` (restarted even if it already plays) plus a
-random ambience clip (`FUN_0040b0f0`, TODO). Narration `S07AN-NAR-001` and
+navigator). Music `track7` (restarted even if it already plays) plus the
+random ambience clips (`FUN_0040b0f0`). Narration `S07AN-NAR-001` and
 `S07AN-LUD-001` are in `lang1/morning`, the rest in `data/morning`.
 
 * Init (`FUN_00425e40`, same for every arg): the bird on the branch is
@@ -4439,8 +4448,6 @@ random ambience clip (`FUN_0040b0f0`, TODO). Narration `S07AN-NAR-001` and
   other answer goes to the page `town` (both through `GAME_Start`).
   Escape goes to the menu (global key).
 * State: none kept across visits; the page has no profile calls.
-* TODO: the ambience clip; the message box answer (the dialog is a stub on
-  this branch, the page assumes YES).
 
 ## Story page `intro` ("Prolog")
 
@@ -4450,9 +4457,7 @@ easel with the game's title board (`title` bitmap). No hotspots and no cursor
 table.
 
 * Init (FUN_004165c0): stops the music, starts the random ambience
-  (FUN_0040b0f0: one of `common/music/ambience1..4`, the next random one when
-  it ends; done locally in `IntroScene` with the global ambience animation
-  structures, see below), adds `title`, creates the character and plays the
+  (FUN_0040b0f0, see "Audio"), adds `title`, creates the character and plays the
   sequence `S00AN-SS-001a, -001b, -001c`.
 * When `-001a` ends the narration `S00AN-NAR-001` starts; when `-001b` ends
   `title` is removed, music `track1` starts and `S00AN-NAR-002` plays; when
@@ -4462,10 +4467,6 @@ table.
   not abort the sequence first). Right click opens the navigator (next
   `yard`, no previous page). Escape goes to the menu (global key).
 * State across visits: none.
-* TODO: the ambience player belongs in the SOUND module (FUN_0040b0f0 also
-  registers a module callback that stops the clips on close); `house` has a
-  TODO for the same call, so it could move into `Music`/`Scene` later.
-  Subtitles (FUN_004094d0) are not shown.
 
 ## Story page `town` ("Flaaklypa bygdeby")
 
@@ -4485,7 +4486,6 @@ hotspots; the cursor is hidden. Music `subgame10`.
   for arg 2).
 * `birds` is in the page's table but the handler never uses it.
 * State across visits: none (the arg is kept for the key handler only).
-* TODO: subtitles (FUN_004094d0).
 
 ## Story page `tvroom` ("TV-stua")
 
@@ -4552,8 +4552,6 @@ counters are reset at init. The car part flag is profile page value 0
 and the glasses `FUN_0041b8c0(5)` (`Scene::carPartFound()`,
 `found3DScene()`).
 
-TODO: music volume (`FUN_0040b410`, no music volume API yet).
-
 ## Story page `outtent` ("Foran sjeikens telt")
 
 Story page 9: Solan and Emanuel Desperados in front of the sheik's tent
@@ -4562,9 +4560,7 @@ Story page 9: Solan and Emanuel Desperados in front of the sheik's tent
 navigator (next `intent`, previous `garage`), 0x10c -> `426560` key, 0x10f
 -> `426230` anim started, 0x110 -> `4262a0` anim finished, 0x111 ->
 `426630` timer. Engine: `outtent.cpp` (`OuttentScene`). Music `track9`
-plus the MUSIC module's random ambience clips (`FUN_0040b0f0`: one of
-`common/music/ambience1..4`, the next one when it ends; done in the page
-class with `defineAnim`, the scene table has no entries for them).
+plus the random ambience clips (`FUN_0040b0f0`, see "Audio").
 
 * Init: `bitmap/backdrop2.bmp` (the night view behind the dream clips) is
   loaded into the empty-named element `0x4bdd58` (opaque, 0,0). Characters
@@ -4842,8 +4838,7 @@ all 0 and the parts are hit tested by rectangle tables.
 * Right click: navigator (`FUN_00421560`), next `tvstation` once at least
   13 parts were ever fitted (the stored most), else none; previous
   `intent`.
-* Not ported: subtitles (`FUN_004094d0`, `data1/buildacar/subtitle`), the
-  obfuscated registry value written by `FUN_00423c50`, read by
+* Not ported: the obfuscated registry value written by `FUN_00423c50`, read by
   `FUN_004234d0` and deleted on close (`FUN_0040b940/b8b0/ba00`).
 
 ## Scene index (`sceneindex`)

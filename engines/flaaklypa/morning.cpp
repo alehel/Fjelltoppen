@@ -68,8 +68,7 @@ void MorningScene::onInit(int arg) {
 	// FUN_0040b1f0("track7", 1): the 1 restarts the track even when it is already playing
 	_vm->_music->stop();
 	playMusic("track7");
-	// TODO: FUN_0040b0f0(): a random ambience clip (common/music/ambience1..4)
-	debug(1, "Morning: TODO random ambience clip");
+	startAmbience(); // FUN_0040b0f0
 	playAnim("S07AN-NAR-001");
 }
 

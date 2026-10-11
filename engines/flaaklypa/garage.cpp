@@ -109,7 +109,8 @@ void GarageScene::onInit(int arg) {
 	_count008 = 0;
 	_count009 = 0;
 	initFacts();
-	// FUN_004094d0 subtitles, FUN_0040a910 callbacks: engine / TODO
+	// FUN_004094d0 (subtitles) and FUN_0040a910 (the CHAR module's handler)
+	// are part of the Scene framework.
 
 	addCharacter(kCharSolan, kHotspotSolan);
 	setCharacterAnims(kCharSolan, kSolanIdle, kSolanBored, kSolanReaction);

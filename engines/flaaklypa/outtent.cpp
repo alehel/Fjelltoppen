@@ -49,10 +49,6 @@ static const char *const kSolanIdle[] = { "S09AN-SOL-B04", "S09AN-SOL-B05", "S09
 static const char *const kEmanuelIdle[] = { "S09AN-EMN-B00", "S09AN-EMN-B04", "S09AN-EMN-B06", "S09AN-EMN-B05", nullptr }; // list_4bfbc4
 static const char *const kEmanuelBored[] = { "S09AN-EMN-004", nullptr }; // list_4bfbd8
 
-// The MUSIC module's ambience clips (FUN_0040b0f0 / FUN_0040b110): one is
-// picked at random and the next one starts when it ends.
-static const char *const kAmbience[] = { "../../common/music/ambience1", "../../common/music/ambience2", "../../common/music/ambience3", "../../common/music/ambience4" };
-
 enum {
 	kCharSolan = 1,       // group bit 0x1
 	kCharEmanuel = 0x10,  // group bit 0x10
@@ -109,21 +105,15 @@ int OuttentScene::pickNoRepeat(int &count, int &mask, int n) {
 	return pick;
 }
 
-void OuttentScene::playAmbience() {
-	playAnim(kAmbience[_vm->getRandomNumber(ARRAYSIZE(kAmbience) - 1)]);
-}
-
 void OuttentScene::onInit(int arg) {
 	// FUN_00413940("backdrop2"): the night view of the page, shown behind
 	// the dream clips. A plain 800x600 bitmap, drawn opaque.
 	defineAnim("backdrop2", false, false, 0, 0, 0, -10);
-	for (const char *a : kAmbience)
-		defineAnim(a, true, false, 0, 0, 0, 0, false);
 
 	// FUN_0040b1f0("track9", 1): the 1 restarts the track even when it is
 	// already playing; the engine keeps a running track.
 	playMusic("track9");
-	playAmbience();
+	startAmbience(); // FUN_0040b0f0
 
 	// FUN_0040c480(now + [60 s, 180 s), 180000, 0): the balloon drifts by
 	// after one to three minutes and then every three minutes.
@@ -268,14 +258,6 @@ void OuttentScene::onAnimFinished(Anim *a) {
 		playAnim("S09AN-SS-010b2");
 	} else if (n == "S09AN-SS-D01a" || n == "S09AN-SS-010b2" || n == "balloon") {
 		a->remove();
-	} else {
-		for (const char *amb : kAmbience) {
-			if (n == amb) {
-				a->remove();
-				playAmbience();
-				break;
-			}
-		}
 	}
 }
 

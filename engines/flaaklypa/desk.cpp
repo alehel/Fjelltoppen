@@ -21,6 +21,7 @@
 #include "common/debug.h"
 #include "common/system.h"
 
+#include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
@@ -72,10 +73,8 @@ enum {
 	kTimerNarration = 1  // one shot, 10 s after the intro
 };
 
-int DeskScene::_narrationCount = 0;
-
 DeskScene::DeskScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
-	_pick101Count(0), _pick102Count(0), _pick110Count(0), _introRunning(false),
+	_pick101Count(0), _pick102Count(0), _pick110Count(0), _narrationCount(0), _introRunning(false),
 	_longFrame(-1), _shortFrame(-1) {
 }
 
@@ -83,10 +82,8 @@ void DeskScene::onInit(int arg) {
 	playMusic("track2"); // FUN_0040b1f0("track2", 1): restarted even when already playing
 
 	_pick101Count = _pick102Count = _pick110Count = 0;
-	// TODO: profile: key 1 (how many times the page was left through the
-	// narration) is read here (FUN_00411e70(1, &DAT_005b8748, 4)); kept in a
-	// static for now.
-	debug(1, "Desk: narration count %d (profile key 1 not read)", _narrationCount);
+	// FUN_00411e70(1, &DAT_005b8748, 4): 0 without a profile
+	_narrationCount = _vm->getSceneValue(name(), 1);
 	initFacts();
 
 	addCharacter(kCharSolan, kHotspotSolan);
@@ -250,10 +247,18 @@ void DeskScene::onMouseDown(int hotspot, int x, int y) {
 }
 
 void DeskScene::onRightClick(int x, int y) {
-	// TODO: the navigator's result (event 0x11e, FUN_00424dc0): the first
-	// time "back to yard" is chosen (narration count < 1) the page plays
-	// S02AN-NAR-002 instead of leaving, and counts it in profile key 1.
 	_vm->showNavigator("house", "yard");
+}
+
+bool DeskScene::onNavigator(int button) {
+	// FUN_00424dc0: the first time "next" is chosen before Solan went out to
+	// pee, the narration S02AN-NAR-002 plays instead of leaving for house
+	if (button != NavigatorDialog::kButtonNext || _narrationCount >= 1)
+		return false;
+	startSingle("S02AN-NAR-002"); // FUN_0040a770
+	_narrationCount++;
+	_vm->setSceneValue(name(), 1, _narrationCount);
+	return true;
 }
 
 void DeskScene::onKey(const Common::KeyState &key) {
@@ -270,8 +275,7 @@ void DeskScene::onKey(const Common::KeyState &key) {
 void DeskScene::onAnimFinished(Anim *a) {
 	if (!strcmp(a->name(), "S02AN-SS-007a")) {
 		_narrationCount++;
-		// TODO: profile: store the count in key 1 (FUN_00411e40(1, ...))
-		debug(1, "Desk: leaving for pee, narration count %d", _narrationCount);
+		_vm->setSceneValue(name(), 1, _narrationCount); // FUN_00411e40(1, ...)
 		_vm->changeScene("pee");
 	}
 }

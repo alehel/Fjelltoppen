@@ -215,7 +215,7 @@ void BuildacarScene::onInit(int arg) {
 	_won = awardWonCount(kAwardCarPart, awardCounter(_vm, kAwardCarPart));
 	debug(1, "Buildacar: %d parts won, %d fitted, stage %d, building stage %d (mask 0x%x)",
 	      _won, _fitted, _stage, _buildStage, _fittedMask);
-	// FUN_004094d0 (subtitles) is not ported.
+	// FUN_004094d0 (subtitles): the Scene framework loads them.
 	_tooltip.start(0);  // FUN_00409b50(0)
 	_font.load("Amerigo BT_10_");
 	_hintRunning = false;
