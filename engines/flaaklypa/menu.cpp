@@ -36,6 +36,7 @@
 #include "flaaklypa/jigsaw.h"
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/chess.h"
 #include "flaaklypa/draughts.h"
 #include "flaaklypa/entrydlg.h"
 #include "flaaklypa/pipeline.h"
@@ -506,6 +507,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new SlidingScene(vm, def);
 	if (!scumm_stricmp(name, "draughts"))
 		return new DraughtsScene(vm, def);
+	if (!scumm_stricmp(name, "chess"))
+		return new ChessScene(vm, def);
 	if (!scumm_stricmp(name, "sceneindex"))
 		return new SceneindexScene(vm, def);
 	if (!scumm_stricmp(name, "buildacar"))

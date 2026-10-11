@@ -38,7 +38,7 @@ enum {
  * The list dialog (FUN_00420750 / FUN_00420430, common/dialogue/listdlg):
  * a title and a scrolling list of bitmaps (one row each, the height of the
  * first) to choose one from, with OK and optionally Cancel. Used by the
- * picture puzzles (jigsaw, sliding), the music fence, chess, the 3D viewer
+ * picture puzzles (jigsaw, sliding), the music fence, colorfill, the 3D viewer
  * and the high score menu of the original.
  *
  * items are drawn with their pixel (0, 0) as the colour key; the caller

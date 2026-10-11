@@ -2580,6 +2580,138 @@ cannot move has lost.
   file `c:\draughts.log` (debug output instead), the CORRUPT error of the
   board checks (warnings), `sound.ini` volumes.
 
+## Activity `chess` ("Sjakk", from `intent`)
+
+Handler `FUN_0045ee90` (`chess.cpp`, code 0x45ee90..0x461600; colorfill's
+handler `FUN_00461600` follows): 0x103 init `FUN_0045efa0`, 0x104 close
+`FUN_0045f760`, 0x105 `FUN_0045f7c0` (returns 1 for the level tabs 2..4
+once a move was made), 0x10b drop `FUN_0045fb10`, 0x10c key
+`FUN_0045fa00`, 0x112 tick `FUN_00461400`, 0x116 buttons `FUN_00461350`.
+A sibling of draughts: the same buttons, modes, levels, keys, wait cursor,
+search thread and award logic (shared code: `FUN_00460b30`,
+`FUN_00465f70`). No music, no cursor table, no saving or loading, no undo,
+no choice of side (the human plays white in one player mode), no opening
+book, no list dialog (the list dialog caller next to chess,
+`FUN_00461970`, is colorfill's).
+
+* **Rules**, simplified as `help.ini` [Begrensninger] says: no castling,
+  no en passant, a pawn on the last row always becomes a queen (no choice),
+  no draw rules (50 moves, repetition, material). The game ends only when
+  the player to move has no legal move: checkmate, or stalemate, which is
+  announced as a win of the other player (`chess:STALEMATE` "Patt: %s
+  spiller vant.").
+* **Screen**: `FUN_0045f190` copies the backdrop's board (188,138)
+  429x430 into a new surface one pixel wider and higher, turns that a
+  quarter clockwise (`FUN_00401f70` mode 1 -> `FUN_00402060`) and copies
+  it back: the backdrop (draughts' board) has a dark square at the top
+  left, chess a light one. The new surface's extra row and column (zeroed:
+  black) become the board's leftmost pixel column and bottom pixel row.
+  Board origin (188,137), squares 54 x 54 (ints 0x49fc30..0x49fc3c); a
+  piece's bitmap (36x76) at (54 col + 198, 54 row + 104) (`FUN_0045f6d0`);
+  the square of a point `(x - 188) / 54`, `(y - 137) / 54` truncated
+  (`FUN_0045f9c0`). Mask hotspots 1 board, 2..4 level tabs, 5 mode, 6 hint,
+  7 reset. Buttons, tabs and tooltips (table 0x5058a8) as in draughts with
+  the `chess:` strings. Title `chess:SCENENAME` in Amerigo BT_18_ centred
+  in (287,26)-(516,85), z 1. The pieces each side has lost
+  (`FUN_0045f3c0`, counts `DAT_006a3e30[6 side + type]`): "%d" in Amerigo
+  BT_14_ centred in five 67 px rows of (697,128)-(731,463) for side 0 and
+  (65,128)-(99,463) for side 1, z 1, next to the pieces painted on the
+  backdrop (rows queen, bishop, knight, rook, pawn: table {4,1,2,3,0} by
+  type).
+* **Pieces** (`DAT_006a3ab0`: 32 x {type, side, x, y, anim}, board
+  `DAT_006a3d30`: 64 pointers; start table 0x503680, 0xb8 byte records
+  {type, side, x, y, animation structure}): types 0 pawn, 1 bishop, 2
+  knight, 3 rook, 4 queen, 5 king. Side 0 = pieces 0..15 (pawns 0..7, then
+  R N B Q K B N R) on rows 0..1 at the top, bitmaps `w_*`, which are the
+  black pieces; side 1 = 16..31 at the bottom, `b_*` = white. Kings 12 and
+  28 (0x49fc48). Player p plays side p (0x5058c8); player 1 (white)
+  starts. z = the row; 15 while dragged or moved by the computer. A
+  promotion swaps the pawn's element for one of 16 queen structures
+  (0x504d80 + 0xa8 (n - 8 side), added at z 0); the port keeps one element
+  per piece and changes its bitmap.
+* **Modes and levels**: `FUN_0045f250` (player types
+  `DAT_006a4070/4074`: 0 human, 1 computer; one player = player 0 the
+  computer), button 5 cycles 1 player / 2 players / auto while no move has
+  been made (`DAT_006a3e60`); depth `DAT_005058d0` = level + 2 (2/3/4
+  plies), medium at the start; the tabs play `click 1`.
+* **Player's move**: a press on the board (`FUN_0045f7e0`, state 0 only)
+  picks up a piece of the side to move (`pickup 1/2`, z 15, drag
+  `FUN_0040c1f0`). The drop (`FUN_0045fb10`) outside the board or on the
+  same square puts it back; else `FUN_00460e80` refuses taking an own
+  piece or the king, checks the shape (`FUN_00460fb0`: a pawn one square
+  forward onto an empty square, two from its first row over an empty
+  square, one diagonally forward onto a piece; bishop, rook and queen
+  along their lines without jumping; the knight; the king one square) and
+  plays the move on a copy: refused when the own king is attacked
+  (`FUN_0045ff00` / `FUN_0045ff50`: pawns attack diagonally forward, the
+  others along their move rays, `FUN_00460100`). An illegal move goes back
+  with `wrong 1`. Playing a move (`FUN_004601a0`) enters it in a ring of 6
+  (`FUN_004603e0`, `DAT_006a3e80`), plays `down 1..3`, or for a capture
+  removes the piece, plays `fall 1..4` and counts it; `FUN_00460260` moves
+  the piece and makes a pawn on its rank 7 a queen.
+* **Turn** (`FUN_0045fd00`): turns + 1, the other player; `FUN_0045fda0`
+  tests check and runs a one ply search for the new player: without a move
+  the game is over (`FUN_00460c40(mover, check)`); else a check plays
+  `wcheck 1..3` (black gave it; the clips are in lang1) or `bcheck 1..5`,
+  then state 0 or the computer (`FUN_00460dc0`: state 2, wait cursor,
+  thread `FUN_00460e00`).
+* **Computer**: plain minimax without pruning on the global board, which
+  is copied before and restored after each move tried.
+  `FUN_00460490(depth, out, maximize)`: depth 0 is the evaluation; else
+  the moves of the pieces of side 0 (maximize) or 1 in piece order
+  (`FUN_00460750`: pawn forward, double step, capture left, capture right;
+  the others their direction table, 0x49fb30 bishop, 0x49fb50 knight,
+  0x49fb90 rook, 0x49fbb0 queen and king, up to 8 steps or 1 (knight,
+  king), stopping at a piece, which is taken when it is the other side's);
+  the best starts at {none, -FLT_MAX / FLT_MAX}. `FUN_00460980` plays the
+  move, skips it when the own king is then attacked, else scores it with
+  the other side's search at depth - 1 (a float); a non-capturing move
+  that repeats one of the ring (same piece and squares, `FUN_00460ac0`)
+  costs 10000; it replaces the best when better, or within 0.075 when
+  `rand() % 8 == 0` (`FUN_00460b30`). Without a legal move the score stays
+  -+FLT_MAX, so mate and stalemate are the same loss to the search.
+  Evaluation (`FUN_00460540`): the sum (a float, rounded after each piece)
+  of `FUN_004605d0`: the value (`FUN_00460650`: pawn 1, 1.1, 1.2, 1.3,
+  1.3, 1.2, 1.1, 1 by column (0x49fc80), bishop and knight 4, rook 5, queen
+  9.9, king 1) x (1 + 0.2 x the rows advanced), computed in double (the x87
+  at its default 53 bits), for a pawn rounded to float plus the values of
+  the pieces of either side on the two squares diagonally ahead
+  (`FUN_004606d0`); side 1 negative; a side without its king (never
+  happens) scores -+3e38. The thread searches at the level's depth and
+  sets state 3; the tick (`FUN_00461450`) searches one ply when no move
+  came back (every move loses to a forced mate; logged "last move piece ==
+  NULL"), sets z 15, plays `pickup`, and (`FUN_00461510`, state 4) slides
+  the piece by (target - start) x t, t = ms since then x 0.001
+  (`FUN_0040c450`, truncated); at t >= 1 the move is played, the cursor
+  comes back, z = row, and the turn passes.
+* **Buttons** (`FUN_00461350`): 6 (state 0) lets the computer play the
+  current player's move (the hint; `chess:START` in auto mode); 7
+  (`FUN_0045fab0`) asks `interfaceh:WARNING` / `chess:ABORT` (Yes / No)
+  unless the game is over, then starts a new game (`FUN_0045f330`:
+  pieces, ring and counters reset; mode and level stay); 10 exit, 11 help.
+  Keys (`FUN_0045fa00`) as in draughts.
+* **End** (`FUN_00460c40(winner, check)`): `chess:CHECKMATE` or
+  `STALEMATE` with `BLACK` (player 0) or `WHITE` in an
+  `interfaceh:GAMEOVER` message box, state 5. Award (`FUN_00460d00`): only
+  for a mate won by the human in one player mode (`FUN_00460d70`); with
+  l = depth - 2 and v = the profile's value 0: if v < l + 1,
+  `awardDifficulty(l, l + 1 - v)` (`FUN_0041c0b0(DAT_005058d0 - 2,
+  DAT_005058d0 - 1 - v)`) and value 0 := l + 1, as in draughts.
+* Engine: the search runs without recursion (`SearchFrame` stack,
+  `runSearch()`) for 25 ms per frame instead of in a thread. A frame lists
+  the moves of the side to move when it is entered; the original finds
+  each move just before trying it, but as the board is restored after
+  each try the list is the same. Checked against a recursive transcription
+  of `FUN_00460490` / `FUN_00460750` / `FUN_00460980` run on a second
+  random source with the same seed (temporary code): the same move, score,
+  moves tried, random draws and final seed in 175 searches (auto games at
+  easy (to mate), medium and hard, and the depth 1 search after a forced
+  mate). Hard tries up to about 1.7 million moves per turn: 2 s in one go,
+  4 s spread over the frames in a debug build. The ring of moves is reset
+  with each game (unlike draughts'). Not ported: the `Debug Log` file
+  `c:\chess.log` (debug output instead), the CORRUPT error of the board
+  checks (warnings), `sound.ini` volumes.
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2661,7 +2793,7 @@ reset to idle.
 
 Hotspots:
 
-* 1 → sub game `chess` (not ported, `startGame` warns), 2 → `hustle`,
+* 1 → activity `chess`, 2 → `hustle`,
   51 (a click on Soline) → `puzzle`.
 * 3 chess board: `S10AN-SS-005` or the sequence `S10AN-SS-005b1/b2`, picked
   with the no-repeat helper (`FUN_0040a150`; count reset per visit, mask kept
@@ -2684,8 +2816,7 @@ Hotspots:
 * Space: removes 006b, restores the music volume and the default lists of
   all three, kills the wake up timer.
 
-TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged), the `chess`
-sub game.
+TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged).
 
 ## Story page `desk` ("Reodors stue")
 
@@ -3428,6 +3559,15 @@ commas; the pieces of each side are used in order, the rest count as
 captured; the player, side 1 at the bottom, moves first). Draughts logs
 each move, and the computer's search (positions, depth, time) at debug
 level 1.
+`test_chess=<placement> [w|b]` (chess: the position at the start, the
+piece placement of a FEN record: rows from the top (black's back row)
+separated by "/", KQRBNP white (side 1, at the bottom), kqrbnp black,
+digits for empty squares, then the player to move, white by default; each
+piece takes a free piece of its kind, extra queens, rooks, bishops and
+knights a free pawn, the pieces left over count as captured; when the
+player to move is the computer it starts thinking; e.g.
+`6k1/5ppp/8/8/8/8/8/R5K1 w`: Ra1-a8 mates). Chess logs each move and the
+computer's search (moves tried, depth, time, score) at debug level 1.
 
 ## Mini game checklist
 
@@ -3474,7 +3614,7 @@ Activities (`[activity]`, open ended):
 | x | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
 | x | sliding | Skyvepusslespillet | garage | data (high score open) |
-| | chess | Sjakk | intent | data |
+| x | chess | Sjakk | intent | data |
 | x | movieplayer | Filmfremviser | tvstation | data |
 | | activity | Aktivitetssenteret | sceneindex | data |
 

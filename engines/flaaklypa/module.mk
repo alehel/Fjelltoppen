@@ -13,6 +13,7 @@ MODULE_OBJS = \
 	buildacar.o \
 	butterfly.o \
 	button.o \
+	chess.o \
 	colorfill.o \
 	console.o \
 	credits.o \
