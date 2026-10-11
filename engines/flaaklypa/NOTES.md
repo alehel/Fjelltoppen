@@ -2946,7 +2946,9 @@ layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
   (`FUN_00452300`): the last pair comes back (alive, visible, unselected,
   place, scale 1, rotation (0,0,90)); it does not update the tiles'
   sides, the remaining count (+0x4ec9, unused) nor a flight still going
-  on (such a tile vanishes at its end but stays in play). Hint and undo
+  on (such a tile vanishes at its end but stays in play, and the board
+  can no longer be cleared). Fixed in the port: undo stops the flight and
+  updates the sides. Hint and undo
   only while a game runs and is not over.
 * **Boxes** (`FUN_00459230(scene, 16, 16, 16, face material, side
   material, id)`): corners (+-16), sides (1,0,3,2) y-, (0,4,7,3) z- (the
@@ -3005,7 +3007,9 @@ layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
   otherwise (not even by a new game), so until the next click it holds
   every frame drawn since: places where the camera showed a tile before,
   removed tiles included, still answer. A removed tile can thus be picked
-  and matched again (its partner goes alone). Mirrored.
+  and matched again (its partner goes alone). Fixed in the port: the
+  buffer is cleared before each frame, removed tiles (still flying off)
+  do not write into it, and a click on one picks nothing.
 * **Timing**: stop watch `DAT_006927e8` (`FUN_0047c5a0` reset,
   `FUN_0047c5c0` time, `FUN_0047c5e0` step, `FUN_0047c610` stop); dt =
   step * 0.1 (10 ms units). A stopped watch keeps returning its last step,

@@ -728,9 +728,10 @@ void MahjongScene::removePair(int a, int b) {
 	updateFaces();
 }
 
-// FUN_00452300: the last pair comes back. The original neither updates
-// the sides of the tiles around nor stops a flight that is still going on
-// (the tile then vanishes when it ends although it is back in play).
+// FUN_00452300: the last pair comes back. Bug fix: the original neither
+// stops a flight that is still going on (the tile then vanished when it
+// ended although it was back in play, and the board could not be cleared)
+// nor updates the sides shown; the port does both.
 void MahjongScene::undo() {
 	if (_undo.size() < 2)
 		return;
@@ -743,6 +744,7 @@ void MahjongScene::undo() {
 		Tile &t = _tiles[pair[k]];
 		t.alive = true;
 		t.selected = false;
+		t.flying = false;
 		t.box.visible = true;
 		t.face.flags[1] = kMatEnvMap;
 		t.box.position = t.pos;
@@ -750,6 +752,7 @@ void MahjongScene::undo() {
 		t.box.rotation = Vec3(0.0f, 0.0f, 90.0f);
 		t.box.updateMatrix();
 	}
+	updateFaces();
 }
 
 // FUN_00452550: the sides next to another tile and the bottom are not
@@ -817,10 +820,12 @@ void MahjongScene::updateStatus() {
 }
 
 // FUN_00450df0: the tile under a click, from the numbers the renderer
-// writes into the half resolution buffer. The buffer is cleared after the
-// lookup, so until the next click it collects every frame drawn: places
-// where a tile was (removed ones too) still answer. A blocked tile gives
-// none.
+// writes into the half resolution buffer. A blocked tile gives none.
+// Bug fix: the original clears the buffer only after a lookup, so until
+// the next click it collects every frame drawn and places where a tile was
+// (removed ones too) still answer: a removed tile could be matched again
+// and its partner went alone. The port fills the buffer anew each frame
+// with the tiles in play (renderBoard(), drawFace()).
 int MahjongScene::pick(int x, int y) {
 	if (x - kViewX < 2 || y - kViewY < 2)
 		return -1;
@@ -828,9 +833,8 @@ int MahjongScene::pick(int x, int y) {
 	if (px >= kPickWidth || py >= kPickHeight)
 		return -1;
 	const byte id = _pickBuffer[py * kPickWidth + px];
-	Common::fill(_pickBuffer.begin(), _pickBuffer.end(), 0);
 	debug(2, "Mahjong: click at %d,%d picks %d", x, y, (int)id - 1);
-	if (!id || id > _tileCount)
+	if (!id || id > _tileCount || !_tiles[id - 1].alive)
 		return -1;
 	return isBlocked(id - 1) ? -1 : id - 1;
 }
@@ -925,6 +929,8 @@ void MahjongScene::renderBoard(float dt) {
 
 	Graphics::ManagedSurface *dst = anim("board")->surface();
 	dst->blitFrom(_background);
+	// The pick buffer shows this frame only (see pick())
+	Common::fill(_pickBuffer.begin(), _pickBuffer.end(), 0);
 
 	_drawList.clear();
 	_depth.clear();
@@ -1012,16 +1018,19 @@ void MahjongScene::drawFace(Graphics::ManagedSurface &dst, const Tile &t, const 
 	RasterVertex rv[3];
 
 	// FUN_00456370: the tile's number at half resolution, whatever is drawn
-	const byte id = (byte)(&t - _tiles + 1);
-	for (int k = 0; k < 3; k++) {
-		rv[k].x = v[k]->sx * 0.5f;
-		rv[k].y = v[k]->sy * 0.5f;
-		rv[k].a[0] = rv[k].a[1] = rv[k].a[2] = rv[k].a[3] = 0.0f;
+	// (the port leaves out removed tiles still flying off, see pick())
+	if (t.alive) {
+		const byte id = (byte)(&t - _tiles + 1);
+		for (int k = 0; k < 3; k++) {
+			rv[k].x = v[k]->sx * 0.5f;
+			rv[k].y = v[k]->sy * 0.5f;
+			rv[k].a[0] = rv[k].a[1] = rv[k].a[2] = rv[k].a[3] = 0.0f;
+		}
+		byte *pick = _pickBuffer.data();
+		scanTriangle(rv[0], rv[1], rv[2], kPickWidth, kPickHeight, [pick, id](int x, int y, const float *) {
+			pick[y * kPickWidth + x] = id;
+		});
 	}
-	byte *pick = _pickBuffer.data();
-	scanTriangle(rv[0], rv[1], rv[2], kPickWidth, kPickHeight, [pick, id](int x, int y, const float *) {
-		pick[y * kPickWidth + x] = id;
-	});
 
 	for (int k = 0; k < 3; k++) {
 		rv[k].x = v[k]->sx;
