@@ -13,6 +13,7 @@ MODULE_OBJS = \
 	cursor.o \
 	desk.o \
 	dialog.o \
+	entrydlg.o \
 	flaaklypa.o \
 	font.o \
 	garage.o \

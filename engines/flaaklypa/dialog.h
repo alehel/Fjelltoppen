@@ -84,6 +84,8 @@ protected:
 	/**
 	 * Adds a push button at a position relative to the dialog with up to three
 	 * bitmaps (normal, pressed, disabled) and an optional centred label.
+	 * Without a normal bitmap the button is part of the dialog bitmap and
+	 * the hit mask holds its id where it can be clicked.
 	 */
 	void addButton(int id, int x, int y, const char *dir, const char *normal, const char *pressed, const char *disabled, const Common::String &label = "", bool transparent = true);
 	void setButtonState(int id, int state);
@@ -92,6 +94,8 @@ protected:
 	Button *buttonAt(int x, int y);
 	/** True when the point is on the dialog bitmap. */
 	bool hitDialog(int x, int y) const;
+	/** The hit mask value at the point (the hotspot in the original), 0 outside. */
+	int hotspotAt(int x, int y) const;
 	int x() const { return _x; }
 	int y() const { return _y; }
 
