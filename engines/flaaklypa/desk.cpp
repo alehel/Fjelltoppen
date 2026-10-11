@@ -22,6 +22,7 @@
 #include "common/system.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -71,9 +72,6 @@ enum {
 	kTimerNarration = 1  // one shot, 10 s after the intro
 };
 
-int DeskScene::_pick101Mask = 0;
-int DeskScene::_pick102Mask = 0;
-int DeskScene::_pick110Mask = 0;
 int DeskScene::_narrationCount = 0;
 
 DeskScene::DeskScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
@@ -191,7 +189,7 @@ void DeskScene::onMouseDown(int hotspot, int x, int y) {
 		takeCarPart();
 		break;
 	case 101:
-		switch (pickWithoutRepeats(_pick101Count, _pick101Mask, 3)) {
+		switch (pickWithoutRepeats(_pick101Count, _vm->_globals->desk.pick101Mask, 3)) {
 		case 0: startSequence(kSeq101a); break;
 		case 1: startSequence(kSeq101b); break;
 		case 2: startSequence(kSeq101c); break;
@@ -199,7 +197,7 @@ void DeskScene::onMouseDown(int hotspot, int x, int y) {
 		}
 		break;
 	case 102:
-		switch (pickWithoutRepeats(_pick102Count, _pick102Mask, 3)) {
+		switch (pickWithoutRepeats(_pick102Count, _vm->_globals->desk.pick102Mask, 3)) {
 		case 0: startSequence(kSeq102a); break;
 		case 1: startSequence(kSeq102b); break;
 		case 2: startSequence(kSeq102c); break;
@@ -219,7 +217,7 @@ void DeskScene::onMouseDown(int hotspot, int x, int y) {
 		startSequence(kSeq108);
 		break;
 	case 110:
-		startSingle(kClips110[pickWithoutRepeats(_pick110Count, _pick110Mask, 3)]);
+		startSingle(kClips110[pickWithoutRepeats(_pick110Count, _vm->_globals->desk.pick110Mask, 3)]);
 		break;
 	case 113:
 		startSingle("S02AN-SS-024");

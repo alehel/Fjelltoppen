@@ -21,6 +21,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
@@ -47,8 +48,6 @@ enum {
 	kStarInterval = 2000
 };
 
-int GoodbyeScene::_fireworkCount = 0;
-
 GoodbyeScene::GoodbyeScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def) {
 }
 
@@ -56,7 +55,7 @@ void GoodbyeScene::onInit(int arg) {
 	// FUN_00416020. The firework counter survives a trip to the word game
 	// (arg 1 on return), it is only reset when the page is entered afresh.
 	if (arg == 0)
-		_fireworkCount = 0;
+		_vm->_globals->goodbye.fireworkCount = 0;
 	// lang2/goodbye/fact.ini of add-on set 2, hotspots 141..147
 	initFacts();
 	// FUN_0040b1f0("track14", 1): the 1 restarts the track even when it is
@@ -122,7 +121,7 @@ void GoodbyeScene::onTimer(int id, int data) {
 			break;
 		addAnim(kFireworks[n], Anim::kDefaultPos, Anim::kDefaultPos, n);
 		anim(kFireworks[n])->play();
-		if (++_fireworkCount == 2)
+		if (++_vm->_globals->goodbye.fireworkCount == 2)
 			playAnim("S14AN-NAR-001");
 		break;
 	}

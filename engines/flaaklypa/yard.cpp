@@ -21,6 +21,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -65,9 +66,6 @@ enum {
 	kTimerNarration3 = 1
 };
 
-int YardScene::_introCount = 0;
-int YardScene::_introMask = 0;
-
 YardScene::YardScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_flags(0), _toggleBench(0), _toggleWell(0), _toggleFence(0) {
 }
@@ -104,21 +102,21 @@ void YardScene::playIntro() {
 
 	// Pick one of three intro variants, never the same twice in a row,
 	// and the first three visits in order (the original's helper).
-	if (_introMask == 7)
-		_introMask = 0;
-	int pick = _introCount;
+	if (_vm->_globals->yard.introMask == 7)
+		_vm->_globals->yard.introMask = 0;
+	int pick = _vm->_globals->yard.introCount;
 	if (pick >= 3) {
 		int free = 0;
 		for (int i = 0; i < 3; i++)
-			if (!(_introMask & (1 << i)))
+			if (!(_vm->_globals->yard.introMask & (1 << i)))
 				free++;
 		int n = _vm->getRandomNumber(free - 1);
 		for (int i = 0; i < 3; i++)
-			if (!(_introMask & (1 << i)) && n-- == 0)
+			if (!(_vm->_globals->yard.introMask & (1 << i)) && n-- == 0)
 				pick = i;
 	}
-	_introMask |= 1 << pick;
-	_introCount++;
+	_vm->_globals->yard.introMask |= 1 << pick;
+	_vm->_globals->yard.introCount++;
 
 	switch (pick) {
 	case 0: playSequence(kIntroA); break;

@@ -26,6 +26,7 @@
 #include "flaaklypa/award.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/listdlg.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
@@ -179,11 +180,6 @@ static const int kYardList[] = { E::kYardShock, E::kYardSolan, E::kYardDrown, E:
 static const int kPeeList[] = { E::kPeeLudvig, E::kPeeMagpie, E::kPeeSolan1, E::kPeeSolan2, E::kNoElem };  // 0x510bd8
 static const int kTvroomList[] = { E::kTvroomLaugh, E::kTvroomTwist, E::kTvroomBoxing, E::kTvroomExercise, E::kNoElem };  // 0x510bec
 static const int kCarsList[] = { E::kCarsIltempo, E::kCarsBoom, E::kCarsRolls, E::kNoElem };      // 0x510c00
-
-int AnaglyphScene::_idleCount = 0;
-int AnaglyphScene::_idleMask = 0;
-int AnaglyphScene::_hitCount = 0;
-int AnaglyphScene::_hitMask = 0;
 
 // Key colour of opaque procedural elements (see button.cpp)
 static const uint32 kNoKey = 0;
@@ -967,14 +963,14 @@ int AnaglyphScene::ballClipKind(Anim *a, int *column) const {
 int AnaglyphScene::ballClip(int kind, const int *column) {
 	switch (kind) {
 	case kBallIdle: {
-		const int n = pickRandom(_vm, _idleCount, _idleMask, 3);
+		const int n = pickRandom(_vm, _vm->_globals->anaglyph.idleCount, _vm->_globals->anaglyph.idleMask, 3);
 		_presses = 0;
 		return kIdleList[n];
 	}
 	case kBallStart:
 		return kRbStartCenter;
 	case kBallHit: {
-		const int n = column ? *column * 3 + (int)_vm->getRandomNumber(2) : pickRandom(_vm, _hitCount, _hitMask, 9);
+		const int n = column ? *column * 3 + (int)_vm->getRandomNumber(2) : pickRandom(_vm, _vm->_globals->anaglyph.hitCount, _vm->_globals->anaglyph.hitMask, 9);
 		_presses = 0;
 		return kHitList[n];
 	}

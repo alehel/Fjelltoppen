@@ -40,6 +40,9 @@ class WriteStream;
 
 namespace Flaaklypa {
 
+struct FenceNote;
+struct FenceTune;
+
 class SoundPlayer;
 
 /**
@@ -75,7 +78,6 @@ private:
 		kPitches = 18,       ///< A1..D3, one per board
 		kLengths = 8,        ///< quaver .. dotted semibreve
 		kSlots = 16,         ///< notes per page of the staff
-		kMaxNotes = 0x400,
 		kMaxBirds = 16,
 		kMaxPoints = 21,     ///< room for the flight path (+0xb4..+0x15b of a bird)
 		kNameSize = 0x400    ///< the tune's name in a .tun file
@@ -97,10 +99,7 @@ private:
 	};
 
 	/** A note of a tune, as stored in a .tun file (two little endian int32). */
-	struct Note {
-		int32 pitch;         ///< 0..17 (A1 .. D3)
-		int32 length;        ///< 0..7, see kLengthNames
-	};
+	typedef FenceNote Note;
 
 	/** A bird carrying a note (0x16c bytes at 0x6b04f8: an animation and its flight). */
 	struct Bird {
@@ -193,8 +192,7 @@ private:
 	void chooseInstrument();
 	Graphics::ManagedSurface *textItem(const Common::String &text);
 
-	static Note _notes[kMaxNotes];  ///< DAT_006b6230, kept across visits like the original's globals
-	static int _count;              ///< DAT_006b8230
+	FenceTune &_tune;               ///< the tune, kept across visits in the engine's globals
 
 	SceneButtons _buttons;
 	BitmapFont _font10;             ///< DAT_006b8640: labels and button labels

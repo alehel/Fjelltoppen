@@ -150,8 +150,6 @@ private:
 	int _scores;                       ///< DAT_006d6f8c: scores entered this visit
 	ScoreEntry _entry;                 ///< DAT_006d4888: the last one
 	int _highlights[3];                ///< DAT_006d26b0: its rows in the three tables
-	/** FUN_0040a150 states of the idle (DAT_006d4884 / DAT_006d6f88) and hit clips (DAT_006d47d4 / DAT_006d6f78), kept across visits */
-	static int _idleCount, _idleMask, _hitCount, _hitMask;
 };
 
 } // End of namespace Flaaklypa

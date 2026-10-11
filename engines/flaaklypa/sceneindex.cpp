@@ -22,6 +22,7 @@
 #include "graphics/screen.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sceneindex.h"
@@ -40,8 +41,6 @@ static const char *const kCursorNames[4] = { "storypage", "subgame", "activity",
 
 // The title text area (0x49c9d0).
 static const int kTitleRect[4] = { 210, 62, 588, 105 };
-
-int SceneindexScene::_tab = 0;
 
 // Language strings in language.ini are sometimes quoted.
 static Common::String unquote(const Common::String &s) {
@@ -132,8 +131,8 @@ void SceneindexScene::onInit(int arg) {
 	// it can also do is not used with argument 3.
 	if (_sections.empty())
 		return;
-	selectTab(_tab);
-	_buttons.setState(kButtonTab0 + _tab, SceneButtons::kStatePressed);
+	selectTab(_vm->_globals->sceneindex.tab);
+	_buttons.setState(kButtonTab0 + _vm->_globals->sceneindex.tab, SceneButtons::kStatePressed);
 	playMusic("theme");
 }
 
@@ -182,9 +181,9 @@ void SceneindexScene::readNames(const Common::String &section) {
 void SceneindexScene::selectTab(int tab) {
 	removeSceneButtons();
 	removeSlots();
-	_tab = CLIP<int>(tab, 0, _sections.size() - 1);
-	const Common::String &sec = _sections[_tab];
-	debug(1, "Sceneindex: tab %d '%s'", _tab, sec.c_str());
+	_vm->_globals->sceneindex.tab = CLIP<int>(tab, 0, _sections.size() - 1);
+	const Common::String &sec = _sections[_vm->_globals->sceneindex.tab];
+	debug(1, "Sceneindex: tab %d '%s'", _vm->_globals->sceneindex.tab, sec.c_str());
 
 	buildCursorTable(sec);
 	setCursorTable(_cursors);
@@ -274,7 +273,6 @@ bool SceneindexScene::handlesKey(const Common::KeyState &key) {
 	return key.keycode == Common::KEYCODE_TAB;
 }
 
-
 void SceneindexScene::onButton(int id) {
 	// FUN_00419260 (event 0x116)
 	if (id == kButtonExit) {
@@ -329,7 +327,7 @@ Common::String SceneindexScene::tooltipText(int tab, int id) {
 		// Not reached yet: where it is hidden, when scene.ini says so
 		// ("hint<n>", only in the lang2 file which the Gold edition's data3
 		// file overrides).
-		int hint = iniInt(_sections[_tab], Common::String::format("hint%d", index), -1);
+		int hint = iniInt(_sections[_vm->_globals->sceneindex.tab], Common::String::format("hint%d", index), -1);
 		if (hint >= 0)
 			return Common::String::format(text("sceneindex:HIDDENIN").c_str(), hint);
 	}
@@ -350,7 +348,7 @@ void SceneindexScene::onUpdate() {
 	int h = _tooltip.poll();
 	if (h >= kButtonScene0 && h < kButtonScene0 + kMaxScenes && !_sections.empty()) {
 		Common::Point p = _vm->mousePos();
-		_tooltip.show(tooltipText(_tab, h), p.x, p.y);
+		_tooltip.show(tooltipText(_vm->_globals->sceneindex.tab, h), p.x, p.y);
 	}
 }
 

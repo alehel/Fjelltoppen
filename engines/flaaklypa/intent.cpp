@@ -21,6 +21,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -70,8 +71,6 @@ enum {
 	kHotspotEmanuel = 52,
 	kTimerWakeUp = 0
 };
-
-int IntentScene::_chessMask = 0;
 
 IntentScene::IntentScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_chessCount(0), _wakeUpTimer(false) {
@@ -125,20 +124,20 @@ int IntentScene::pickChessVariant() {
 	// FUN_0040a150(&count, &mask, 2): the first two clicks after a visit
 	// starts play the variants in order, then a random one that has not
 	// been played since the mask was last full.
-	if (_chessMask == 3)
-		_chessMask = 0;
+	if (_vm->_globals->intent.chessMask == 3)
+		_vm->_globals->intent.chessMask = 0;
 	int pick = _chessCount;
 	if (pick >= 2) {
 		int free = 0;
 		for (int i = 0; i < 2; i++)
-			if (!(_chessMask & (1 << i)))
+			if (!(_vm->_globals->intent.chessMask & (1 << i)))
 				free++;
 		int n = _vm->getRandomNumber(free - 1);
 		for (int i = 0; i < 2; i++)
-			if (!(_chessMask & (1 << i)) && n-- == 0)
+			if (!(_vm->_globals->intent.chessMask & (1 << i)) && n-- == 0)
 				pick = i;
 	}
-	_chessMask |= 1 << pick;
+	_vm->_globals->intent.chessMask |= 1 << pick;
 	_chessCount++;
 	return pick;
 }

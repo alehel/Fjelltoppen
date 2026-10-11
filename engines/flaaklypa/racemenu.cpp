@@ -25,6 +25,7 @@
 #include "flaaklypa/award.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/racemenu.h"
@@ -35,14 +36,11 @@ namespace Flaaklypa {
 // ---- the settings shared with the race -------------------------------------
 
 RaceSettings &raceMenuSettings() {
-	// DAT_006cfed0 (zeroed by the menu's init, FUN_0047b150)
-	static RaceSettings settings;
-	return settings;
+	return g_engine->_globals->race.settings;
 }
 
 RaceScoreState &raceScoreState() {
-	static RaceScoreState state;
-	return state;
+	return g_engine->_globals->race.score;
 }
 
 // FUN_0047a980: the default keys (0x4a0150 player 0 keyboard, 0x4a0170
@@ -358,7 +356,6 @@ void RaceSoundDialog::drawContents(Graphics::ManagedSurface &dst) {
 		}
 	}
 }
-
 
 // ---- the controls dialog (FUN_0041d140, dialogue "ctrlcfg") ----------------------
 

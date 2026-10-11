@@ -264,11 +264,6 @@ private:
 	uint32 _blinkStart[kTanks];    ///< DAT_006e3cf8
 	int _box[kBoxes];              ///< DAT_006e1cc0
 	int _op[2];                    ///< DAT_006e3cdc, DAT_006e3ce0
-
-	/** DAT_00512860 (.data, 1): the third container is covered. Kept across visits. */
-	static bool _thirdDisabled;
-	/** DAT_005120a8 (.data, 1): the hatch at the end of the rail is open. Kept across visits. */
-	static bool _hatchOpen;
 };
 
 } // End of namespace Flaaklypa

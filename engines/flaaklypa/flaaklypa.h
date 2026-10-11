@@ -48,6 +48,7 @@ namespace Flaaklypa {
 class Cursor;
 class Dialog;
 class Music;
+struct Globals;
 class Profile;
 class Resources;
 class Scene;
@@ -146,6 +147,7 @@ public:
 	Resources *_resources = nullptr;
 	Cursor *_cursor = nullptr;
 	Music *_music = nullptr;
+	Globals *_globals = nullptr;  ///< the scene state kept across visits (the original's globals)
 	Dialog *_dialog = nullptr;     ///< the modal dialog receiving the input, if any
 	Profile *_profile = nullptr;   ///< the active player profile (DAT_0054eaa0), if any
 

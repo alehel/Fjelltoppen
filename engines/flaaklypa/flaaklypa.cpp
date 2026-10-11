@@ -25,6 +25,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
 #include "flaaklypa/entrydlg.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/profile.h"
@@ -55,6 +56,7 @@ FlaaklypaEngine *g_engine;
 FlaaklypaEngine::FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 	_gameDescription(gameDesc), _randomSource("Flaaklypa"), _scene(nullptr), _nextSceneArg(0), _language(nullptr) {
 	g_engine = this;
+	_globals = new Globals();
 	// The volume table at 0x4a68bc: the options 0.75, the others 1
 	for (int c = 0; c < kVolumeChannels; c++) {
 		_volumes[kVolumeOptions][c] = 0.75f;
@@ -72,6 +74,7 @@ FlaaklypaEngine::~FlaaklypaEngine() {
 	delete _cursor;
 	delete _resources;
 	delete _screen;
+	delete _globals;
 }
 
 uint32 FlaaklypaEngine::getFeatures() const {

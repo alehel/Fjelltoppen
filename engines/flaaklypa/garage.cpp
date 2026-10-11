@@ -21,6 +21,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
@@ -71,9 +72,6 @@ enum {
 	kHotspotCarPart = 27
 	// 200..213: fact pages (fact.ini, the fact module)
 };
-
-int GarageScene::_mask008 = 0;
-int GarageScene::_mask009 = 0;
 
 GarageScene::GarageScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_count008(0), _count009(0) {
@@ -165,7 +163,7 @@ void GarageScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S06AN-SS-004");
 		break;
 	case kHotspotClip008:
-		switch (pickVariant(_count008, _mask008, 2)) {
+		switch (pickVariant(_count008, _vm->_globals->garage.mask008, 2)) {
 		case 0: playSingle("S06AN-SS-008a"); break;
 		case 1: playSingle("S06AN-SS-008b"); break;
 		default: break;
@@ -175,7 +173,7 @@ void GarageScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S06AN-SS-002");
 		break;
 	case kHotspotClip009:
-		switch (pickVariant(_count009, _mask009, 2)) {
+		switch (pickVariant(_count009, _vm->_globals->garage.mask009, 2)) {
 		case 0: playSingle("S06AN-SS-009a"); break;
 		case 1: playSingle("S06AN-SS-009b"); break;
 		default: break;

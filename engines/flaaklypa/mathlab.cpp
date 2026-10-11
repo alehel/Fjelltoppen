@@ -33,6 +33,7 @@
 
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/mathlab.h"
 #include "flaaklypa/resources.h"
@@ -97,9 +98,6 @@ static const int kSumDigitX[4] = { 323, 349, 375, 403 };
 static const int kTankMeterPos[5][2] = { { 217, 448 }, { 301, 475 }, { 394, 486 }, { 440, 481 }, { 529, 436 } };
 // FUN_00412b90(water5 + tank * 0xa8): the stream into each tank
 static const char *const kWater[5] = { "water5", "water4", "water3", "water2", "water1" };
-
-bool MathlabScene::_thirdDisabled = true;
-bool MathlabScene::_hatchOpen = true;
 
 MathlabScene::MathlabScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _buttons(this),
 	_soundRandom("mathlab"), _dragging(false), _dragData(0), _clockBase(0), _state(kStateIdle), _level(0),
@@ -784,9 +782,9 @@ void MathlabScene::removeBall(int hotspot) {
 // FUN_00480730: the hatch at the end of the rail opens (a new level, the
 // end of the round); every ball on the rail falls out
 void MathlabScene::openHatch() {
-	if (_hatchOpen)
+	if (_vm->_globals->mathlab.hatchOpen)
 		return;
-	_hatchOpen = true;
+	_vm->_globals->mathlab.hatchOpen = true;
 	if (!isAnimAdded("ballopener"))
 		addAnim("ballopener", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
 	anim("ballopener")->play();
@@ -806,7 +804,7 @@ void MathlabScene::moveBalls() {
 		return;
 	if (_slots[0].limit < kFrameRest)
 		_slots[0].limit = kFrameRest;
-	if (_hatchOpen)
+	if (_vm->_globals->mathlab.hatchOpen)
 		_slots[0].limit = kFrameGone;
 	for (int i = 1; i < kSlots; i++) {
 		Slot &s = _slots[i];
@@ -835,7 +833,7 @@ void MathlabScene::moveBalls() {
 				s.sound++;
 			}
 		}
-		if (!s.active || (_hatchOpen && s.out == 0))
+		if (!s.active || (_vm->_globals->mathlab.hatchOpen && s.out == 0))
 			continue;
 		const int frame = s.frame;
 		int dt = (int)(t - s.stepTime);
@@ -861,7 +859,7 @@ void MathlabScene::moveBalls() {
 			removeBall(_balls[s.ball].def.hotspot);
 	}
 
-	if (!_hatchOpen)
+	if (!_vm->_globals->mathlab.hatchOpen)
 		return;
 	for (int i = 0; i < kSlots; i++)
 		if (_slots[i].active && _slots[i].out != 0)
@@ -873,7 +871,7 @@ void MathlabScene::moveBalls() {
 	playAnim("ballcloser");
 	if (_state != kStateOver)
 		playSound("closerP");
-	_hatchOpen = false;
+	_vm->_globals->mathlab.hatchOpen = false;
 	if (_state != kStateOver)
 		for (int i = 0; i < kSlots; i++)
 			addBall();
@@ -912,7 +910,7 @@ void MathlabScene::startRound(int level) {
 	_shownScore = 0;
 	_level = level;
 	_timeBase = (int32)now();
-	_thirdDisabled = true;
+	_vm->_globals->mathlab.thirdDisabled = true;
 	if (level == 0)
 		_timeBase += 100000;
 	else if (level == 1)
@@ -921,7 +919,7 @@ void MathlabScene::startRound(int level) {
 		_timeBase += 30000;
 	_deadline = _timeBase;
 	setupLevel(true);
-	if (_thirdDisabled && !isAnimAdded("disable2"))
+	if (_vm->_globals->mathlab.thirdDisabled && !isAnimAdded("disable2"))
 		addAnim("disable2", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
 	showScore();
 	setCounter(_sumCounter, 0);
@@ -962,9 +960,9 @@ void MathlabScene::setupLevel(bool first) {
 			playSound("light_bulb");
 		}
 	} else {
-		_hatchOpen = false;
+		_vm->_globals->mathlab.hatchOpen = false;
 	}
-	if (_level > 1 && _thirdDisabled) {
+	if (_level > 1 && _vm->_globals->mathlab.thirdDisabled) {
 		_buttons.addTab(2, kButtonPlus2, 0x1a1, 0xc0, nullptr, "plus_2", "", true);
 		_buttons.addTab(2, kButtonPlus2 + 1, 0x1a0, 0xd7, nullptr, "minus_2", "", true);
 		_buttons.addTab(2, kButtonPlus2 + 2, 0x19f, 0xee, nullptr, "multiply_2", "", true);
@@ -972,7 +970,7 @@ void MathlabScene::setupLevel(bool first) {
 		playSound("3 shows up");
 		if (isAnimAdded("disable2"))
 			removeAnim("disable2");
-		_thirdDisabled = false;
+		_vm->_globals->mathlab.thirdDisabled = false;
 	}
 	_pending = 0;
 	_pumping = false;
@@ -1020,7 +1018,7 @@ void MathlabScene::loseTime(int seconds) {
 void MathlabScene::gameOver() {
 	for (int id = kButtonPlus1; id < kButtonPlus1 + 3; id++)
 		_buttons.remove(id);
-	if (!_thirdDisabled)
+	if (!_vm->_globals->mathlab.thirdDisabled)
 		for (int id = kButtonPlus2; id < kButtonPlus2 + 3; id++)
 			_buttons.remove(id);
 	_vm->setGameRunning(false);   // FUN_0040d8a0(0)
@@ -1087,7 +1085,7 @@ void MathlabScene::dropBall(int hotspot, int number) {
 		return;
 	if (hotspot >= kHotspotBox0 && hotspot < kHotspotBox0 + kBoxes) {
 		const int b = hotspot - kHotspotBox0;
-		if (!_thirdDisabled || b < 2) {
+		if (!_vm->_globals->mathlab.thirdDisabled || b < 2) {
 			playSound("click2");
 			_box[b] = number;
 			setCounter(_boxCounters[b], number);
@@ -1252,7 +1250,7 @@ void MathlabScene::onUpdate() {
 	}
 
 	for (int b = 0; b < kBoxes; b++) {
-		if (b == 2 && _thirdDisabled) {
+		if (b == 2 && _vm->_globals->mathlab.thirdDisabled) {
 			// FUN_00407880: the covered container shows no digits
 			clearLabel("box2_0");
 			clearLabel("box2_1");
@@ -1281,7 +1279,7 @@ void MathlabScene::onUpdate() {
 		checkLevel();
 		_pumping = false;
 	}
-	if (_state == kStateOver && _tapState == 0 && _pours.empty() && !_hatchOpen)
+	if (_state == kStateOver && _tapState == 0 && _pours.empty() && !_vm->_globals->mathlab.hatchOpen)
 		gameOver();
 }
 

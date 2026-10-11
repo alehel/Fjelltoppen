@@ -80,7 +80,6 @@ private:
 	SceneButtons _buttons;
 	Tooltip _tooltip;
 	BitmapFont _font;                         ///< DAT_0057cff0: title and tab labels
-	static int _tab;                          ///< DAT_0057e0ec, kept across visits
 };
 
 } // End of namespace Flaaklypa

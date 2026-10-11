@@ -229,6 +229,17 @@ F1..F11). Engine: `Scene::handlesKey()` and
 151..199 or 200..214 fact pages (`fact.ini` `hotspot=`), 251/252 the characters,
 254/255 hidden 3D glasses / car part bitmaps.
 
+### State that outlives a scene
+
+The original keeps some scene state in globals that survive a visit and
+are reset only when the program starts: the "pick without repeats" masks
+of the story pages (`FUN_0040a150`), the fence's tune, the scene index's
+tab, mathlab's hatch, gametrivia's picture clips, anaglyph's clips, the
+race menu's settings and its last high score rows. The engine keeps them
+in `Globals` (`globals.h`, `FlaaklypaEngine::_globals`, created with the
+engine) rather than in statics, so a game started again from the launcher
+starts afresh like the original would.
+
 ### Audio
 
 Nearly all clips with sound use Bink RDFT audio inside Smacker (flag bit 27),
@@ -3320,7 +3331,7 @@ B2). No music (`FUN_0040b2f0`), no title.
   (the original shows the full path).
 * State: the notes and their count are globals that outlive the scene:
   on the next visit the old tune shows and flies away before the empty
-  `fence:DEFTUNE` tune starts (static members in the port). Instrument
+  `fence:DEFTUNE` tune starts (`Globals::fence` in the port). Instrument
   (piano), tempo, letters and page reset on init. Profile: value 0 =
   hidden car part found; the car part (`carpart`, z -10 at (0,536)) has
   hotspot -1 (`FUN_00467790` case -1, only outside the bird modes:
@@ -4225,8 +4236,8 @@ plays one clip, and no state machine.
   on init, the masks are kept); 27 the hidden car part (`bitmap/carpart.bmp`
   at 650,179, z -10, element hotspot); 200..213 the fact pages of
   `lang/garage/fact.ini` (listed as `factopedia` in the cursor table).
-* State across visits: the car part flag (profile key 0 of the page in the
-  original, a static here) and the two variant masks.
+* State across visits: the car part flag (profile key 0 of the page) and
+  the two variant masks (`Globals::garage`).
 ## Story page `house` ("På tunet")
 
 Reodor's house (`S04`, handler `FUN_00425160`, `house.cpp`, `HouseScene`).
@@ -4258,7 +4269,7 @@ next `tvroom`, previous `desk`.
   `S04AN-SS-013b`/`013c`. Hotspots 100..116 are fact pages
   (`lang/house/fact.ini`, handled by the fact module).
 * State: the three "pick without repeats" counters are reset at init, the
-  three masks are globals and survive a visit (static members).
+  three masks are globals and survive a visit (`Globals::house`).
 * Clips of this page are spread over `data/house`, `data1..3/house` and
   `lang1/house` (the intro, narration and the longer dialogue clips).
 * TODO: ambience clip.
@@ -4335,7 +4346,7 @@ navigator result -> `424dc0`, 0x11f -> `424d30`). Engine: `desk.cpp`.
   `010/012a/012b/014`, `010/013a/013b/014`, 110: one of the single clips
   `021`/`022`/`023` (all three picked with `FUN_0040a150`: in order the
   first three times, then random without repeats; the counters are reset
-  on every visit, the masks are globals). Single clips: 103 `015`, 104
+  on every visit, the masks are globals, `Globals::desk`). Single clips: 103 `015`, 104
   `016`, 106 `017`, 113 `024`, 115 `026`, 116 `027`, 117 `028`, 118 `arc`
   (not in the mask: unreachable), 119 `chime`, 121 `bear`; 108 sequence
   `019/019a/020`. 120: `S02AN-SS-007a` (Solan goes out to pee), when it
@@ -4536,7 +4547,7 @@ Hotspots 6 and 215 exist in the mask but are neither in the cursor table
 nor handled.
 
 State: the masks of the five random picks (`DAT_005b8a10`, `..18`,
-`..24`, `..30`, `..34`) are kept across visits (static members); their
+`..24`, `..30`, `..34`) are kept across visits (`Globals::tvroom`); their
 counters are reset at init. The car part flag is profile page value 0
 and the glasses `FUN_0041b8c0(5)` (`Scene::carPartFound()`,
 `found3DScene()`).

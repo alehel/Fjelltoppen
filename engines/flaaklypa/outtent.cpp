@@ -22,6 +22,7 @@
 #include "common/system.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -81,9 +82,6 @@ enum {
 
 // Random pick masks of the original (DAT_005b87a4, DAT_005b8798,
 // DAT_005b87a0): never cleared, so they survive a visit.
-int OuttentScene::_cushionsMask = 0;
-int OuttentScene::_grassMask = 0;
-int OuttentScene::_tableMask = 0;
 
 OuttentScene::OuttentScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_cushionsCount(0), _grassCount(0), _tableCount(0), _dreamNarrationCount(0) {
@@ -173,7 +171,7 @@ void OuttentScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S09AN-SS-010");
 		break;
 	case kHotspotCushions:
-		switch (pickNoRepeat(_cushionsCount, _cushionsMask, 2)) {
+		switch (pickNoRepeat(_cushionsCount, _vm->_globals->outtent.cushionsMask, 2)) {
 		case 0: playSequence(kSeqCushions1); break;
 		case 1: playSequence(kSeqCushions2); break;
 		default: break;
@@ -189,14 +187,14 @@ void OuttentScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->changeScene("intent");
 		break;
 	case kHotspotGrass:
-		switch (pickNoRepeat(_grassCount, _grassMask, 2)) {
+		switch (pickNoRepeat(_grassCount, _vm->_globals->outtent.grassMask, 2)) {
 		case 0: playSequence(kSeqGrass1); break;
 		case 1: playSequence(kSeqGrass2); break;
 		default: break;
 		}
 		break;
 	case kHotspotTable:
-		switch (pickNoRepeat(_tableCount, _tableMask, 3)) {
+		switch (pickNoRepeat(_tableCount, _vm->_globals->outtent.tableMask, 3)) {
 		case 0: playSequence(kSeqTable1); break;
 		case 1: playSequence(kSeqTable2); break;
 		case 2: playSequence(kSeqTable3); break;

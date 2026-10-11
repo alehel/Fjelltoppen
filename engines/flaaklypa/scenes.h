@@ -301,7 +301,6 @@ private:
 
 	int _flags;
 	int _toggleBench, _toggleWell, _toggleFence;
-	static int _introCount, _introMask; ///< random pick without repeats, kept across visits like the original
 };
 
 /** Story page 6: the garage (verkstedet). */
@@ -317,7 +316,6 @@ private:
 	int pickVariant(int &count, int &mask, int n);
 
 	int _count008, _count009;            ///< picks of the two clip pairs this visit (reset on init)
-	static int _mask008, _mask009;       ///< variants played since the last full round, kept across visits
 };
 
 /** Story page 4: the house. */
@@ -337,7 +335,6 @@ private:
 	int pickRandom(int &count, int &mask, int n);
 
 	int _countWindow, _countBench, _countDoor;   ///< picks made this visit (reset on init)
-	static int _maskWindow, _maskBench, _maskDoor; ///< variants used since the last reset, kept across visits
 	int _audiopairsHotspot;                      ///< DAT_005b877c
 };
 
@@ -361,7 +358,6 @@ private:
 	int pickChessVariant();
 
 	int _chessCount;         ///< clicks on the chess board this visit
-	static int _chessMask;   ///< variants played, kept across visits like the original
 	bool _wakeUpTimer;       ///< the trance wake up timer is pending
 };
 
@@ -386,7 +382,6 @@ private:
 	void startSingle(const char *name);
 
 	int _pick101Count, _pick102Count, _pick110Count; ///< reset every visit
-	static int _pick101Mask, _pick102Mask, _pick110Mask; ///< kept across visits like the original's globals
 	static int _narrationCount; ///< profile key 1 in the original (TODO)
 	bool _introRunning;
 	int _longFrame, _shortFrame; ///< clock hand frames currently shown
@@ -495,7 +490,6 @@ private:
 
 	int _count005, _countBee, _countMoose, _countMooseClick, _countSolan;
 	AnimList _sequence; ///< the list last started by the page, to tell which one onSequenceDone() reports
-	static int _mask005, _maskBee, _maskMoose, _maskMooseClick, _maskSolan; ///< kept across visits like the original
 };
 
 /** Story page 9: outside the sheik's tent (foran sjeikens telt). */
@@ -517,7 +511,6 @@ private:
 
 	int _cushionsCount, _grassCount, _tableCount; ///< random pick counters, reset on every visit
 	int _dreamNarrationCount;                  ///< the dream narration plays once per visit
-	static int _cushionsMask, _grassMask, _tableMask; ///< random pick masks, kept across visits like the original
 };
 
 /** Story page 14: goodbye (avslutning). Fireworks and stars, then the narrator sends the player on to the outro. */
@@ -535,7 +528,6 @@ public:
 private:
 	void narrationFinished(const char *name);
 
-	static int _fireworkCount; ///< DAT_0055d000: fireworks launched, reset when the page is entered afresh
 };
 
 /** The ending page (epilog): Reodor, Solan and Ludvig watch the fireworks, then the credits from credits.ini scroll up. */
@@ -701,7 +693,6 @@ private:
 	static int heading(const Common::Point &p0, const Common::Point &p1);
 
 	int _bushCount;              ///< clicks on the bush this visit
-	static int _bushMask;        ///< variants played, kept across visits like the original
 
 	// The flying butterfly
 	Common::Point _points[kMaxPoints]; ///< flight path

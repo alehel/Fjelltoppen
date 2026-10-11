@@ -21,6 +21,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -68,9 +69,6 @@ enum {
 };
 
 // The "pick without repeats" masks survive a visit (the counts do not).
-int HouseScene::_maskWindow = 0;
-int HouseScene::_maskBench = 0;
-int HouseScene::_maskDoor = 0;
 
 HouseScene::HouseScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_countWindow(0), _countBench(0), _countDoor(0), _audiopairsHotspot(0) {
@@ -153,7 +151,7 @@ void HouseScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S04AN-SS-014");
 		break;
 	case kHotspotRightWindow:
-		switch (pickRandom(_countWindow, _maskWindow, 2)) {
+		switch (pickRandom(_countWindow, _vm->_globals->house.maskWindow, 2)) {
 		case 0: playSingle("S04AN-SS-002a"); break;
 		case 1: playSingle("S04AN-SS-002c"); break;
 		default: break;
@@ -175,14 +173,14 @@ void HouseScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S04AN-SS-015a");
 		break;
 	case kHotspotBench2:
-		switch (pickRandom(_countBench, _maskBench, 2)) {
+		switch (pickRandom(_countBench, _vm->_globals->house.maskBench, 2)) {
 		case 0: playSingle("S04AN-SS-015c"); break;
 		case 1: playSingle("S04AN-SS-015d"); break;
 		default: break;
 		}
 		break;
 	case kHotspotDoor:
-		switch (pickRandom(_countDoor, _maskDoor, 2)) {
+		switch (pickRandom(_countDoor, _vm->_globals->house.maskDoor, 2)) {
 		case 0: playSingle("S04AN-SS-013b"); break;
 		case 1: playSingle("S04AN-SS-013c"); break;
 		default: break;

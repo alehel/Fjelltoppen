@@ -30,6 +30,7 @@
 #include "flaaklypa/entrydlg.h"
 #include "flaaklypa/fence.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/listdlg.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
@@ -148,10 +149,7 @@ static int noteY(int x, int pitch) {
 	return (int)(u * u * -6.0 + 182.0 - pitch * 8.5 - 42.0);
 }
 
-FenceScene::Note FenceScene::_notes[FenceScene::kMaxNotes];
-int FenceScene::_count = 0;
-
-FenceScene::FenceScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _buttons(this),
+FenceScene::FenceScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _tune(vm->_globals->fence), _buttons(this),
 	_sounds(nullptr), _instrument(0), _birdsChannel(-1), _tempoLabel(nullptr), _tempo(kTempoDefault), _mode(kModeFree),
 	_prevMode(kModeFree), _current(0), _page(0), _dragSlot(-1), _letters(false), _lastTick(0),
 	_drag(kDragNone), _sockCreated(false), _sockMax(0), _sockValue(0), _sockW(0),
@@ -315,7 +313,7 @@ void FenceScene::enterPlay() {
 			return;
 		}
 	}
-	debug(1, "Fence: playing %d notes at %d bpm", _count, _tempo);
+	debug(1, "Fence: playing %d notes at %d bpm", _tune.count, _tempo);
 	_mode = kModePlay;
 	showModeLight(kHotspotPlay);
 	if (!isAnimAdded("player"))
@@ -458,23 +456,23 @@ void FenceScene::boardPressed(int pitch) {
 	if (_mode == kModeFree) {
 		// The player follows the tune: the right note moves the cursor on
 		playNote(pitch);
-		if (_current < _count && pitch == _notes[_current].pitch)
+		if (_current < _tune.count && pitch == _tune.notes[_current].pitch)
 			advance();
 	} else if (_mode == kModePlay) {
 		playNote(pitch);
-	} else if (_mode == kModeRecord && _count < kMaxNotes) {
+	} else if (_mode == kModeRecord && _tune.count < FenceTune::kMaxNotes) {
 		// A crotchet after the current note
-		if (_count < 1)
+		if (_tune.count < 1)
 			_current = 0;
 		else
 			_current++;
 		scrollToCurrent();
 		const int at = _current;
-		for (int i = _count; i > at; i--)
-			_notes[i] = _notes[i - 1];
-		_count++;
-		_notes[at].pitch = pitch;
-		_notes[at].length = kNewNoteLength;
+		for (int i = _tune.count; i > at; i--)
+			_tune.notes[i] = _tune.notes[i - 1];
+		_tune.count++;
+		_tune.notes[at].pitch = pitch;
+		_tune.notes[at].length = kNewNoteLength;
 		playNote(pitch);
 		showPage();
 		showCursorMark();
@@ -496,7 +494,7 @@ void FenceScene::playNote(int pitch) {
 
 // FUN_00467f70: plays the current note and waits its length
 bool FenceScene::playStep() {
-	const Note &note = _notes[_current];
+	const Note &note = _tune.notes[_current];
 	playNote(note.pitch);
 	const int ms = kLengthUnits[note.length] * 60000 / kUnitsPerBeat / _tempo;
 	if (advance()) {
@@ -516,13 +514,13 @@ bool FenceScene::playStep() {
 // FUN_00467cb0: the next note; false at the end of the tune
 bool FenceScene::advance() {
 	_current++;
-	if (_current >= _count) {
+	if (_current >= _tune.count) {
 		removeMarker();
 		return false;
 	}
 	if (_current >= _page + kSlots) {
 		_page += kSlots;
-		if (_page >= _count) {
+		if (_page >= _tune.count) {
 			_page = 0;
 			_current = 0;
 		}
@@ -533,7 +531,7 @@ bool FenceScene::advance() {
 			} else {
 				// The original takes the pitch of the note before (0x6b6228 + current * 8)
 				const int x = (_current - _page) * kNoteSpacing + 7;
-				marker->setPos(x, noteY(x, _notes[_current - 1].pitch));
+				marker->setPos(x, noteY(x, _tune.notes[_current - 1].pitch));
 			}
 		}
 		updateSock();
@@ -597,7 +595,7 @@ void FenceScene::onRightClick(int x, int y) {
 	if (_mode != kModeRecord || hotspot < kHotspotNote || hotspot >= kHotspotNote + kSlots)
 		return;
 	_current = _page + hotspot - kHotspotNote;
-	Note &note = _notes[_current];
+	Note &note = _tune.notes[_current];
 	if (g_system->getEventManager()->getModifierState() & Common::KBD_SHIFT)
 		note.length += (note.length & 1) ? -1 : 1;
 	else
@@ -685,7 +683,7 @@ void FenceScene::centreAnim(Anim *a, int x, int y) {
 // The note of a slot (bitmap/<length>-<up|down>, stem down from the middle
 // line up) at its column, hit tested on its rectangle
 void FenceScene::showNote(int slot, int index, int z) {
-	const Note &note = _notes[index];
+	const Note &note = _tune.notes[index];
 	const int x = slot * kNoteSpacing + kNoteX;
 	const int y = noteY(x, note.pitch);
 	Anim *a = showElement(slotName(slot), Common::String::format("%s-%s", kLengthNames[note.length], note.pitch > 7 ? "down" : "up"),
@@ -723,18 +721,18 @@ void FenceScene::removeSlot(int slot, bool note) {
 void FenceScene::showPage() {
 	for (int slot = 0; slot < kSlots; slot++)
 		removeSlot(slot, true);
-	const int end = MIN(_page + (int)kSlots, _count);
+	const int end = MIN(_page + (int)kSlots, _tune.count);
 	for (int i = _page; i < end; i++) {
 		const int slot = i - _page;
 		showNote(slot, i, kZNote);
-		showExtras(slot, _notes[i].pitch, slot * kNoteSpacing + kNoteX);
+		showExtras(slot, _tune.notes[i].pitch, slot * kNoteSpacing + kNoteX);
 	}
 }
 
 // FUN_004664f0: the frame round the current note, when it is on the page
 void FenceScene::showCursorMark() {
 	if (_mode == kModeFree || _mode == kModeRecord) {
-		const int end = MIN(_page + (int)kSlots, _count);
+		const int end = MIN(_page + (int)kSlots, _tune.count);
 		if (_page <= _current && _current < end) {
 			const Common::Point &p = _slotPos[_current - _page];
 			if (!isAnimAdded("cursor"))
@@ -773,7 +771,7 @@ void FenceScene::dragMove(int x, int y) {
 	if (_dragSlot < 0)
 		return;
 	const int index = _page + _dragSlot;
-	Note &note = _notes[index];
+	Note &note = _tune.notes[index];
 	const int nx = _dragSlot * kNoteSpacing + kNoteX;
 	Anim *a = anim(slotName(_dragSlot).c_str());
 	const int top = y - a->rect().height() / 2;
@@ -804,13 +802,13 @@ void FenceScene::dragMove(int x, int y) {
 // deleted
 void FenceScene::drop() {
 	if (isAnimAdded("trash")) {
-		_count--;
-		for (int i = _dragSlot + _page; i < _count; i++)
-			_notes[i] = _notes[i + 1];
+		_tune.count--;
+		for (int i = _dragSlot + _page; i < _tune.count; i++)
+			_tune.notes[i] = _tune.notes[i + 1];
 		if (_current < 1)
 			_current = 0;
-		else if (_current >= _count)
-			_current = _count - 1;
+		else if (_current >= _tune.count)
+			_current = _tune.count - 1;
 		scrollToCurrent();
 		removeAnim("trash");
 	}
@@ -831,7 +829,7 @@ void FenceScene::updateSock() {
 	if (!_sockCreated)
 		return;
 	// FUN_00408e20(0x21, 0, max)
-	_sockMax = MAX((_count - 16) / 16 + 1, 0);
+	_sockMax = MAX((_tune.count - 16) / 16 + 1, 0);
 	if (sockSetValue(_page / 16))
 		scrolled();
 }
@@ -1078,7 +1076,7 @@ void FenceScene::flyAway() {
 	for (int slot = 0; slot < kSlots; slot++) {
 		Anim *a = findAnimOrNull(slotName(slot).c_str());
 		if (a && a->isAdded())
-			birdTakeOff(_slotPos[slot].x, _slotPos[slot].y, _notes[_page + slot]);
+			birdTakeOff(_slotPos[slot].x, _slotPos[slot].y, _tune.notes[_page + slot]);
 	}
 	showWaitCursor();
 	if (_sounds && !_sounds->isPlaying(_birdsChannel))
@@ -1089,9 +1087,9 @@ void FenceScene::flyAway() {
 // FUN_00468520: the first 16 notes of the tune come flying
 void FenceScene::flyIn() {
 	_birdCount = 0;
-	for (int i = 0; i < _count && i < kSlots; i++) {
+	for (int i = 0; i < _tune.count && i < kSlots; i++) {
 		const int x = i * kNoteSpacing + kNoteX;
-		birdLand(x, noteY(x, _notes[i].pitch), _notes[i]);
+		birdLand(x, noteY(x, _tune.notes[i].pitch), _tune.notes[i]);
 	}
 	if (_sounds && !_sounds->isPlaying(_birdsChannel))
 		_birdsChannel = _sounds->play("birds", true);
@@ -1120,7 +1118,7 @@ void FenceScene::changeTune(const TuneFile *tune) {
 	leaveMode();
 	flyAway();
 	if (!tune) {
-		_count = 0;
+		_tune.count = 0;
 		setTempo(kTempoDefault);
 		_tuneName = _vm->getString("fence:DEFTUNE");
 	} else {
@@ -1128,7 +1126,7 @@ void FenceScene::changeTune(const TuneFile *tune) {
 		const bool ok = s && readTune(*s);
 		delete s;
 		debug(1, "Fence: tune '%s' (%s): %s, %d notes at %d bpm", tune->title.c_str(), tune->path.c_str(),
-			ok ? "loaded" : "failed", _count, _tempo);
+			ok ? "loaded" : "failed", _tune.count, _tempo);
 		if (!ok) {
 			_vm->messageBox("fence:IOERR_TITLE", Common::String::format(_vm->getString("fence:IOERR").c_str(), tune->path.c_str()),
 				MessageBox::kButtonOk);
@@ -1158,7 +1156,7 @@ bool FenceScene::readTune(Common::SeekableReadStream &s) {
 	const int count = s.readByte();
 	if (s.eos())
 		return false;
-	_count = 0;
+	_tune.count = 0;
 	_tempo = kTempoDefault;
 	for (int i = 0; i < count; i++) {
 		const int32 pitch = s.readSint32LE();
@@ -1166,10 +1164,10 @@ bool FenceScene::readTune(Common::SeekableReadStream &s) {
 		if (s.eos() || s.err())
 			return false;
 		// Not checked by the original
-		_notes[i].pitch = CLIP<int32>(pitch, 0, kPitches - 1);
-		_notes[i].length = CLIP<int32>(length, 0, kLengths - 1);
+		_tune.notes[i].pitch = CLIP<int32>(pitch, 0, kPitches - 1);
+		_tune.notes[i].length = CLIP<int32>(length, 0, kLengths - 1);
 	}
-	_count = count;
+	_tune.count = count;
 	setTempo(tempo);
 	return true;
 }
@@ -1182,10 +1180,10 @@ void FenceScene::writeTune(Common::WriteStream &out, const Common::String &title
 	Common::strlcpy(name, title.c_str(), sizeof(name));
 	out.write(name, sizeof(name));
 	out.writeByte(_tempo);
-	out.writeByte(_count & 0xff);
-	for (int i = 0; i < _count; i++) {
-		out.writeSint32LE(_notes[i].pitch);
-		out.writeSint32LE(_notes[i].length);
+	out.writeByte(_tune.count & 0xff);
+	for (int i = 0; i < _tune.count; i++) {
+		out.writeSint32LE(_tune.notes[i].pitch);
+		out.writeSint32LE(_tune.notes[i].length);
 	}
 }
 
@@ -1315,7 +1313,7 @@ void FenceScene::saveTune() {
 	out->finalize();
 	const bool ok = !out->err();
 	delete out;
-	debug(1, "Fence: tune '%s' saved as %s (%d notes)", title.c_str(), saveName.c_str(), _count);
+	debug(1, "Fence: tune '%s' saved as %s (%d notes)", title.c_str(), saveName.c_str(), _tune.count);
 	if (!ok)
 		return;
 	_vm->messageBox("fence:SAVETITLE", Common::String::format(_vm->getString("fence:SAVED").c_str(), saveName.c_str()),

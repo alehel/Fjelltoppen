@@ -22,6 +22,7 @@
 #include "common/system.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
 
@@ -97,11 +98,6 @@ static const char *const kTvSound = "S05AN-SS-003c";
 // Random picks without repeats (FUN_0040a150): the masks live in the
 // original's data segment and survive leaving the page, the counters are
 // reset by the init handler.
-int TvroomScene::_mask005 = 0;
-int TvroomScene::_maskBee = 0;
-int TvroomScene::_maskMoose = 0;
-int TvroomScene::_maskMooseClick = 0;
-int TvroomScene::_maskSolan = 0;
 
 TvroomScene::TvroomScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_count005(0), _countBee(0), _countMoose(0), _countMooseClick(0), _countSolan(0), _sequence(nullptr) {
@@ -215,7 +211,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->startGame("gallery");
 		break;
 	case kHotspot005:
-		if (pick(_count005, _mask005, 2) == 0)
+		if (pick(_count005, _vm->_globals->tvroom.mask005, 2) == 0)
 			sequence(kSeq005a);
 		else
 			sequence(kSeq005b);
@@ -242,7 +238,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->startGame("draughts");
 		break;
 	case kHotspotBee:
-		if (pick(_countBee, _maskBee, 2) == 0)
+		if (pick(_countBee, _vm->_globals->tvroom.maskBee, 2) == 0)
 			single("bee");
 		else
 			single("flower");
@@ -251,7 +247,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		takeCarPart();
 		break;
 	case kHotspotMoose:
-		if (pick(_countMooseClick, _maskMooseClick, 2) == 0)
+		if (pick(_countMooseClick, _vm->_globals->tvroom.maskMooseClick, 2) == 0)
 			single("moose3");
 		else
 			single("moose4");
@@ -264,7 +260,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		break;
 	case kHotspotSolan:
 		// Solan has no reaction list; the page plays one of four clips.
-		switch (pick(_countSolan, _maskSolan, 4)) {
+		switch (pick(_countSolan, _vm->_globals->tvroom.maskSolan, 4)) {
 		case 0:
 			single("S05AN-SS-007c");
 			break;
@@ -369,7 +365,7 @@ void TvroomScene::onTimer(int id, int data) {
 	// FUN_00427890; the original timers repeat, the engine's fire once.
 	if (id == kTimerMoose) {
 		setTimer(kTimerMoose, kMoosePeriod);
-		playAnim(kMoose[pick(_countMoose, _maskMoose, 5)]);
+		playAnim(kMoose[pick(_countMoose, _vm->_globals->tvroom.maskMoose, 5)]);
 	} else {
 		setTimer(kTimerClock, kClockPeriod);
 		updateClock();

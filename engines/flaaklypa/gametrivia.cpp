@@ -27,6 +27,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/gametrivia.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
@@ -106,9 +107,6 @@ static const char *const kNextPicture[] = {
 	"solan_next_picture1", "solan_next_picture2", "solan_next_picture3", "solan_next_picture4", nullptr
 };
 enum { kNextPictureCount = 4 };
-
-// DAT_006d71a0: the clips of kNextPicture played so far (FUN_0040a150), kept for the whole session
-static uint32 s_nextPictureMask = 0;
 
 // The texts of FUN_0047f590 (left, top, right, bottom)
 static const int kScoreRect[4] = { 578, 522, 784, 538 };     // 0x4a0368: SCORE label and the score
@@ -651,16 +649,16 @@ void GametriviaScene::playQuestionSound() {
 // fourth counting as played)
 void GametriviaScene::nextPicture(bool correct) {
 	const uint32 full = (1u << kNextPictureCount) - 1;
-	if (s_nextPictureMask == full)
-		s_nextPictureMask = 0;
+	if (_vm->_globals->gametrivia.nextPictureMask == full)
+		_vm->_globals->gametrivia.nextPictureMask = 0;
 	int free = 0;
 	for (int i = 0; i < kNextPictureCount; i++)
-		if (!(s_nextPictureMask & (1u << i)))
+		if (!(_vm->_globals->gametrivia.nextPictureMask & (1u << i)))
 			free++;
 	int k = free ? (int)_vm->getRandomNumber(free - 1) : 0;
 	int idx = 0;
 	for (int i = 0; i < kNextPictureCount; i++) {
-		if (s_nextPictureMask & (1u << i))
+		if (_vm->_globals->gametrivia.nextPictureMask & (1u << i))
 			continue;
 		if (k < 1) {
 			idx = i;
@@ -668,7 +666,7 @@ void GametriviaScene::nextPicture(bool correct) {
 		}
 		k--;
 	}
-	s_nextPictureMask |= 1u << idx;
+	_vm->_globals->gametrivia.nextPictureMask |= 1u << idx;
 	if (!correct && idx == kNextPictureCount - 1)
 		idx = 0;
 	_state = kStateNext;

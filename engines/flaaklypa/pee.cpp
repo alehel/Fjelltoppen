@@ -22,6 +22,7 @@
 #include "common/system.h"
 
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/globals.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
@@ -71,8 +72,6 @@ enum {
 	kButterflyRadius = 20
 };
 
-int PeeScene::_bushMask = 0;
-
 PeeScene::PeeScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_bushCount(0), _pointCount(0), _progress(0.0f), _speed(0.0f), _colour(0), _lastTick(0) {
 	memset(_points, 0, sizeof(_points));
@@ -113,20 +112,20 @@ int PeeScene::pickBush() {
 	// FUN_0040a150(&count, &mask, 2): the first two clicks of a visit in
 	// order, then a random variant, never repeating one until both played.
 	const int n = 2;
-	if (_bushMask == (1 << n) - 1)
-		_bushMask = 0;
+	if (_vm->_globals->pee.bushMask == (1 << n) - 1)
+		_vm->_globals->pee.bushMask = 0;
 	int pick = _bushCount;
 	if (pick >= n) {
 		int free = 0;
 		for (int i = 0; i < n; i++)
-			if (!(_bushMask & (1 << i)))
+			if (!(_vm->_globals->pee.bushMask & (1 << i)))
 				free++;
 		int r = _vm->getRandomNumber(free - 1);
 		for (int i = 0; i < n; i++)
-			if (!(_bushMask & (1 << i)) && r-- == 0)
+			if (!(_vm->_globals->pee.bushMask & (1 << i)) && r-- == 0)
 				pick = i;
 	}
-	_bushMask |= 1 << pick;
+	_vm->_globals->pee.bushMask |= 1 << pick;
 	_bushCount++;
 	return pick;
 }
