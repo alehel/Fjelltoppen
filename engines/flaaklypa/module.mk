@@ -34,6 +34,7 @@ MODULE_OBJS = \
 	intro.o \
 	lettersort.o \
 	logo.o \
+	mahjong.o \
 	mainscore.o \
 	menu.o \
 	metaengine.o \
