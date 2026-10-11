@@ -169,7 +169,17 @@ Graphics::ManagedSurface *Resources::loadBitmap(const Common::String &scene, con
 		return nullptr;
 	}
 	const Graphics::Surface *src = decoder.getSurface();
-	Graphics::Surface *conv = src->convertTo(format, decoder.hasPalette() ? decoder.getPalette().data() : nullptr);
+	// A BMP's palette may have fewer than 256 colours; the conversion maps
+	// all 256 indices, so the rest are padded with black.
+	byte palette[256 * 3];
+	memset(palette, 0, sizeof(palette));
+	const byte *srcPalette = nullptr;
+	if (decoder.hasPalette()) {
+		const Graphics::Palette &p = decoder.getPalette();
+		memcpy(palette, p.data(), MIN<uint>(p.size(), 256) * 3);
+		srcPalette = palette;
+	}
+	Graphics::Surface *conv = src->convertTo(format, srcPalette);
 	Graphics::ManagedSurface *result = new Graphics::ManagedSurface();
 	result->copyFrom(*conv);
 	conv->free();
