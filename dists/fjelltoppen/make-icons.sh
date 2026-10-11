@@ -1,40 +1,23 @@
 #!/bin/sh
-# Builds Fjelltoppen's icons from the Il Tempo Gigante render on CD 1 of
-# the Gold edition (MEDIA/BITMAP/CARS/ILTEMPO03.BMP):
+# Builds Fjelltoppen's icons from icon.svg (a waving checkered flag filling
+# the tile, drawn for Fjelltoppen):
 #
-#   icon.png        1024x1024 master
+#   icon.png          1024x1024 master
 #   fjelltoppen.icns  macOS bundle icon
 #   fjelltoppen.ico   Windows executable icon
 #   fjelltoppen.png   256x256 Linux desktop icon
 #   fjelltoppen.xpm   SDL window icon (at most 90 colours, one char per pixel)
 #
-# Usage: make-icons.sh <CD 1 folder>. Needs ImageMagick 7 and python3;
-# fjelltoppen.icns also needs iconutil (macOS).
+# Needs rsvg-convert (librsvg), ImageMagick 7 and python3; fjelltoppen.icns
+# also needs iconutil (macOS).
 
 set -e
 
-cd1="$1"
 out=$(cd "$(dirname "$0")" && pwd)
-if [ -z "$cd1" ] || [ ! -d "$cd1" ]; then
-	echo "usage: $0 <CD 1 folder>" >&2
-	exit 1
-fi
-render=$(find "$cd1" -ipath '*media/bitmap/cars/iltempo03.bmp' | head -n 1)
-if [ -z "$render" ]; then
-	echo "MEDIA/BITMAP/CARS/ILTEMPO03.BMP not found in $cd1" >&2
-	exit 1
-fi
-
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-# The car (black background) lightened onto a night sky tile with the
-# rounded corners of the macOS icon grid (824x824 in 1024x1024).
-magick "$render" -crop 834x717+76+51 +repage -level 0,80%,1.15 -modulate 100,115 -resize 800x "$tmp/car.png"
-magick -size 824x824 gradient:"#2b4a86"-"#05070f" "$tmp/car.png" -geometry +12+90 -compose lighten -composite "$tmp/tile.png"
-magick -size 824x824 xc:black -fill white -draw "roundrectangle 0,0 823,823 185,185" "$tmp/mask.png"
-magick "$tmp/tile.png" "$tmp/mask.png" -alpha off -compose copyopacity -composite "$tmp/rounded.png"
-magick -size 1024x1024 xc:none "$tmp/rounded.png" -geometry +100+100 -compose over -composite "$out/icon.png"
+rsvg-convert -w 1024 -h 1024 "$out/icon.svg" -o "$out/icon.png"
 
 magick "$out/icon.png" -resize 256x256 "$out/fjelltoppen.png"
 magick "$out/icon.png" -define icon:auto-resize=256,128,64,48,32,24,16 "$out/fjelltoppen.ico"

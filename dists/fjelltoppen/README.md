@@ -82,8 +82,9 @@ GitHub only offers for workflows on the default branch), it only builds.
 
 ## Icons
 
-`make-icons.sh <CD 1 folder>` makes `icon.png` and the per-platform icons
-from the Il Tempo Gigante render on CD 1 (`MEDIA/BITMAP/CARS/ILTEMPO03.BMP`).
+`icon.svg` is Fjelltoppen's icon (a waving checkered flag filling the tile,
+drawn for it, so no artwork from the game); `make-icons.sh` renders it to
+`icon.png` and the per-platform icons.
 
 ## Testing the first launch
 
