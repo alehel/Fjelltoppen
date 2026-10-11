@@ -22,6 +22,7 @@
 
 #include "flaaklypa/activity.h"
 #include "flaaklypa/audiopairs.h"
+#include "flaaklypa/balloonhunt.h"
 #include "flaaklypa/beemaze.h"
 #include "flaaklypa/bouquet.h"
 #include "flaaklypa/bugzzz.h"
@@ -477,6 +478,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BugzzzScene(vm, def);
 	if (!scumm_stricmp(name, "mountain"))
 		return new MountainScene(vm, def);
+	if (!scumm_stricmp(name, "balloonhunt"))
+		return new BalloonhuntScene(vm, def);
 	if (!scumm_stricmp(name, "intent"))
 		return new IntentScene(vm, def);
 	if (!scumm_stricmp(name, "desk"))
