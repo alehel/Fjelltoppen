@@ -20,7 +20,8 @@ mkdir -p "${1:-build-flaaklypa-macos}"
 build=$(cd "${1:-build-flaaklypa-macos}" && pwd)
 download="$build/download"
 . "$src/dists/flaaklypa/deps.sh"
-version=$(cat "$src/dists/flaaklypa/VERSION")
+# The release workflow passes the version of its tag
+version=${FLAAKLYPA_VERSION:-$(cat "$src/dists/flaaklypa/VERSION")}
 name="Flåklypa Grand Prix"
 jobs=$(sysctl -n hw.ncpu)
 
@@ -113,7 +114,12 @@ mkdir -p "$stage"
 cp -R "$app" "$stage/"
 ln -s /Applications "$stage/Programmer"
 cp "$src/dists/flaaklypa/LESMEG.txt" "$stage/Les meg.txt"
-hdiutil create -volname "$name" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$dmg"
+# hdiutil fails now and then with "Resource busy"
+for attempt in 1 2 3; do
+	hdiutil create -volname "$name" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$dmg" && break
+	[ $attempt = 3 ] && exit 1
+	sleep 5
+done
 rm -rf "$stage"
 
 if [ -n "$CODESIGN_IDENTITY" ]; then

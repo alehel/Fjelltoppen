@@ -17,7 +17,8 @@ out=$(cd "${1:-build-flaaklypa-windows}" && pwd)
 build=${WORK:-/tmp/flaaklypa-windows}
 download="$out/download"
 . "$src/dists/flaaklypa/deps.sh"
-version=$(cat "$src/dists/flaaklypa/VERSION")
+# The release workflow passes the version of its tag
+version=${FLAAKLYPA_VERSION:-$(cat "$src/dists/flaaklypa/VERSION")}
 jobs=$(nproc)
 
 host=x86_64-w64-mingw32

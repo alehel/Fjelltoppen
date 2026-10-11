@@ -58,9 +58,24 @@ zlib, bzip2), built from source and linked statically.
       podman run --rm -v "$PWD:/src:ro" -v "$PWD/build-linux:/build" \
           flaaklypa-linux /src/dists/flaaklypa/linux/build.sh /build
 
-The workflow `.github/workflows/flaaklypa-app.yml` runs the same scripts
-on GitHub (by hand, or for a pushed `flaaklypa-v*` tag, which also makes a
-draft release with the packages). The version is in `VERSION`.
+`VERSION` is the version of local builds; the release workflow passes
+the tag's version instead (`FLAAKLYPA_VERSION`).
+
+## Releasing
+
+`master` only follows upstream ScummVM, to merge its changes into
+`flaaklypa`, where the work happens. A tag `v<version>` on `flaaklypa`
+makes a release:
+
+    git tag v0.2.0
+    git push origin flaaklypa v0.2.0
+
+The workflow `.github/workflows/flaaklypa-app.yml` then builds the four
+packages (macOS, Windows, Linux x86_64 and aarch64) with the scripts above
+and publishes a GitHub release with them and `release-notes.md`. A version
+with a dash (`v0.2.0-beta1`) is a pre-release; a tag that is not on
+`flaaklypa` fails the workflow. Run by hand from the Actions tab (which
+GitHub only offers for workflows on the default branch), it only builds.
 
 ## Icons
 
