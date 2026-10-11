@@ -72,6 +72,9 @@ Anim::Anim(Scene *scene, const AnimDef *def) : _scene(scene), _def(def),
 
 Anim::~Anim() {
 	unload();
+	// unload() keeps a surface the scene draws into
+	if (_ownSurface)
+		delete _frame;
 }
 
 void Anim::load() {

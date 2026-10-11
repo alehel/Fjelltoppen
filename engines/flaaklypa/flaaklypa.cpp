@@ -76,6 +76,7 @@ FlaaklypaEngine::~FlaaklypaEngine() {
 	delete _resources;
 	delete _screen;
 	delete _globals;
+	delete _limiter;
 }
 
 uint32 FlaaklypaEngine::getFeatures() const {

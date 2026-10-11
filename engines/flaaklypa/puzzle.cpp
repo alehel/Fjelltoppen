@@ -19,6 +19,7 @@
  *
  */
 #include "common/debug.h"
+#include "common/ptr.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 
@@ -137,9 +138,12 @@ bool PuzzleScene::load() {
 	}
 	delete mask;
 
-	_illum.load(resources()->loadBitmap(_name, "bitmap/illum.bmp", _vm->_screen->format));
-	_gold.load(resources()->loadBitmap(_name, "bitmap/gold.bmp", _vm->_screen->format));
-	_silver.load(resources()->loadBitmap(_name, "bitmap/silver.bmp", _vm->_screen->format));
+	Texture3D *const textures[] = { &_illum, &_gold, &_silver };
+	static const char *const kTextureFiles[] = { "bitmap/illum.bmp", "bitmap/gold.bmp", "bitmap/silver.bmp" };
+	for (int i = 0; i < ARRAYSIZE(textures); i++) {
+		Common::ScopedPtr<Graphics::ManagedSurface> bitmap(resources()->loadBitmap(_name, kTextureFiles[i], _vm->_screen->format));
+		textures[i]->load(bitmap.get());
+	}
 	_font.load("Amerigo BT_10_");
 	return true;
 }
