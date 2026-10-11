@@ -239,7 +239,7 @@ bool Anim::update() {
 }
 
 void Anim::draw(Graphics::ManagedSurface &dst) {
-	if (!_added || !_frame || !_def->visible)
+	if (!_added || !_frame || !isVisible())
 		return;
 	if (_hasKey)
 		dst.transBlitFrom(*_frame, Common::Point(_x, _y), _keyColor);
@@ -254,7 +254,7 @@ Common::Rect Anim::rect() const {
 }
 
 int Anim::hitTest(int x, int y) const {
-	if (!_added || !_frame || !_def->visible || _hotspot == 0)
+	if (!_added || !_frame || !isVisible() || _hotspot == 0)
 		return -1;
 	if (_hitRadius > 0) {
 		// FUN_00413750 mode 1: the square [centre - r, centre + r) first,

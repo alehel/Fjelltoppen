@@ -55,6 +55,12 @@ public:
 	bool isAdded() const { return _added; }
 	bool isPlaying() const { return _playing; }
 	bool isSmacker() const { return _def->smacker != 0; }
+	/**
+	 * Whether the element shows: the visible flag (+0x44) only matters for
+	 * clips (audio only ones have no picture, FUN_00412840); bitmaps always
+	 * show.
+	 */
+	bool isVisible() const { return !_def->smacker || _def->visible; }
 
 	/** SCENE_AddAnim: loads the resources and puts the element on screen (bitmaps) or makes it ready (clips). */
 	void add(int x = kDefaultPos, int y = kDefaultPos, int z = 0);
