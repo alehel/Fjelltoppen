@@ -2079,9 +2079,11 @@ on the pieces lie turned in quarter turns (+0x38 of the motive).
   source; the other `rand()` uses (turns, scatter, drop sound) use the
   engine's. Events 0x10a / 0x10b (drag messages of another module, the
   same as 0x109 / 0x106 here) are not ported.
-* TODO: the high score calls (`FUN_0041ee50` in `tick()`, `FUN_0041f640`
-  for button 5) wait for the HISCORE module; the chooser reads the best
-  time from the profile's record itself (`FUN_0041ebd0`).
+* High scores: a solved picture (not by the solution button) registers
+  its time with `addScore()` (`FUN_0041ee50`, key = the picture, 0x102);
+  button 5 shows the picture's tables with `showScoreTables()`
+  (`FUN_0041f640`); the chooser's best times come from
+  `loadScoreTables()` (`FUN_0041ebd0`).
 
 ## List dialog (`listdlg.cpp`, `common/dialogue/listdlg`)
 
@@ -2144,8 +2146,8 @@ n = 3 + item % 3 (`FUN_0046eb20`).
   jigsaw's text line. **Table** (3): `FUN_0041f640(0, item, entry,
   highlights, 0x102)`, entry and highlights only once solved.
 * The clock's countdown variant (`DAT_006c0e90`) is never switched on.
-* TODO: the high score calls (`FUN_0041ee50` in `solved()`, `FUN_0041f640`
-  for button 3).
+* High scores: `addScore()` in `solved()` (`FUN_0041ee50`, key = the
+  picture, 0x102) and `showScoreTables()` for button 3 (`FUN_0041f640`).
 
 ## Story page `garage` ("Verkstedet")
 

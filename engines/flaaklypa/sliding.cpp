@@ -20,7 +20,6 @@
  */
 #include "common/debug.h"
 #include "common/endian.h"
-#include "common/debug.h"
 #include "graphics/managed_surface.h"
 
 #include "flaaklypa/award.h"
@@ -60,6 +59,7 @@ static int slidingSize(int item) {
 SlidingScene::SlidingScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_item(0), _n(0), _fixedCount(0), _state(0), _active(false), _tileW(0), _tileH(0), _boardX(0), _boardY(0),
 	_gapCol(0), _gapRow(0), _done(false), _startTime(0), _elapsed(0), _buttons(this) {
+	_highlights[0] = _highlights[1] = _highlights[2] = -1;
 	memset(_fixed, 0, sizeof(_fixed));
 	for (int i = 0; i < kMaxSide * kMaxSide; i++) {
 		_tiles[i].homeCol = _tiles[i].col = i % kMaxSide;
@@ -373,10 +373,11 @@ void SlidingScene::solved() {
 		_state = kStateSolved;
 		_vm->setSceneValue(_name, _item, _state);
 	}
-	// TODO: high score (FUN_0041ee50(motive, elapsed ms, medals 0, 0x102, &DAT_006c0ff8 entry,
-	// &DAT_006c5428 highlights)): ScoreTable tables[3]; addScore(_vm, _item, _elapsed, nullptr,
-	// kScoreTime, &_entry, tables); _highlights[i] = tables[i].highlight (members for button 3)
-	debug(1, "Sliding: TODO high score: %d ms for motive %d (FUN_0041ee50, flags 0x102)", _elapsed, _item);
+	// FUN_0041ee50: the time goes into the picture's table
+	ScoreTable tables[3];
+	addScore(_vm, _item, _elapsed, nullptr, kScoreTime, &_entry, tables);
+	for (int i = 0; i < 3; i++)
+		_highlights[i] = tables[i].highlight;
 	killTimer(kTimerClock);
 }
 
@@ -445,10 +446,8 @@ void SlidingScene::onButton(int id) {
 		print();
 		break;
 	case kButtonScores:
-		// TODO: high score table (FUN_0041f640(0, motive, entry, highlights, 0x102), the entry and
-		// highlights of the registration only once solved): showScoreTables(_vm, "", _item,
-		// _done ? &_entry : nullptr, _done ? _highlights : nullptr, kScoreTime)
-		debug(1, "Sliding: TODO high score table for motive %d (FUN_0041f640, flags 0x102, entry shown: %d)", _item, _done);
+		// FUN_0041f640: the picture's tables, with the registration once solved
+		showScoreTables(_vm, "", _item, _done ? &_entry : nullptr, _done ? _highlights : nullptr, kScoreTime);
 		break;
 	case kButtonStart:
 		newGame();

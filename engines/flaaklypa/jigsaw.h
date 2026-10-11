@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "common/debug.h"
-#include "common/endian.h"
 #ifndef FLAAKLYPA_JIGSAW_H
 #define FLAAKLYPA_JIGSAW_H
 
@@ -29,6 +27,7 @@
 
 #include "flaaklypa/button.h"
 #include "flaaklypa/font.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/scene.h"
 
 namespace Flaaklypa {
@@ -120,6 +119,8 @@ private:
 	bool _snapped;            ///< DAT_006bfbb0
 	uint32 _startTime;        ///< DAT_006bc9a8
 	int32 _elapsed;           ///< DAT_006bc910
+	ScoreEntry _entry;        ///< DAT_006bd9e8: the last registration
+	int _highlights[3];       ///< DAT_006bfb8c: its rows in the three tables
 
 	// The recursions' visited lists and depths (DAT_006bc914 / DAT_00509c7c,
 	// DAT_006bfbb8 / DAT_00509c78, DAT_006bfba0 / DAT_00509c74,

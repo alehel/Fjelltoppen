@@ -20,7 +20,6 @@
  */
 #include "common/debug.h"
 #include "common/endian.h"
-#include "common/debug.h"
 
 #include "flaaklypa/button.h"
 #include "flaaklypa/dialog.h"

@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "common/debug.h"
-#include "common/endian.h"
 #ifndef FLAAKLYPA_SLIDING_H
 #define FLAAKLYPA_SLIDING_H
 
@@ -27,6 +25,7 @@
 
 #include "flaaklypa/button.h"
 #include "flaaklypa/font.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/scene.h"
 
 namespace Flaaklypa {
@@ -77,6 +76,8 @@ private:
 	bool _done;                         ///< DAT_006c33c0: building, or solved (no moves, the clock stands)
 	uint32 _startTime;                  ///< DAT_006c0ea0
 	int32 _elapsed;                     ///< DAT_006c0e18
+	ScoreEntry _entry;                  ///< DAT_006c0ff8: the last registration
+	int _highlights[3];                 ///< DAT_006c5428: its rows in the three tables
 
 	SceneButtons _buttons;
 	BitmapFont _lcdFont, _font;

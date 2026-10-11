@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "common/debug.h"
-#include "common/endian.h"
 #ifndef FLAAKLYPA_LISTDLG_H
 #define FLAAKLYPA_LISTDLG_H
 

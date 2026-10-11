@@ -20,8 +20,6 @@
  */
 #include "common/debug.h"
 #include "common/endian.h"
-#include "common/debug.h"
-#include "common/endian.h"
 #include "common/system.h"
 #include "graphics/managed_surface.h"
 #include "gui/gui-manager.h"
@@ -209,17 +207,12 @@ static Graphics::ManagedSurface *turnSurface(const Graphics::ManagedSurface &src
 	return dst;
 }
 
-// The best time of the player's own table for a picture (FUN_0041ebd0 with
-// only the profile's table: the 0x58 byte record 0x401 {medal, count, ten
-// {date, score}}, best first), in whole seconds; 0 without one.
-// TODO: loadScoreTables() of the HISCORE module once it is merged.
+// The best time of the player's own table for a picture (FUN_0041ebd0
+// with only the profile's table), in whole seconds; 0 without one.
 static int32 bestSeconds(FlaaklypaEngine *vm, const Common::String &scene, int item) {
-	byte buf[0x58];
-	if (!vm->profile() || !vm->profile()->getRecord(scene, Profile::kRecordScores, item, buf, sizeof(buf)))
-		return 0;
-	if ((int32)READ_LE_UINT32(buf + 4) <= 0)
-		return 0;
-	return (int32)READ_LE_UINT32(buf + 12) / 1000;
+	ScoreTable table;
+	loadScoreTables(vm, scene, item, &table, nullptr, nullptr, kScoreTime);
+	return table.entries.empty() ? 0 : table.entries[0].score / 1000;
 }
 
 int choosePuzzlePicture(Scene *scene, const char *title, int first, int end, int (*size)(int)) {
@@ -272,14 +265,9 @@ void printPuzzle(Graphics::ManagedSurface &picture, int32 elapsed) {
 	// the time) in Amerigo BT_10_ at the bottom right (0x202); the original
 	// then hands the picture to the activity centre's print page
 	// ("activity", not ported), the port to ScummVM's print dialog.
-	// TODO: formatScoreDate() / formatScore() (FUN_0041ed50 / FUN_0041ed90)
-	// of the HISCORE module once it is merged.
 	FlaaklypaEngine *vm = g_engine;
-	TimeDate td;
-	g_system->getTimeAndDate(td);
-	const Common::String date = Common::String::format("%02d.%02d.%02d", td.tm_mday, td.tm_mon + 1, (td.tm_year + 1900) % 100);
-	const int32 seconds = elapsed / 1000;
-	const Common::String time = Common::String::format("%02d:%02d.%02d", seconds / 60, seconds % 60, (elapsed % 1000) / 10);
+	const Common::String date = formatScoreDate(FlaaklypaEngine::profileTime());
+	const Common::String time = formatScore(elapsed, kScoreTime);
 	const Common::String name = vm->profile() ? vm->profile()->name() : vm->getString("profile:NONAME");
 	const Common::String text = Common::String::format("%s   %s   %s", name.c_str(), date.c_str(), time.c_str());
 	BitmapFont font;
@@ -559,6 +547,7 @@ JigsawScene::JigsawScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, d
 	_item(0), _n(0), _rotate(false), _state(0), _active(false), _category(-1), _held(-1),
 	_stopped(false), _gliding(false), _cheated(false), _autoSolved(false), _solveIndex(-1), _snapped(false),
 	_startTime(0), _elapsed(0), _snapDepth(-1), _followDepth(-1), _turnDepth(-1), _zDepth(0), _buttons(this) {
+	_highlights[0] = _highlights[1] = _highlights[2] = -1;
 }
 
 JigsawScene::~JigsawScene() {
@@ -891,10 +880,12 @@ void JigsawScene::tick() {
 			_state = kStateSolved;
 			_vm->setSceneValue(_name, _item, _state);
 		}
-		// TODO: high score (FUN_0041ee50(motive, elapsed ms, medals 0, 0x102, &DAT_006bd9e8 entry,
-		// &DAT_006bfb8c highlights)): ScoreTable tables[3]; addScore(_vm, _item, _elapsed, nullptr,
-		// kScoreTime, &_entry, tables); _highlights[i] = tables[i].highlight (members for button 5)
-		debug(1, "Jigsaw: TODO high score: %d ms for motive %d (FUN_0041ee50, flags 0x102)", _elapsed, _item);
+		// FUN_0041ee50: the time goes into the picture's table (key = the
+		// picture, times, no medals)
+		ScoreTable tables[3];
+		addScore(_vm, _item, _elapsed, nullptr, kScoreTime, &_entry, tables);
+		for (int i = 0; i < 3; i++)
+			_highlights[i] = tables[i].highlight;
 	}
 	_buttons.setState(kButtonPrint, SceneButtons::kStateNormal);
 	_buttons.setLabel(kButtonSolution, _vm->getString("jigsaw:START"));
@@ -1274,13 +1265,13 @@ void JigsawScene::onButton(int id) {
 		if (_active && isSolved())
 			print();
 		break;
-	case kButtonScores:
-		// TODO: high score table (FUN_0041f640(0, motive, entry, highlights, 0x102), the entry and
-		// highlights of the registration only when the player solved it): bool own = isSolved() &&
-		// !_autoSolved; showScoreTables(_vm, "", _item, own ? &_entry : nullptr, own ? _highlights : nullptr, kScoreTime)
-		debug(1, "Jigsaw: TODO high score table for motive %d (FUN_0041f640, flags 0x102, entry shown: %d)",
-			_item, isSolved() && !_autoSolved);
+	case kButtonScores: {
+		// FUN_0041f640: the picture's tables, with the registration only
+		// when the player solved it
+		bool own = isSolved() && !_autoSolved;
+		showScoreTables(_vm, "", _item, own ? &_entry : nullptr, own ? _highlights : nullptr, kScoreTime);
 		break;
+	}
 	default:
 		break;
 	}
