@@ -6,8 +6,9 @@ sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
 The menu (partly), the scene index, every story page except `buildacar`,
 the message box, navigator and help dialogs and 15 sub games work (see the
-checklist at the end). Not done: the award dialog, profiles and
-high scores, `buildacar`, the remaining sub games and activities, racing.
+checklist at the end), with player profiles (save slots) and the award
+dialog. Not done: high scores and medals, `buildacar`, the remaining sub
+games and activities, racing.
 
 ## The game
 
@@ -1427,8 +1428,8 @@ while a dialog is open waits until it closes.
   lines (`FUN_0041dde0`), OK button. Each section found sets bit n of the
   page's profile key 100 (read at init, written at close by
   `FUN_0041df50`); the click that completes the mask shows the award
-  dialog `awarddlg:TITLE_FACT` / `DESC_FACT` (`FUN_0041c120`, TODO with
-  the profiles). Without a `fact.ini` the module would use a table of
+  dialog `awarddlg:TITLE_FACT` / `DESC_FACT` (`FUN_0041c120`,
+  `awardFactsFound()`). Without a `fact.ini` the module would use a table of
   `fact:TITLE` strings (`FUN_0041def0`), which no Gold page has. Engine:
   `Scene::initFacts()`; the profile values live in memory for now
   (`FlaaklypaEngine::getSceneValue()`).
@@ -1592,8 +1593,6 @@ plays one clip, and no state machine.
   `lang/garage/fact.ini` (listed as `factopedia` in the cursor table).
 * State across visits: the car part flag (profile key 0 of the page in the
   original, a static here) and the two variant masks.
-* TODO: profile get/set of the car part, the award dialog
-  (`FUN_0041c150`).
 ## Story page `house` ("På tunet")
 
 Reodor's house (`S04`, handler `FUN_00425160`, `house.cpp`, `HouseScene`).
@@ -1612,9 +1611,9 @@ next `tvroom`, previous `desk`.
   if it is not running and kills the pending timer (the framework aborts
   the sequence); `S04AN-NAR-001` is removed when it finishes.
 * The hidden car part (`carpart`, hotspot 20) and 3D glasses (`3dglasses`,
-  hotspot 22) bitmaps are added at z -10 (TODO: only while not yet found:
-  profile key 0 / 3D scene 4); clicking them removes the bitmap (TODO: award
-  dialogs, profile update).
+  hotspot 22) bitmaps are added at z -10 while not yet found (profile key
+  0 / 3D scene 4); clicking them awards them (`Scene::takeCarPart()`,
+  `take3DGlasses(4)`).
 * Hotspots (the mask has no hotspot 1; 11, 12, 13 and 19 are in the mask
   but unused): 2 `audiopairs` (the original compares against a variable set
   to 2 at init), 16 `hopscotch`, 21 `whackamole`; one clip sequences: 3
@@ -1628,8 +1627,7 @@ next `tvroom`, previous `desk`.
   three masks are globals and survive a visit (static members).
 * Clips of this page are spread over `data/house`, `data1..3/house` and
   `lang1/house` (the intro, narration and the longer dialogue clips).
-* TODO: ambience clip, profile (car part / 3D glasses found),
-  award dialogs, the navigator dialog itself (engine stub).
+* TODO: ambience clip.
 
 ## Story page `intent` ("I sjeikens telt")
 
@@ -1670,8 +1668,8 @@ Hotspots:
 * Space: removes 006b, restores the music volume and the default lists of
   all three, kills the wake up timer.
 
-TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged), profile key 0 /
-3D scene 9 checks and the award dialogs, the `chess` sub game.
+TODO: music volume (`FUN_0040b410(2, 2, v)`, only logged), the `chess`
+sub game.
 
 ## Story page `desk` ("Reodors stue")
 
@@ -1769,9 +1767,7 @@ reel on top, a fuse box on the wall, and one character (clips
   click: navigator `racing` / `buildacar`.
 * State across visits: none in the page itself; profile: car part found
   (static member for now), collection count, session count.
-* TODO: profile collection mask (reel count fixed to 1), session counter
-  (NAR-002 always plays), car part flag in the profile, award dialog, the
-  movie player.
+* TODO: the movie player.
 
 ## Story page `morning` ("Solan på tokt")
 
@@ -1913,8 +1909,8 @@ counters are reset at init. The car part flag is profile page value 0
 and the glasses `FUN_0041b8c0(5)`; the port keeps both in static members
 until profiles exist.
 
-TODO: music volume (`FUN_0040b410`, no music volume API yet), the award
-dialogs, profile; `gallery` and `draughts` are not ported yet
+TODO: music volume (`FUN_0040b410`, no music volume API yet); `gallery`
+and `draughts` are not ported yet
 (`startGame` warns).
 
 ## Story page `outtent` ("Foran sjeikens telt")
@@ -1958,8 +1954,7 @@ class with `defineAnim`, the scene table has no entries for them).
 * State across visits: only the three random pick masks (`DAT_005b87a4`,
   `5b8798`, `5b87a0`); the pick counters and the narration counter are reset
   on init.
-* Not done: profile (car part flag, 3D scene 8), award dialogs,
-  music volume factors, `balloonhunt` and `mahjong` (not ported). The page
+* Not done: music volume factors, `balloonhunt` and `mahjong` (not ported). The page
   never starts `town` itself (no reference in its handler); `town`
   (`FUN_00426f30`) is a cutscene that returns here (or to `buildacar` with
   arg 2). `track9` is not restarted when already playing (the original
@@ -2000,7 +1995,6 @@ Handler `FUN_00415f50` (`goodbye.cpp`). A night sky over Flåklypa; music
   game cannot be started from the page. Same for `desk`, `house`,
   `intent`, `outtent` (masks), `menu` / `sceneindex` (data3 backdrop and
   bitmaps), `common/language.ini` and `outro/credits.ini` (lang3).
-* TODO: profile (session counter).
 
 ## Story page `outro` ("Epilog")
 
@@ -2031,9 +2025,8 @@ Ludvig watch the fireworks from the yard; music `track15`.
 * The last entry (`image42=carpart`) gives the hidden car part:
   `FUN_00418770` checks profile record 0x402 key 0, sets it and shows
   award dialog `FUN_0041bb20(0, outro:AWARD_TITLE, outro:AWARD_DESC, 1,
-  0)`; without a profile the award comes every time (TODO: dialog,
-  profile).
-* Hotspot 10: 3D scene 14 award (`FUN_0041c1b0(14)`, TODO) and the
+  0)`; without a profile the award comes every time.
+* Hotspot 10: 3D scene 14 award (`FUN_0041c1b0(14)`) and the
   glasses are removed. Right click: navigator (previous `goodbye`). Space:
   back to the menu (`FUN_0040cc30`).
 
@@ -2088,9 +2081,7 @@ its own hotspot numbering, not the 55..99/251.. ranges of the other pages.
   1 in `FUN_00413750`: the square [c - r, c + r) and the distance to the
   centre); the engine defines the 24 clips with `defineAnim(.., loop)` and
   uses `Anim::setHitRadius()`.
-* TODO: profile (car part only while page key 0 is 0, set to 1 when found;
-  3D glasses only while 3D scene 3 is not found), the award dialogs
-  (`FUN_0041c150`, `FUN_0041c1b0(3)`), activity `fence`.
+* TODO: activity `fence`.
 
 ## Scene index (`sceneindex`)
 
@@ -2153,7 +2144,7 @@ and tooltip modules are in `button.cpp`). Music `theme`.
   at the bottom), z 1500; `tooldot.bmp` marks the cursor's x on its top
   edge. A click hides it. The handler also eats Tab (which opens the
   scene index everywhere else).
-* TODO: profile (locked scenes, medals). The original also writes, reads and deletes a value
+* The original also writes, reads and deletes a value
   under an obfuscated registry key (`FUN_0040b940`/`b8b0`/`ba00`, key 7
   of `FUN_0040ce80`), ignored here. A sub game started from the index
   returns to the index (engine `startGame`); the original returns to the
@@ -2214,7 +2205,7 @@ saving and loading are off, autosave too (slot -1).
   centred in (200,350)-(600,550) aligned to the bottom, z 0x32. Space
   leaves, right click opens an empty navigator. Close (`FUN_004154a0`):
   each of them gets a car part (award dialog `birthday:AWARD_TITLE` /
-  `AWARD_DESC`, TODO) unless the scene value 0 (time of the last
+  `AWARD_DESC`) unless the scene value 0 (time of the last
   present) is on the same day of the month this year.
 * **Menu** (`FUN_00417600`): the name box (0x120,0x200) 0xe0x0x3a, z 0x28,
   `Amerigo BT_18_` centred, shows the player used last (`FUN_004177c0`);

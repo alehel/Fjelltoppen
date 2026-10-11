@@ -100,9 +100,8 @@ void DeskScene::onInit(int arg) {
 	addCharacter(kCharReodor, kHotspotReodor);
 	setCharacterAnims(kCharReodor, kReodorIdle, kReodorBored, kReodorReaction);
 
-	// TODO: profile: key 0 = the hidden car part has been found; shown while it is 0
-	// (FUN_00411e70(0, ...)); for now it is shown on every visit like on the yard.
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 
 	if (arg == 1) {
 		resetCharacters();
@@ -189,9 +188,7 @@ void DeskScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->startGame("colorfill");
 		break;
 	case kHotspotCarpart:
-		// TODO: profile: key 0 = 1 (car part found); award dialog FUN_0041c150
-		debug(1, "Desk: hidden car part found (award dialog not implemented)");
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case 101:
 		switch (pickWithoutRepeats(_pick101Count, _pick101Mask, 3)) {

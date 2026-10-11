@@ -20,6 +20,7 @@
  */
 #include "common/debug.h"
 
+#include "flaaklypa/award.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/scenedata.h"
@@ -74,7 +75,6 @@ enum {
 	kMaxReelBitmaps = 12
 };
 
-bool TvstationScene::_carpartFound = false;
 
 TvstationScene::TvstationScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def) {
 }
@@ -97,9 +97,7 @@ void TvstationScene::onInit(int arg) {
 	// items of category 1 (FUN_0041b540(1): the profile's collection mask,
 	// FUN_0041b690(1, mask): how many of the 18 items are owned, item 0
 	// always counts). The bitmap "reel_NN" gets the reel's hotspot.
-	// TODO: profile: the collection mask; a fresh profile owns one item
-	int reels = 1;
-	debug(1, "tvstation: TODO profile collection count, using %d", reels);
+	int reels = awardWonCount(kAwardFilmClip, awardCounter(_vm, kAwardFilmClip));
 	if (reels > 0) {
 		if (reels > kMaxReelBitmaps)
 			reels = kMaxReelBitmaps;
@@ -108,8 +106,7 @@ void TvstationScene::onInit(int arg) {
 		addAnim(_reelName.c_str(), Anim::kDefaultPos, Anim::kDefaultPos, -10);
 	}
 
-	// TODO: profile: page key 0 (FUN_00411e70) remembers the found car part
-	if (!_carpartFound)
+	if (!carPartFound())
 		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 
 	if (arg == 0) {
@@ -188,10 +185,7 @@ void TvstationScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("monitor1a");
 		break;
 	case kHotspotCarpart:
-		// TODO: profile: remember the hidden car part (page key 0 = 1); award dialog
-		debug(1, "tvstation: car part found (TODO profile + award dialog)");
-		_carpartFound = true;
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	default:
 		if (hotspot == kHotspotReel)

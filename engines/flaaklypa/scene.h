@@ -158,6 +158,19 @@ public:
 	void setTimer(int id, uint32 delayMs, int data = 0);
 	void killTimer(int id);
 
+	// ---- the hidden items of the story pages
+	/** The page's hidden car part was found (the page's profile value 0). */
+	bool carPartFound() const;
+	/**
+	 * The player clicked the hidden car part: the page remembers it in value
+	 * 0, the award dialog hands it out (FUN_0041c150) and "carpart" goes.
+	 */
+	void takeCarPart();
+	/** Hidden 3D scene n (the 3D glasses) was found (FUN_0041b8c0). */
+	bool found3DScene(int n) const;
+	/** The player clicked the 3D glasses: award dialog (FUN_0041c1b0) and "3dglasses" goes. */
+	void take3DGlasses(int n);
+
 	// ---- fact pages (FACT module)
 	/**
 	 * Loads the scene's fact.ini (FUN_0041dbf0, story page init): a click on

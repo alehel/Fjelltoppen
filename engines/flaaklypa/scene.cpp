@@ -23,6 +23,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 
+#include "flaaklypa/award.h"
 #include "flaaklypa/cursor.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
@@ -672,6 +673,29 @@ int Scene::pickIdleAnim(AnimList list, int count, int randomRange) {
 	return -1;
 }
 
+// ---- hidden items --------------------------------------------------------------
+
+bool Scene::carPartFound() const {
+	return _vm->getSceneValue(_name, 0) != 0;
+}
+
+void Scene::takeCarPart() {
+	_vm->setSceneValue(_name, 0, 1);
+	awardHiddenCarPart(_vm);
+	if (isAnimAdded("carpart"))
+		removeAnim("carpart");
+}
+
+bool Scene::found3DScene(int n) const {
+	return award3DSceneFound(_vm, n);
+}
+
+void Scene::take3DGlasses(int n) {
+	award3DScene(_vm, n);
+	if (isAnimAdded("3dglasses"))
+		removeAnim("3dglasses");
+}
+
 // ---- fact pages ------------------------------------------------------------
 
 void Scene::initFacts() {
@@ -711,9 +735,8 @@ void Scene::factClicked(int hotspot) {
 		if (_factsFound != all) {
 			_factsFound |= 1u << (i & 0x1f);
 			if (_factsFound == all) {
-				// TODO: the award dialog (FUN_0041c120: awarddlg:TITLE_FACT /
-				// DESC_FACT, FUN_0041bb20 with a car part)
-				debug(1, "Scene %s: all fact pages found (TODO: award dialog)", _name.c_str());
+				// FUN_0041c120: awarddlg:TITLE_FACT / DESC_FACT, a car part
+				awardFactsFound(_vm);
 			}
 		}
 		return;

@@ -242,8 +242,10 @@ bool FlaaklypaEngine::selectProfile(int slot) {
 	delete _profile;
 	_profile = p;
 	_profileSlot = slot;
-	// FUN_00411ef0: the profile is stamped with the time it was last used
+	// FUN_00411ef0: the profile is stamped with the time it was last used;
+	// FUN_0040d860 starts the play time award's clock
 	_profile->setLastUsed(profileTime());
+	_playTimeStart = g_system->getMillis();
 	_profileDirty = true;
 	flushProfile();
 	debug(1, "Profile '%s' (slot %d) selected", _profile->name().c_str(), slot);
@@ -622,10 +624,17 @@ void FlaaklypaEngine::runFrame() {
 	// Under a modal dialog the original skips the clip updates
 	// (FUN_0040d110), its clock stands still and the dialog swallows the
 	// scene's frame, timer and input events: the scene is frozen.
-	if (!isSceneFrozen())
+	if (!isSceneFrozen()) {
 		_scene->update();
-	else
+		// FUN_0040d4c0 (frame tick): three hours after the profile was
+		// chosen, outside a sub game round, a car part once per profile
+		if (!_gameRunning && _playTimeStart >= 0 && g_system->getMillis() - _playTimeStart > 10799 * 1000) {
+			_playTimeStart = -1;
+			awardPlayTime(this);
+		}
+	} else {
 		_cursor->update();
+	}
 	_music->update();
 	_scene->draw(*_screen);
 	if (_dialog)

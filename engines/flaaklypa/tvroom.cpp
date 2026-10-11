@@ -102,8 +102,6 @@ int TvroomScene::_maskBee = 0;
 int TvroomScene::_maskMoose = 0;
 int TvroomScene::_maskMooseClick = 0;
 int TvroomScene::_maskSolan = 0;
-bool TvroomScene::_carPartFound = false;
-bool TvroomScene::_glassesFound = false;
 
 TvroomScene::TvroomScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_count005(0), _countBee(0), _countMoose(0), _countMooseClick(0), _countSolan(0), _sequence(nullptr) {
@@ -175,10 +173,9 @@ void TvroomScene::onInit(int arg) {
 	setCharacterZ(kCharReodor, 5);
 	setCharacterAnims(kCharReodor, kReodorIdle, kReodorBored, kReodorReaction);
 
-	// TODO: profile: page value 0 = hidden car part found; FUN_0041b8c0(5) = 3D scene 5 found
-	if (!_carPartFound)
+	if (!carPartFound())
 		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -9);
-	if (!_glassesFound)
+	if (!found3DScene(5))
 		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -9);
 
 	if (arg == 0) {
@@ -251,10 +248,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 			single("flower");
 		break;
 	case kHotspotCarPart:
-		// TODO: profile: set page value 0 = 1; award dialog "hidden car part found" (FUN_0041c150)
-		debug(1, "tvroom: hidden car part found");
-		_carPartFound = true;
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case kHotspotMoose:
 		if (pick(_countMooseClick, _maskMooseClick, 2) == 0)
@@ -266,10 +260,7 @@ void TvroomScene::onMouseDown(int hotspot, int x, int y) {
 		single("electric");
 		break;
 	case kHotspot3DGlasses:
-		// TODO: award dialog "3D scene found" (FUN_0041c1b0(5)), profile
-		debug(1, "tvroom: 3D scene 5 found");
-		_glassesFound = true;
-		removeAnim("3dglasses");
+		take3DGlasses(5);
 		break;
 	case kHotspotSolan:
 		// Solan has no reaction list; the page plays one of four clips.

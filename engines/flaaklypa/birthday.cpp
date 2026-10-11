@@ -20,6 +20,7 @@
  */
 #include "common/debug.h"
 
+#include "flaaklypa/award.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/music.h"
@@ -127,9 +128,8 @@ void BirthdayScene::onClose() {
 		int lastDay, lastYear;
 		FlaaklypaEngine::splitProfileTime(last, lastDay, lastYear);
 		if (last == 0 || lastDay != now.tm_mday || lastYear < now.tm_year + 1900) {
-			// TODO: the award dialog: a car part (FUN_0041bb20(0, ...)) with
-			// birthday:AWARD_TITLE / birthday:AWARD_DESC (the name)
-			debug(1, "Birthday: present for '%s' (TODO: award dialog)", _vm->profile()->name().c_str());
+			Common::String text = Common::String::format(_vm->getString("birthday:AWARD_DESC").c_str(), _vm->profile()->name().c_str());
+			showAward(_vm, kAwardCarPart, "birthday:AWARD_TITLE", text, 1);
 		}
 	}
 	if (active >= 0)

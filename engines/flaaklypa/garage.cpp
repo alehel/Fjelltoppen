@@ -72,7 +72,6 @@ enum {
 	// 200..213: fact pages (fact.ini, the fact module)
 };
 
-bool GarageScene::_carPartFound = false;
 int GarageScene::_mask008 = 0;
 int GarageScene::_mask009 = 0;
 
@@ -121,8 +120,7 @@ void GarageScene::onInit(int arg) {
 	addCharacter(kCharLudvig, kHotspotLudvig);
 	setCharacterAnims(kCharLudvig, kLudvigIdle, kLudvigBored, nullptr);
 
-	// TODO: profile: FUN_00411e70(0, &found, 4), the hidden car part of this page
-	if (!_carPartFound)
+	if (!carPartFound())
 		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 
 	if (arg == 0)
@@ -190,10 +188,7 @@ void GarageScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S06AN-SS-007");
 		break;
 	case kHotspotCarPart:
-		// TODO: profile: FUN_00411e40(0, 1, 4) remembers the car part; FUN_0041c150() award dialog
-		debug(1, "garage: hidden car part found (award dialog TODO)");
-		_carPartFound = true;
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	default:
 		break;

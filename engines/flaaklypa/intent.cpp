@@ -92,10 +92,10 @@ void IntentScene::onInit(int arg) {
 	addCharacter(kCharEmanuel, kHotspotEmanuel);
 	setCharacterAnims(kCharEmanuel, kEmanuelIdle, kEmanuelBored, kEmanuelReaction);
 
-	// TODO: profile key 0: only while the hidden car part has not been found
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -20);
-	// TODO: profile: only while 3D scene 9 has not been found (FUN_0041b8c0(9))
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -20);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -20);
+	if (!found3DScene(9))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -20);
 
 	if (arg == 0) {
 		// Soline starts idling right away; Ben and Emanuel play the intro.
@@ -175,17 +175,13 @@ void IntentScene::onMouseDown(int hotspot, int x, int y) {
 		playSequence(kSeqDance);
 		break;
 	case 9:
-		// TODO: profile: set key 0 (car part found); award dialog "hidden car part found" (FUN_0041c150)
-		debug(1, "Intent: hidden car part found (TODO: profile, award dialog)");
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case 10:
 		playSingle("S10AN-SS-003a");
 		break;
 	case 11:
-		// TODO: award dialog "3D scene 9 found" (FUN_0041c1b0(9))
-		debug(1, "Intent: 3D glasses found (TODO: award dialog)");
-		removeAnim("3dglasses");
+		take3DGlasses(9);
 		break;
 	case kHotspotSoline:
 		// A click on Soline starts the jewellery box puzzle.

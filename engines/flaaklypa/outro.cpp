@@ -21,6 +21,7 @@
 #include "common/debug.h"
 #include "common/system.h"
 
+#include "flaaklypa/award.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scenes.h"
@@ -104,18 +105,14 @@ void OutroScene::onInit(int arg) {
 	playSingle("S14AN-SS-001");
 	playMusic("track15");
 
-	// TODO: profile: only while 3D scene 14 has not been found (FUN_0041b8c0)
-	debug(1, "Outro: 3D scene %d found = false (TODO: profile)", k3DScene);
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, 0);
+	if (!found3DScene(k3DScene))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, 0);
 }
 
 void OutroScene::onMouseDown(int hotspot, int x, int y) {
 	// FUN_00418940
-	if (hotspot == kHotspot3DGlasses) {
-		// TODO: award dialog "3D scene found" (FUN_0041c1b0(14)); profile
-		debug(1, "Outro: TODO: award 3D scene %d", k3DScene);
-		removeAnim("3dglasses");
-	}
+	if (hotspot == kHotspot3DGlasses)
+		take3DGlasses(k3DScene);
 }
 
 void OutroScene::onRightClick(int x, int y) {
@@ -286,13 +283,13 @@ void OutroScene::onUpdate() {
 }
 
 void OutroScene::award() {
-	// FUN_00418770: profile record 0x402, key 0 remembers that the car part
-	// of the outro was given. Without a profile the record reads 0 and the
-	// award comes every time.
-	// TODO: profile: record 0x402 key 0
-	// TODO: award dialog (FUN_0041bb20(0, title, desc, 1, 0): hidden car part)
-	debug(1, "Outro: TODO: award \"%s\": %s", _vm->getString("outro:AWARD_TITLE").c_str(),
-		_vm->getString("outro:AWARD_DESC").c_str());
+	// FUN_00418770: the page's value 0 remembers that the car part of the
+	// outro was given. Without a profile the value reads 0 and the award
+	// comes every time.
+	if (_vm->getSceneValue(_name, 0) != 0)
+		return;
+	_vm->setSceneValue(_name, 0, 1);
+	showAward(_vm, kAwardCarPart, "outro:AWARD_TITLE", "outro:AWARD_DESC", 1);
 }
 
 } // End of namespace Flaaklypa

@@ -150,7 +150,6 @@ private:
 
 	int _count008, _count009;            ///< picks of the two clip pairs this visit (reset on init)
 	static int _mask008, _mask009;       ///< variants played since the last full round, kept across visits
-	static bool _carPartFound;           ///< TODO: profile key 0 of the page
 };
 
 /** Story page 4: the house. */
@@ -247,7 +246,6 @@ private:
 	int pickFreeMonitor();
 
 	Common::String _reelName;   ///< "reel_NN" bitmap of this visit
-	static bool _carpartFound;  ///< TODO: profile; kept across visits like the original
 };
 
 /** Story page 7, "Solan på tokt": the morning before the ride down the mountain. */
@@ -330,7 +328,6 @@ private:
 	int _count005, _countBee, _countMoose, _countMooseClick, _countSolan;
 	AnimList _sequence; ///< the list last started by the page, to tell which one onSequenceDone() reports
 	static int _mask005, _maskBee, _maskMoose, _maskMooseClick, _maskSolan; ///< kept across visits like the original
-	static bool _carPartFound, _glassesFound; ///< stand-ins for the profile
 };
 
 /** Story page 9: outside the sheik's tent (foran sjeikens telt). */

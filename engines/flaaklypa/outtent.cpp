@@ -147,11 +147,10 @@ void OuttentScene::onInit(int arg) {
 
 	playAnim("windmill");
 
-	// TODO: profile key 0 of the page: the hidden car part has been found
-	debug(1, "Outtent: TODO profile: car part found flag, 3D scene 8 found flag");
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -11);
-	// TODO: FUN_0041b8c0(8): 3D scene 8 already found
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -11);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -11);
+	if (!found3DScene(8))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -11);
 
 	if (arg == 0) {
 		addAnim("paper", Anim::kDefaultPos, Anim::kDefaultPos, -20);
@@ -205,9 +204,7 @@ void OuttentScene::onMouseDown(int hotspot, int x, int y) {
 		}
 		break;
 	case kHotspotCarPart:
-		// TODO: profile: set key 0 of the page to 1; award dialog "hidden car part found" (FUN_0041c150)
-		debug(1, "Outtent: TODO car part found: profile flag and award dialog");
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case kHotspotMahjong:
 		_vm->startGame("mahjong");
@@ -216,9 +213,7 @@ void OuttentScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->startGame("balloonhunt");
 		break;
 	case kHotspot3dGlasses:
-		// TODO: award dialog "3D scene found" (FUN_0041c1b0(8))
-		debug(1, "Outtent: TODO 3D scene 8 found: award dialog");
-		removeAnim("3dglasses");
+		take3DGlasses(8);
 		break;
 	default:
 		// Hotspots 201..214 belong to the fact module, which opens the

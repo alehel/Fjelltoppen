@@ -98,10 +98,10 @@ void PeeScene::onInit(int arg) {
 	setCharacterAnims(kCharLudvig, kLudvigIdle, kLudvigBored, kLudvigReaction);
 
 	addAnim("door", Anim::kDefaultPos, Anim::kDefaultPos, -10);
-	// TODO: profile: the car part only while profile key 0 of the page is 0 (FUN_00411e70)
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -20);
-	// TODO: profile: the 3D glasses only while 3D scene 3 has not been found (FUN_0041b8c0(3))
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -20);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -20);
+	if (!found3DScene(3))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -20);
 
 	if (arg == 0)
 		playSequence(kIntro);
@@ -176,14 +176,10 @@ void PeeScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("door");
 		break;
 	case kHotspotCarPart:
-		// TODO: profile: set key 0 of the page to 1 (FUN_00411e40); award dialog "hidden car part found" (FUN_0041c150)
-		debug(1, "PeeScene: hidden car part found");
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case kHotspot3DGlasses:
-		// TODO: award dialog "3D scene found" (FUN_0041c1b0(3))
-		debug(1, "PeeScene: 3D scene 3 found");
-		removeAnim("3dglasses");
+		take3DGlasses(3);
 		break;
 	case kHotspotDesk:
 		_vm->changeScene("desk", 1);

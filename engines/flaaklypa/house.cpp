@@ -97,10 +97,10 @@ void HouseScene::onInit(int arg) {
 	setCharacterList(kCharLudvig, 3, kLudvigReaction);
 	_audiopairsHotspot = kHotspotAudiopairs;
 
-	// TODO: profile key 0: only while the hidden car part has not been found
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
-	// TODO: profile: only while 3D scene 4 has not been found (FUN_0041b8c0(4))
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -10);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
+	if (!found3DScene(4))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 
 	if (arg == 0) {
 		hideCursor();
@@ -198,17 +198,13 @@ void HouseScene::onMouseDown(int hotspot, int x, int y) {
 		playSingle("S04AN-SS-015b");
 		break;
 	case kHotspotCarPart:
-		// TODO: profile: set key 0 (car part found); award dialog "hidden car part found"
-		debug(1, "House: car part found (TODO: profile, award dialog)");
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	case kHotspotWhackamole:
 		_vm->startGame("whackamole");
 		break;
 	case kHotspot3DGlasses:
-		// TODO: award dialog "3D scene 4 found"
-		debug(1, "House: 3D glasses found (TODO: award dialog)");
-		removeAnim("3dglasses");
+		take3DGlasses(4);
 		break;
 	default:
 		if (hotspot == _audiopairsHotspot)

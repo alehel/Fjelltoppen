@@ -84,9 +84,10 @@ void YardScene::onInit(int arg) {
 	setCharacterAnims(kCharLudvig, kLudvigIdle, kLudvigBored, kLudvigReaction);
 
 	addAnim("bush", Anim::kDefaultPos, Anim::kDefaultPos, 15);
-	// TODO: profile: only while the hidden car part / 3D glasses have not been found
-	addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
-	addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -10);
+	if (!carPartFound())
+		addAnim("carpart", Anim::kDefaultPos, Anim::kDefaultPos, -10);
+	if (!found3DScene(1))
+		addAnim("3dglasses", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 
 	if (arg == 0) {
 		playIntro();
@@ -237,12 +238,10 @@ void YardScene::onMouseDown(int hotspot, int x, int y) {
 		}
 		break;
 	case 254:
-		// TODO: award dialog "3D scene found"
-		removeAnim("3dglasses");
+		take3DGlasses(1);
 		break;
 	case 255:
-		// TODO: profile: remember the hidden car part; award dialog
-		removeAnim("carpart");
+		takeCarPart();
 		break;
 	default:
 		break;

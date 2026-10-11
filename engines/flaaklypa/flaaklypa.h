@@ -90,6 +90,7 @@ private:
 	uint32 _frozenTotal = 0;
 	Common::Point _mousePos;
 	int _profileSlot = -1;         ///< save slot of _profile
+	int64 _playTimeStart = -1;     ///< DAT_004a6c9c: when the profile was selected (ms), -1 once checked
 	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
