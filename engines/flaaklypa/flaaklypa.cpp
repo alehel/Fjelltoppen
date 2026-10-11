@@ -250,6 +250,10 @@ bool FlaaklypaEngine::selectProfile(int slot) {
 }
 
 int FlaaklypaEngine::createProfile(const Common::String &name, int month, int day) {
+	return addProfile(Profile(name, month, day, profileTime()));
+}
+
+int FlaaklypaEngine::addProfile(const Profile &p) {
 	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
 	int slot = 0;
 	for (; slot <= getMetaEngine()->getMaximumSaveSlot(); slot++) {
@@ -261,7 +265,6 @@ int FlaaklypaEngine::createProfile(const Common::String &name, int month, int da
 	}
 	if (slot > getMetaEngine()->getMaximumSaveSlot())
 		return -1;
-	Profile p(name, month, day, profileTime());
 	Common::OutSaveFile *out = _saveFileMan->openForSaving(getSaveStateName(slot));
 	if (!out)
 		return -1;
@@ -270,7 +273,7 @@ int FlaaklypaEngine::createProfile(const Common::String &name, int month, int da
 	out->finalize();
 	bool ok = !out->err();
 	delete out;
-	debug(1, "Profile '%s' created in slot %d", p.name().c_str(), slot);
+	debug(1, "Profile '%s' saved in slot %d", p.name().c_str(), slot);
 	return ok ? slot : -1;
 }
 
@@ -643,18 +646,11 @@ Common::Error FlaaklypaEngine::run() {
 		Common::FSNode node(Common::Path(ConfMan.get("profile_import"), '/'));
 		Common::ScopedPtr<Common::SeekableReadStream> in(node.createReadStream());
 		Profile p;
-		if (in && p.load(*in)) {
-			int slot = createProfile(p.name(), p.birthMonth(), p.birthDay());
-			if (slot >= 0) {
-				_profile = new Profile(p);
-				_profileSlot = slot;
-				_profileDirty = true;
-				flushProfile();
-				debug(1, "Imported profile '%s' into slot %d", p.name().c_str(), slot);
-			}
-		} else {
+		int slot = in && p.load(*in) ? addProfile(p) : -1;
+		if (slot >= 0)
+			selectProfile(slot);
+		else
 			warning("Cannot import the profile %s", ConfMan.get("profile_import").c_str());
-		}
 	}
 
 	// FUN_0040e830: the profile used last is active from the start; a save

@@ -24,12 +24,14 @@
 #include "flaaklypa/beemaze.h"
 #include "flaaklypa/bugzzz.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/resources.h"
 #include "flaaklypa/hopscotch.h"
 #include "flaaklypa/butterfly.h"
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/hustle.h"
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/entrydlg.h"
 #include "flaaklypa/pipeline.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/puzzle.h"
@@ -90,6 +92,8 @@ void MenuScene::onInit(int arg) {
 		defineAnim(b->highlight, false, true, b->hotspot, b->x, b->y, -10);
 	}
 
+	// common/sound/cheat, an audio only clip (FUN_00412c20)
+	defineAnim("../../common/sound/cheat", true, false, 0, 0, 0, 0, false);
 	// FUN_00417700: the profile name box (0x120,0x200) 0xe0x0x3a, z 0x28
 	_nameFont.load("Amerigo BT_18_");
 	defineSurfaceAnim("profilename", 0xe0, 0x3a, _vm->_screen->format.RGBToColor(0, 0xff, 0))->add(0x120, 0x200, 0x28);
@@ -154,8 +158,58 @@ void MenuScene::createProfile() {
 		_vm->messageBox("interfaceh:WARNING", "menu:MAXPROFILES", MessageBox::kButtonOk);
 		return;
 	}
-	// TODO: the name entry and birthday dialogs
-	debug(1, "Menu: creating a profile is not implemented yet");
+	Common::String name;
+	if (runTextEntry(_vm, 0xf9, 0xf7, _vm->getString("menu:ENTERNAME"), name, Profile::kMaxNameLength, TextEntryDialog::kAcceptName) != 1 || name.empty())
+		return;
+	// FUN_00417b70: names are compared without case
+	for (const auto &p : _profiles) {
+		if (p.name.equalsIgnoreCase(name)) {
+			Common::String text = Common::String::format(_vm->getString("menu:NAMEUSED").c_str(), name.c_str());
+			_vm->messageBox("interfaceh:WARNING", text, MessageBox::kButtonOk);
+			return;
+		}
+	}
+	if (installDeveloperProfile(name))
+		return;
+	int month = 0, day = 1;
+	if (runCalendar(_vm, 0xfa, 0x9d, month, day) != 1)
+		return;
+	if (_vm->createProfile(name, month, day) < 0) {
+		warning("Cannot create the profile '%s'", name.c_str());
+		return;
+	}
+	listProfiles(true);
+	// FUN_00414e60: a new player whose birthday is today is greeted at once
+	TimeDate now;
+	g_system->getTimeAndDate(now);
+	if (BirthdayScene::isBirthday(month, day, now))
+		_vm->changeScene("birthday", 0);
+}
+
+// FUN_00417bc0: the names of the developers' test profiles install the
+// profile of that name shipped in common/profiles/ instead, with the cheat
+// sound (FUN_0040ae50), and select it.
+bool MenuScene::installDeveloperProfile(const Common::String &name) {
+	static const char *const kNames[] = {
+		"capmar", "Simon fra Floden", "BigFriendlyGiant", "SnuppeLuppa", "Ca2",
+		"demo profile", "One", "Nr 2", "Three Amigos", "customer 01"
+	};
+	for (const char *n : kNames) {
+		if (!name.equalsIgnoreCase(n))
+			continue;
+		Common::ScopedPtr<Common::SeekableReadStream> in(_vm->_resources->open("common", Common::String::format("profiles/%s.pfl", name.c_str())));
+		Profile p;
+		if (!in || !p.load(*in))
+			return false;
+		int slot = _vm->addProfile(p);
+		if (slot < 0)
+			return false;
+		playAnim("../../common/sound/cheat");
+		_vm->selectProfile(slot);
+		listProfiles(true);
+		return true;
+	}
+	return false;
 }
 
 // FUN_00417f80

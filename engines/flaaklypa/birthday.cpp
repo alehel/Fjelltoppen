@@ -48,9 +48,7 @@ enum {
 BirthdayScene::BirthdayScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def) {
 }
 
-// FUN_00414e60: the profile's birthday is today (29 February counts on the
-// 28th in other years)
-static bool isBirthday(int month, int day, const TimeDate &now) {
+bool BirthdayScene::isBirthday(int month, int day, const TimeDate &now) {
 	if (month == 1 && day == 29) {
 		int year = now.tm_year + 1900;
 		bool leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;

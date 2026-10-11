@@ -67,6 +67,7 @@ private:
 	void cycleProfile(int delta);
 	void useProfile();
 	void createProfile();
+	bool installDeveloperProfile(const Common::String &name);
 	void removeProfile();
 	void startStory();
 
@@ -98,6 +99,9 @@ public:
 	void onKey(const Common::KeyState &key) override;
 	void onAnimFinished(Anim *anim) override;
 	void onTimer(int id, int data) override;
+
+	/** FUN_00414e60: the birthday is today (29 February counts on the 28th in other years). */
+	static bool isBirthday(int month, int day, const TimeDate &now);
 
 private:
 	Common::Array<int> _slots;  ///< the profiles having their birthday

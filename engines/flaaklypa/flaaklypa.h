@@ -196,6 +196,8 @@ public:
 	bool selectProfile(int slot);
 	/** Creates and saves a profile (FUN_00411060); returns its slot or -1. */
 	int createProfile(const Common::String &name, int month, int day);
+	/** Saves a profile in a free slot; returns the slot or -1. */
+	int addProfile(const Profile &profile);
 	/** Deletes a profile; the active one is dropped first (FUN_00417f80). */
 	void removeProfile(int slot);
 	Profile *profile() const { return _profile; }
