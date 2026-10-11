@@ -68,7 +68,7 @@ Totals for the Gold edition: 6264 files, about 1 GB uncompressed.
 | `.ini` | 244 | Windows INI. `sound.ini` volumes, `help.ini` help text, `track.ini` / `car.ini` / `stage*.ini` race parameters, `scene.ini` scene index, `language.ini` all UI strings, `subtitle/*.ini` subtitles. |
 | `.pfl` | 10 | Player profiles (save games). |
 | `.tun` | 20 | Tunes for the `fence` music editor. |
-| `.nod`, `.ai`, `.l`, `.map`, `.eff`, `.fff` | few | Binary race track collision/path data and `mountain`/`balloonhunt` level maps. Not yet analysed. |
+| `.nod`, `.ai`, `.l`, `.map`, `.eff`, `.fff` | few | Binary race track collision/path data and `mountain`/`balloonhunt` level maps (`mountain`'s `.l`/`.fff`/`.eff`: see Sub game `mountain`). |
 
 INI files are Windows-1252. The executable also reads `*.lst` files (not found
 in the data; probably runtime generated).
@@ -1259,6 +1259,200 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
 * Not done: the album button's disabled state during a game, `sound.ini`
   volumes, the LOVELYFLIES cheat.
 
+## Sub game `mountain` ("Solan i farta", started from `morning`, 640x480)
+
+Solan rides down Flåklypatoppen, a side view of a road over a tile map.
+Handler `0x43fd90` (jump table: 0x103 -> `FUN_00440d6e` init, 0x104 ->
+`44430d` close, 0x105 / 0x107 -> empty, 0x10c -> `4481d0` (up arrow: time
+noted), 0x111 -> `4481fd` (the timer's data pointer is incremented),
+0x112 -> `4446b2` frame, 0x116 -> `448228` buttons, 0x11b -> `43ff03`,
+0x11c -> `440053`); the code runs to `FUN_004483c3` (0x448410 is
+pipeline). The handler returns 0 for every event, so the global keys
+work. Engine: `mountain.cpp`.
+
+* **Init** (`FUN_00440d6e`): `FUN_004442bf` switches to 640x480, shows the
+  loading box and limits the tile / pick-up blits to (0, 80)-(640, 480)
+  (`FUN_00401b30`); `maps.ini` (the TRACK sections), `Amerigo BT_10_`,
+  difficulty 1, track 0, a 640x480 int buffer for the collisions, a
+  registry value (`FUN_0040b940`, read back and ignored), buttons (z 1)
+  help 0x20 at (12, 7) and exit 0x21 at (577, 9) (`help_0/1`,
+  `exit_0/1`), the `interface` bar (640x80, z 0), text areas (z 1) for the
+  time (465, 25) 65x13 and the score (465, 50) 65x13 (0x201: right
+  aligned), the PROGRESS bar `progress` (640x3) at (-1, 74) z 1, the 7
+  pick-up bitmaps and sounds, a 66 ms timer counting the pick-up frames,
+  music `subgame10`. Close (`FUN_0044430d`) frees everything and goes back
+  to 800x600.
+* **Start screen** (`FUN_00444431`): the backdrop (the bike), `Start
+  interface` (200, 162) z 1; buttons (z 2) start 0x72 `strbtnoff/on` at
+  (284, 258), difficulty tabs (group 1) 0x6f/0x70/0x71 `levelnonchk/
+  levelcheck` at (228/305/378, 222), track arrows 0xca `down_0/1` (210,
+  176) and 0xc9 `up_0/1` (405, 176); centred labels (z 3)
+  `mountain:EASY/MEDIUM/HARD` (207/284/358, 205) 67x15, `mountain:START`
+  (291, 263) 51x18 and the track title (228, 173) 176x20.
+  `FUN_004415b5` selects the track's section of `maps.ini` (data2's has
+  `mountain:TRACK1` "Solan på sykkel" and `mountain:TRACK2` "Solan på
+  holkeføre"; the section name is the language.ini key of the title) and
+  reads `easy` / `medium` / `hard` (the `.l` per difficulty), `fff`,
+  `eff`, `postwalk` / `postcrash` (Gustav); the arrows step through the
+  sections with wrapping (`FUN_004483c3`). `mountain:READY` and
+  `mountain:RESTART` are not used by the Gold executable.
+* **Start** (`FUN_0044108e`, button 0x72): game running; a new track
+  frees and rebuilds Solan (`FUN_00443a6e`: clips `cycle`, `jump`,
+  `inair`, `land`, `crash2`, `crash1`, `duck` of the section, loop flag 1,
+  sounds `bloop5`, `jumpsound`, `during jump` and, when `soundmode` is 1,
+  `groundsound`) and the level (`FUN_00441f58`), and replaces the
+  interface bitmap by the section's `interface`; the same track with
+  another difficulty reloads only the tile layers (`FUN_004419d0`). Then:
+  checkpoint = the start segment, 3 lives (1 in tournament mode), score 0,
+  slots empty, the profile value 0 (8 bytes: film clip found, car part
+  found) read; pick-ups whose flag is set stay hidden; a random truck and
+  a random Gustav of the level are chosen; the start screen goes and
+  `FUN_00441747` starts the ride (actors and Solan reset at the
+  checkpoint, sound duplicates stopped, `bloop5` (and the ground sound)
+  loop at the scene volume, a head per life (`solanhead` at (240/294/349,
+  26)), frame counter = pick-up count).
+* **Level files** (`maps/<name>.l/.fff/.eff`). `.l` (`FUN_00441f58`,
+  `FUN_00441e4f`): a u32 0x008000dc, then a run length coded stream:
+  control byte with bit 7 = the next byte repeated (ctrl & 0x7f) times,
+  else (ctrl & 0x7f) literal bytes; runs continue across the reads (the
+  decoder's control/value locals survive between calls). The stream holds
+  a 0xdc byte header (+8 layer count 4, +0xc width 2048 and +0x10 height
+  512 in tiles, Pascal strings at +0x14 the map name `<uten navn>`, +0x35
+  `megaobjs.bmp`, +0x56 `bypass.bmp`, +0x77 `bakgrunn.bmp` (unused), +0x98
+  the tile set `New.bmp` / `snowtile.bmp`, +0xb9 `objects.bmp` (unused))
+  and the layers, each column by column, an int16 tile per cell (-1
+  none; other negative values occur and count as none). The tile set
+  (`bitmap/<name>`, 256 wide) is cut into 32x32 tiles row by row; its
+  colour key is its bottom right pixel. `.fff` ("FUNKY FILE FORMAT", 18
+  bytes; a bad magic closes the file and reads on (sic)): count, then per
+  node float x, float y, int type, int n, n ints (linked nodes); types 0
+  road, 1 checkpoint, 2 start, 3 finish, 4/5 truck trigger/spawn, 6/7
+  Gustav trigger/spawn. Every link is a segment (0x28 bytes: from, to,
+  unit direction, normal, angle = atan2(dx, dy) + pi, so 3/2 pi is level;
+  `FUN_00442c1f`); a node's outgoing segments follow its links (forks: link
+  0 the lower road, link 1 the upper one), incoming ones collect in
+  segment order. Without the file the original builds a two segment road
+  (not ported). `.eff` ("EVEN FUNKIER FILEFORMAT", 24 bytes, else the
+  load fails): count, then int x, y, type per pick-up; the rectangle is
+  the 32x32 sprite around the point (`FUN_00442ce7` validates: start =
+  the type 2 node's x, its out[0] the start segment, finish = the type 3
+  node's x). Track 1: 913 nodes, x 647..65023; winter: 920 nodes.
+* **Actors** (`FUN_00442de3`): per node of type 4 (6) a truck (Gustav)
+  appearing at the next node of type 5 (7) after it, not the one the
+  previous actor took, facing its incoming segment; truck `melkebil.smk`
+  (loop) with the `melkebil` sound, 300 px/s; Gustav `<postwalk>` (loop)
+  and `<postcrash>1|2` (random, no loop), 66 px/s, drawn upright. One
+  truck and one Gustav per ride start when Solan enters a segment leaving
+  their trigger node (`FUN_0044733f`) and drive back along the road
+  (`x -= dt * dir * speed`, previous segment at the segment start), turning
+  towards the segment angle at 3 rad/s; the truck's loop volume is 99 % x
+  (1 - (d - 350) / 900) clamped, d = distance to the camera point; they
+  stop when their segment ends 640 px behind the camera.
+* **Frame** (`FUN_004446b2`): dt = game ms x 0.001; up held notes the
+  time; right accelerates (`FUN_00447c97`: +15 px/s per frame up to 630),
+  else left brakes (`FUN_00447bdd`: -15 down to 210), else normal speed
+  at once (`FUN_00447aa0`: 420); on the ground only (ducking or in the air:
+  normal speed rule); down ducks (`FUN_00447de4`, clip `duck`, normal
+  speed), releasing it plays `cycle` again; `FUN_00445440` computes an
+  unused slope acceleration; `FUN_00447d51` clamps to 210..630; physics
+  (`FUN_004456ff`, false = game over -> start screen); the camera
+  (`FUN_00445355`); space jumps (`FUN_0044554e`); pick-ups; drawing; HUD;
+  finish (`FUN_00447f43`) -> game not running, awards and high score,
+  `FUN_0040cd70("town", 0)` (not the scene table's exit).
+* **Physics** (`FUN_004456ff`, units of 300 / 10 = 30): x += vx dt; in the
+  air y = the flight table, else y += vy dt. The segment follows x
+  (`FUN_004465de`): before it the previous one (`from.in[0]`; the speed
+  is put along it unless it turns left, cross > 0), past it `to.out[1]`
+  when up was held during the last second and there is a fork, else
+  `to.out[0]` (none: no segment); turning left the velocity is projected
+  on it, the vertical part using the new horizontal one (sic). A node
+  linked back to the previous one can make the original loop forever (the
+  port stops after 1000 steps). Actors move, a segment from a type 1 node
+  becomes the checkpoint. With a segment: ground = the road's height at x
+  (`FUN_00443a33`); ground - y >= 0.75 is in the air: `FUN_004455ff`
+  fills the flight table once (300 heights every 50 ms from y - 1.5,
+  starting with -375 px/s after a jump, else the vertical speed, gravity
+  870 px/s^2; a jump recomputes it once more in the next frame); on the
+  ground the landing clip `land` then `cycle` play, the vertical speed is
+  |v| x the segment's dy (`FUN_00446590`), the jump sound stops and the
+  ground sound loops. Below 10 px over the ground `during jump` gives way
+  to `bloop5`, above it the reverse (`during jump` at 30 %) and the
+  `jump` + `inair` clips; more than 0.75 px under the road snaps to it.
+  On the ground the angle turns towards the segment's at 3 rad/s, in the
+  air after a jump towards level (4.712389). `bloop5`'s pitch follows
+  min(|angle - segment + 1|, 1.5) and then (overriding it) the speed:
+  0.84 at 210, 1 at 420, 1.5 at 630.
+* **Collisions** (`FUN_00446619`, `FUN_0044680b`): Solan's outline is 5
+  lines around the rear wheel (riding 0x4dbe70, ducking 0x4dbec0, in the
+  air 0x4dbf10), rotated by -angle - 1.57. Every layer 1 tile drawn in the
+  last frame (an obstacle, map +0x88) whose rectangle holds a line's first
+  point or is crossed by a line (`FUN_00444d33`, integer end points; its
+  last test compares a column with the rows, sic) gets its opaque pixels
+  stamped with a new frame number into the 640x480 buffer
+  (`FUN_004471a3`; its left edge clamps to 479, not 639, and tiles cut by
+  the top/left edge are stamped unshifted, sic). Then the 5 lines, and
+  the lines between the first points of every pair, are walked
+  (`FUN_00447056`, Bresenham without the end point, x 639 and y 479 never
+  tested): a stamped pixel is a crash, type 2 (backwards, speed 0) for
+  lines 1 and 2 (back and head), else 1 (forwards). The active truck or
+  Gustav (6 lines, 0x4dbf60 / 0x4dbfc0, Gustav's not rotated) crash him
+  (type 1) when a line crosses one of his (`FUN_00446e7c`: slopes, a
+  vertical line counts as slope 0, sic); Gustav stops and falls. A crash
+  stops the sounds, plays `crash2` (type 1) or `crash1` (type 2) from the
+  queue; when either reaches its last frame both rewind, a life goes
+  (`FUN_00446434`) and the ride restarts at the checkpoint
+  (`FUN_00441747`) or the game is over (`FUN_00446414`: not running,
+  awards and high score, start screen; the HUD keeps its values).
+* **Pick-ups** (`FUN_004448f1`, types 0x4dc668): cup 100 points, coin 25,
+  film (profile flag 0), `dings` the car part (flag 1), slot1/2/3
+  (propeller 200, letter 150, newspaper 100) also go into the first free
+  of three slots (`propell`/`brev`/`avis` at (98/134/170, 32) z 1). Points
+  x 0.75 / 1 / 1.25 by difficulty (`FUN_00444bc9`, truncated). Three slots
+  full (`FUN_004451b7`): `fanfare`, ten times the item's points for three
+  alike, 500 for a pair, 1500 for three different, slots cleared. A hit
+  is a line's first point in the 32x32 rectangle or a line through it
+  (`FUN_00444cad`). Sounds `pickup1/2/3` play on duplicates when busy
+  (`FUN_00444bfb`, 20). Counters with bonuses (0x4dc63c/0x4dc648) exist
+  but no pick-up counts. The help text's time bonus does not exist.
+* **Drawing** (`FUN_004400e8`, every frame into the back buffer under the
+  scene's elements, no backdrop meanwhile): the view's corner is (camera -
+  160, camera - 240); the camera point follows Solan within 20 px across
+  and 50 px up/down and is clamped to the map (`FUN_00440ae7`). 21 x 16
+  cells: layer 0 opaque, layer 3 and layer 1 (recorded as obstacles)
+  keyed; Solan (`FUN_00440801`: the queue's clip decodes into a 256x512
+  surface, a clip without the loop flag gives way to the next one when its
+  frame number reaches the last frame, which is never shown), the active
+  truck / Gustav (`FUN_00440b66`), the active pick-ups (`FUN_00440713`:
+  frame = (66 ms counter - pick-up number) mod 32, strips of 32x32
+  frames), then layer 2 in front. Sprites are textured quads
+  (`FUN_0046fdc0`, the racing code's): the clips are stored turned a
+  quarter (the bike's wheels on the left), the point lies 15 % into the
+  texture (the rear wheel), scale 0.6 (Gustav 0.75 at -pi/2, 60 px lower),
+  key = the texture's first pixel. HUD (`FUN_00447fda`): `"%d:%02d"`
+  seconds and hundredths since the start node (frozen at the finish), the
+  score, the progress (x - start) / (finish - start).
+* **Dialogs** (0x11b, `FUN_0043ff03`): during a ride the playfield is
+  drawn into a 640x480 element (top 80 rows keyed) and the playing
+  `bloop5` / ground / `during jump` sounds stop; 0x11c restarts them at
+  the scene volume. Engine: `Scene::pauseAnims()` (now virtual).
+* **End** (`FUN_00447e43`): profile value 0 written; a flag set for the
+  first time gives `FUN_0041bb20(1, 0, 0, 1, 0)` (a film clip) /
+  `(0, 0, 0, 1, 0)` (a car part); then `FUN_0041f8c0(LANG_Get(section),
+  track, score, 0x4dc654 {2500, 5000, 10000, 15000}, 0)`: the track is the
+  table key (mainscore's `version` 0/1). Engine: `showAward()`,
+  `registerScore(vm, section, score, medals, track, kScorePoints)`.
+* **Port notes**: the original is 16 bit; colour keys compare in RGB565
+  (`normaliseKey()`, `rgb565()`: New.bmp has 830 near-red pixels that are
+  transparent there). WAV sounds play through the scene's own voices
+  (pitch with `Mixer::setChannelRate`, sound.ini `sound=` as the scene
+  volume, DirectSound percentages linear); clip audio at the scene volume.
+  Clip frames advance at their rate (SmackWait). The playfield is cleared
+  to black where layer 0 has no tile (the original leaves the back
+  buffer). Not done: tournament mode (`FUN_00419490`: no start screen,
+  the round's track, one life), the loading box, the cursor auto hide
+  (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
+  Development aid: `mountain_skip=<x>` / `mountain_skip=n<node>`.
+
 ## Dialogs (`dialog.cpp`)
 
 `Dialog` is the modal box of the DIALOG/BUTTON modules: a bitmap from
@@ -2274,8 +2468,8 @@ Engine: `hiscore.h`.
   `FUN_00450180` (`wheelbarrow:LONGNAME`, 0x49f1f8 {2500, 5000, 10000,
   15000}); puzzle `FUN_00455890` (no medals). The tables not listed are
   {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
-  (the callbacks are the code after the call); balloonhunt, mountain and the
-  add-on set 3 games are not ported.
+  (the callbacks are the code after the call; mountain passes its track as
+  the key); balloonhunt and the add-on set 3 games are not ported.
 * Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
   (title a language.ini key or text, "" = scene title; returns the player
   row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
@@ -2812,8 +3006,7 @@ random ambience clip (`FUN_0040b0f0`, TODO). Narration `S07AN-NAR-001` and
   Escape goes to the menu (global key).
 * State: none kept across visits; the page has no profile calls.
 * TODO: the ambience clip; the message box answer (the dialog is a stub on
-  this branch, the page assumes YES); the `mountain` sub game itself
-  (`startGame` only warns).
+  this branch, the page assumes YES).
 
 ## Story page `intro` ("Prolog")
 
@@ -3420,6 +3613,12 @@ all tiles but n are removed, leaving n/2 matching pairs that are all
 free; a negative n removes the hint's pair until none is left, usually
 a lost game); with `--debuglevel=2` mahjong logs where to click each
 free tile (the camera follows the mouse) and what each click picks.
+`mountain_skip=<x>` (mountain: the ride starts on the main road, link 0
+at every fork, at the first segment at or past x, e.g. 64000 just before
+the finish of track 1; `mountain_skip=n<node>` starts on the first
+segment leaving that node of the `.fff` file, e.g. n786 before the car
+part, n668 before the film clip; a crash restarts there until a
+checkpoint is passed).
 `test_colorfill_print=<png>` (colorfill: the activity button writes the
 picture to that file instead of opening ScummVM's print dialog).
 `test_draughts=<side 0>/<side 1>` (draughts: the position at the start,
@@ -3451,7 +3650,7 @@ profiles / tournament mode, `sound.ini` volumes.
 | x | whackamole | Dra meg baklengs! | house | data2 |
 | x | beemaze | Ludvigs Labyrint | tvroom | data |
 | x | buildabike | Reodors sykkelverksted | garage | data |
-| | mountain | (no title in language.ini) | morning | data (no sceneDefs entry yet) |
+| x | mountain | Solan i farta | morning | data + data1/data2 (640x480) |
 | x | pipeline | Oljeeventyret | outtent | data |
 | x | butterfly | Sommerfugler i magen | pee | data (+ album `buttercol`; info page open) |
 | x | hustle | Emanuels utfordring | intent | data |
