@@ -25,6 +25,7 @@
 #include "common/hash-str.h"
 #include "common/path.h"
 #include "common/str.h"
+#include "common/str-array.h"
 #include "common/stream.h"
 #include "graphics/managed_surface.h"
 #include "graphics/pixelformat.h"
@@ -63,6 +64,13 @@ public:
 	Common::SeekableReadStream *open(const Common::String &scene, const Common::String &file);
 
 	bool exists(const Common::String &scene, const Common::String &file);
+
+	/**
+	 * Appends the files of a scene's containers that match a pattern such
+	 * as "tunes/<wildcard>.tun" (paths relative to the scene, each name once, in the
+	 * lookup order of open()).
+	 */
+	void listFiles(const Common::String &scene, const Common::String &pattern, Common::StringArray &files);
 
 	/** Loads a bitmap and converts it to the given pixel format. */
 	Graphics::ManagedSurface *loadBitmap(const Common::String &scene, const Common::String &file, const Graphics::PixelFormat &format);

@@ -25,6 +25,7 @@
 #include "flaaklypa/bouquet.h"
 #include "flaaklypa/bugzzz.h"
 #include "flaaklypa/colorfill.h"
+#include "flaaklypa/fence.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/hopscotch.h"
@@ -494,6 +495,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BouquetScene(vm, def);
 	if (!scumm_stricmp(name, "colorfill"))
 		return new ColorfillScene(vm, def);
+	if (!scumm_stricmp(name, "fence"))
+		return new FenceScene(vm, def);
 	if (!scumm_stricmp(name, "mahjong"))
 		return new MahjongScene(vm, def);
 	if (!scumm_stricmp(name, "jigsaw"))

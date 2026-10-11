@@ -20,6 +20,7 @@ MODULE_OBJS = \
 	desk.o \
 	dialog.o \
 	entrydlg.o \
+	fence.o \
 	flaaklypa.o \
 	font.o \
 	gallery.o \
