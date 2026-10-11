@@ -272,6 +272,16 @@ public:
 	bool isSceneFrozen() const { return _freezeDepth > 0; }
 	/** The mouse position of the last mouse event (the original's FUN_0040ca10). */
 	Common::Point mousePos() const { return _mousePos; }
+	/**
+	 * Switches the display mode (FUN_004017f0): the 640x480 scenes (racing,
+	 * mountain, balloonhunt) switch to their size in their init and back to
+	 * 800x600 when they close.
+	 */
+	void setScreenSize(int w, int h);
+	/** The size of the current display mode; dialogs centre on it. */
+	int screenWidth() const { return _screen->w; }
+	int screenHeight() const { return _screen->h; }
+
 	/** One iteration of the main loop: input, scene update, drawing. Dialogs nest it. */
 	void runFrame();
 

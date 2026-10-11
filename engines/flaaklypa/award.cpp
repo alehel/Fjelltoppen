@@ -457,7 +457,7 @@ AwardDialog::AwardDialog(FlaaklypaEngine *vm, int type, const Common::Array<int>
 		close(0);
 		return;
 	}
-	const int dx = (kScreenWidth - kAwardDialogW) / 2, dy = (kScreenHeight - kAwardDialogH) / 2;
+	const int dx = (_vm->screenWidth() - kAwardDialogW) / 2, dy = (_vm->screenHeight() - kAwardDialogH) / 2;
 
 	// FUN_0041be20: the title in Amerigo BT_14_ centred (a label at z 501)
 	// and the text with awarddlg:AWARDBELOW word wrapped in Amerigo BT_10_

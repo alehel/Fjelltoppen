@@ -135,9 +135,13 @@ struct SceneDesc {        // e.g. yard at 0x4cb6c8
 };
 ```
 
-Three scenes are 640x480: `racing`, `mountain` and `balloonhunt` (flags 3
-for the two sub games; `FUN_0040ccd0` calls `FUN_0040cb20` for flag bit 1,
-presumably the display mode switch). The scene registry at 0x4a7f08 (58
+Three scenes are 640x480: `racing`, `mountain` and `balloonhunt`. Their
+inits switch the display mode with `FUN_004017f0(640, 480)` and their
+close handlers back with `FUN_004017f0(800, 600)` (engine:
+`FlaaklypaEngine::setScreenSize()`; dialogs centre on the current mode).
+Flag bit 1 (`FUN_0040ccd0` -> `FUN_0040cb20`) shows the `loading` box
+(`common/bitmap/loading.bmp` with `gamec:LOADING`) at the bottom right
+while the scene loads. The scene registry at 0x4a7f08 (58
 pointers, count at 0x4a7ff0) lists them in story order.
 `tools/gen_scenedata.py` extracts these, all animation structures and all
 cursor tables into `scenedata.cpp`; `scenelists.txt` lists the animation

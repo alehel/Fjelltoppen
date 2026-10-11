@@ -351,6 +351,16 @@ Common::String FlaaklypaEngine::subtitleLanguage() const {
 	}
 }
 
+void FlaaklypaEngine::setScreenSize(int w, int h) {
+	if (_screen->w == w && _screen->h == h)
+		return;
+	Graphics::PixelFormat format = _screen->format;
+	initGraphics(w, h, &format);
+	delete _screen;
+	_screen = new Graphics::Screen(w, h, g_system->getScreenFormat());
+	debug(1, "Display mode %dx%d", w, h);
+}
+
 void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
 	switch (key.keycode) {
 	case Common::KEYCODE_TAB:

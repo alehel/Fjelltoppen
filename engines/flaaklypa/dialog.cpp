@@ -365,9 +365,9 @@ MessageBox::MessageBox(FlaaklypaEngine *vm, const Common::String &title, const C
 	int w = (backdrop->w - inner.right) + kContentW + inner.left;
 	int h = (backdrop->h - inner.bottom) + inner.top + textH;
 	if (x == -1)
-		x = kScreenWidth / 2 - w / 2;
+		x = _vm->screenWidth() / 2 - w / 2;
 	if (y == -1)
-		y = kScreenHeight / 2 - h / 2;
+		y = _vm->screenHeight() / 2 - h / 2;
 	Graphics::ManagedSurface *surface = nineSlice(*backdrop, inner, w, h);
 	delete backdrop;
 
@@ -531,7 +531,7 @@ HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const C
 		close(0);
 		return;
 	}
-	setSurface(backdrop, kScreenWidth / 2 - 0xf2, kScreenHeight / 2 - 0xcf);
+	setSurface(backdrop, _vm->screenWidth() / 2 - 0xf2, _vm->screenHeight() / 2 - 0xcf);
 	setHitMask(_vm->_resources->loadMask("common", "dialogue/help/hotspot.bmp"));
 	_font.load("Amerigo BT_10_");
 	const Graphics::PixelFormat &format = backdrop->format;

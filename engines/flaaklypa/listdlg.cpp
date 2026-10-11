@@ -87,7 +87,7 @@ ListDialog::ListDialog(FlaaklypaEngine *vm, const Common::String &title, const C
 	if (!backdrop)
 		return;
 	_valid = true;
-	setSurface(backdrop, (kScreenWidth - 0x140) / 2, (kScreenHeight - 0x1e3) / 2);
+	setSurface(backdrop, (_vm->screenWidth() - 0x140) / 2, (_vm->screenHeight() - 0x1e3) / 2);
 	setHitMask(_vm->_resources->loadMask("common", "dialogue/listdlg/hotspot.bmp"));
 
 	// The title in Amerigo BT_14_, centred (FUN_00407650, 0x101)

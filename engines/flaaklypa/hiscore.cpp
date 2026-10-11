@@ -397,7 +397,7 @@ HighscoreDialog::HighscoreDialog(FlaaklypaEngine *vm, const Common::String &titl
 	if (!backdrop)
 		return;
 	_valid = true;
-	const int dx = (kScreenWidth - kScoreDialogW) / 2, dy = (kScreenHeight - kScoreDialogH) / 2;
+	const int dx = (_vm->screenWidth() - kScoreDialogW) / 2, dy = (_vm->screenHeight() - kScoreDialogH) / 2;
 
 	// FUN_0041f4a0: labels at z 0x1fe, centred; the title in the bold font,
 	// the column heads, the last one POINTS or TIME
