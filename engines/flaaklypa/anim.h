@@ -33,6 +33,15 @@ class Scene;
 class SmackerClip;
 
 /**
+ * Draws src at pos leaving out the pixels of the key colour, like
+ * ManagedSurface::transBlitFrom() but on the raw pixels when both surfaces
+ * have the same 16 or 32 bit format (the generic blit converts every pixel
+ * and costs tens of milliseconds for a full screen element). Pixels with
+ * no alpha are left out too; partial alpha is copied as is.
+ */
+void blitKeyed(Graphics::ManagedSurface &dst, const Graphics::ManagedSurface &src, const Common::Point &pos, uint32 key);
+
+/**
  * A scene element: a Smacker clip or a bitmap drawn at a position, mirroring
  * the original's animation structures (SCENE_AddAnim / SCENE_PlayAnim).
  *

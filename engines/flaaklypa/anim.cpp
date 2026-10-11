@@ -30,6 +30,40 @@
 
 namespace Flaaklypa {
 
+template<typename T>
+static void blitKeyedPixels(Graphics::ManagedSurface &dst, const Graphics::ManagedSurface &src, const Common::Rect &srcRect,
+                            const Common::Point &destPos, T key, T alphaMask) {
+	for (int y = 0; y < srcRect.height(); y++) {
+		const T *s = (const T *)src.getBasePtr(srcRect.left, srcRect.top + y);
+		T *d = (T *)dst.getBasePtr(destPos.x, destPos.y + y);
+		for (int x = 0; x < srcRect.width(); x++) {
+			const T p = s[x];
+			if (p != key && (!alphaMask || (p & alphaMask)))
+				d[x] = p;
+		}
+	}
+}
+
+void blitKeyed(Graphics::ManagedSurface &dst, const Graphics::ManagedSurface &src, const Common::Point &pos, uint32 key) {
+	const int bpp = src.format.bytesPerPixel;
+	if (src.format != dst.format || dst.hasTransparentColor() || (bpp != 2 && bpp != 4)) {
+		dst.transBlitFrom(src, pos, key);
+		return;
+	}
+	Common::Rect clipped(pos.x, pos.y, pos.x + src.w, pos.y + src.h);
+	clipped.clip(Common::Rect(dst.w, dst.h));
+	if (clipped.isEmpty())
+		return;
+	const Common::Rect srcRect(clipped.left - pos.x, clipped.top - pos.y, clipped.right - pos.x, clipped.bottom - pos.y);
+	const Common::Point destPos(clipped.left, clipped.top);
+	const uint32 alphaMask = src.format.aBits() ? src.format.ARGBToColor(0xff, 0, 0, 0) : 0;
+	if (bpp == 4)
+		blitKeyedPixels<uint32>(dst, src, srcRect, destPos, key, alphaMask);
+	else
+		blitKeyedPixels<uint16>(dst, src, srcRect, destPos, (uint16)key, (uint16)alphaMask);
+	dst.addDirtyRect(clipped);
+}
+
 Anim::Anim(Scene *scene, const AnimDef *def) : _scene(scene), _def(def),
 	_video(nullptr), _volume(255), _frame(nullptr), _hasKey(false), _keyColor(0),
 	_x(def->x), _y(def->y), _z(def->zOrder), _hotspot(def->hotspot), _hitMask(nullptr), _hitRadius(0), _group(def->group),
@@ -251,7 +285,7 @@ void Anim::draw(Graphics::ManagedSurface &dst) {
 	if (!_added || !_frame || !isVisible())
 		return;
 	if (_hasKey)
-		dst.transBlitFrom(*_frame, Common::Point(_x, _y), _keyColor);
+		blitKeyed(dst, *_frame, Common::Point(_x, _y), _keyColor);
 	else
 		dst.blitFrom(*_frame, Common::Point(_x, _y));
 }
