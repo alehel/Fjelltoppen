@@ -64,6 +64,7 @@ MODULE_OBJS = \
 	sockdrawer.o \
 	sound.o \
 	subtitles.o \
+	synonym.o \
 	textinvader.o \
 	town.o \
 	tvroom.o \

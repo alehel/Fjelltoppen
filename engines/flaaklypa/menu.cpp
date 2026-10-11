@@ -48,6 +48,7 @@
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/sliding.h"
 #include "flaaklypa/sockdrawer.h"
+#include "flaaklypa/synonym.h"
 #include "flaaklypa/textinvader.h"
 #include "flaaklypa/whackamole.h"
 #include "flaaklypa/wheelbarrow.h"
@@ -453,6 +454,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new SockdrawerScene(vm, def);
 	if (!scumm_stricmp(name, "textinvader"))
 		return new TextinvaderScene(vm, def);
+	if (!scumm_stricmp(name, "synonym"))
+		return new SynonymScene(vm, def);
 	if (!scumm_stricmp(name, "audiopairs"))
 		return new AudiopairsScene(vm, def);
 	if (!scumm_stricmp(name, "whackamole"))

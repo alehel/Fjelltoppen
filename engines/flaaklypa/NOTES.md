@@ -1453,6 +1453,176 @@ work. Engine: `mountain.cpp`.
   (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
   Development aid: `mountain_skip=<x>` / `mountain_skip=n<node>`.
 
+## Sub game `synonym` ("Reodors Ordmaskin", add-on set 3)
+
+A word game: the machine shows a word (`Arial_23_b`, red LED look) and
+rolls the shuffled letters of a synonym onto the upper shelf; the player
+drags them into the right order on the lower shelf. Started from the
+scene index (parent `sceneindex`, no cursor table). Handler `0x482230`
+(a function in the Ghidra project; code `0x482230`..`0x4844a7`, the LANG
+module follows): 0x103 `FUN_00482320` init, 0x104 `FUN_004830b0` close,
+0x105 `FUN_004831d0` mouse down, 0x10b `FUN_00483640` drop, 0x110
+`FUN_00483d80` clip finished, 0x112 `FUN_00483f10` tick, 0x116
+`FUN_00483aa0` buttons; no key handling (global keys only). Engine:
+`synonym.cpp`.
+
+* **Word list** `lang3/synonym/synonym.ini` `[dictionary]` (Windows-1252,
+  4854 entries): `word<n>` the word the player builds, `level<n>` its
+  difficulty 0..2, `synonym<n>` the words shown, `:` separated; only the
+  first is ever shown (`FUN_00483e30`; `FUN_00483e80` counts them, unused).
+  Words are lower case a-z plus æ, ø, å (c, w rare), 2..18 letters, no
+  duplicates. Loading (`FUN_00482b70`): counted by probing `word0`, `word1`,
+  ... (`FUN_0047f360`); records of 0x1c bytes {number, last used, word,
+  synonyms, strlen, difficulty, float key} at `DAT_006e63b0`, then qsort
+  (`LAB_00482f00`) by difficulty, length, word (unsigned strcmp). The ini
+  stays loaded (`DAT_006e7750`) for the strings.
+* **Profile**: `FUN_00411e70(0, buf, n * 4)` reads the minute each word was
+  last given, indexed by its number (record 0x402 key 0 of the scene, all
+  zero without a profile or with a different size); `FUN_00483120` writes it
+  back on close (`FUN_00411e40`). A word gets the stamp when it is given
+  (`FUN_00482720`), solved or not: `FUN_004827c0` = `time() / 60 -
+  0xe6b680` (minutes since 1998-10-01). The port marks the profile changed
+  only when the record differs.
+* **Levels** `data3/synonym/level.ini` `[level]`, counted by
+  `<l>_totaltime` (12 levels, past the last one the last repeats,
+  `FUN_00482570`; the level shown is l + 1): `<l>_minlength_<d>` /
+  `<l>_maxlength_<d>` the word lengths of difficulty d (missing = 0 = no
+  words), `numcorrect` (default 15; 10 in the file) words to solve,
+  `wordtime` (10000) ms until pass is enabled, `hintcount` (0) hints per
+  word (1, 1, 2, 2, 3, 3, then 4), `totaltime` (40000) ms for the level
+  (260 s .. 130 s), `basepoints` (20..50) points per letter, `secpoints`
+  (3..17) bonus factor. Record 0x48 bytes: min[3], max[3], numcorrect,
+  wordtime, hintcount, totaltime, basepoints, secpoints, start[3],
+  count[3]. `FUN_00482f60` finds each difficulty's range in the sorted list
+  but stores the end of difficulty 2 in count[0] (+0xc) instead of the third
+  start, so difficulty 0 spans the whole list; `FUN_00483010` then takes,
+  per difficulty, the run from the first word with length >= min while
+  length <= max, which stays inside difficulty 0 because the limits (<= 11)
+  are below its longest words (16). Kept as is. Pools: level 0 699 words,
+  1 711, 2 1251, ..., 11 483.
+* **Choosing words** (`FUN_004825b0`, at every level start): the words of
+  the three ranges into `DAT_006e63b4` with key = last used (float), qsort
+  by key (`LAB_004826a0`), then each key += `FUN_0047ec00(lo, hi)` =
+  `(rand() % 200 - 100) * 0.01 * ((hi - lo) * 0.25 + 10)` with lo/hi the
+  smallest and largest key, qsort again. So words never given come first
+  in random order (+-10), then the ones given longest ago (the noise is a
+  quarter of the spread). The level walks the pool with `DAT_006e5f90`,
+  wrapping at its size (`FUN_00484070`), so there are no repeats; a new
+  level resets the index to 0 and `FUN_00484000` increments it right after,
+  so the first word of every pool but the first level's is skipped (kept).
+  Port: `Common::sort` and ScummVM's random source instead of qsort (not
+  stable) and `rand()`, so equal keys and the sequence differ.
+* **Screen** (`FUN_00482960`): fonts `Arial_23_b` (data3, the word),
+  `Amerigo BT_14_` (score), `Amerigo BT_10_` (labels, level). Labels
+  (`FUN_00407a30`, z 10): `synonym:POINTS` centred in (295, 372)-(388, 384),
+  `synonym:LEVEL` left aligned in (295, 417)-(388, 436). Text areas
+  (`FUN_00407930`, z 10, key 0x00ff00): level number "%d" right aligned
+  (0x201) in the same (295, 417)-(388, 436), score "%d" centred in (295,
+  384)-(388, 417) (drawn from the first start on), the word centred in
+  (187, 166)-(508, 203). Buttons (`FUN_00406ed0`, z 0x1a, transparent):
+  3 help (0, 0), 4 exit (0x2d8, 0), 2 pass (0x222, 0x18d) `pass_0/1/2`,
+  6 hint (0x26, 0x18b) `hint_0/1/2`, 5 shuffle (0x5e, 0xde) `shuffle_0/1`
+  (lang bitmaps, "STOKK"). Elements at their default places: `hint` /
+  `pass` captions and the gauges `correct`, `time`, `clock` at z 10, the
+  covers `overlayleft` (145, 224), `overlayright` (505, 224),
+  `overlayfunnel` (547, 318) at z 0x19; `start` (hotspot 1) at z 0x32 when
+  no game runs. Music `subgame21`. No cursor table, no tooltips.
+* **Gauges** (`FUN_004824a0(clip, v)`): v clamped to 0..1, frame =
+  round(v * (frames - 1)) clamped to 1..frames, `SmackGoto` when it differs
+  (returns whether it did). Frame 0 of the 60 frame clips is empty, so
+  they never show it. The port treats the number as 0 based like the
+  tvroom clock (`Anim::showFrame`). `correct` = solved / numcorrect,
+  `time` and `clock` = 1 - elapsed / totaltime (`FUN_004843f0`, every tick
+  in a game; `sndclocktick` whenever the clock's frame changes, every
+  totaltime / 59 ms: 4.4 s on level 1, 2.2 s on level 12).
+* **Letters**: 64 element structures at `DAT_006e7758` (0xa8 each),
+  element i = the word's letter i, hotspot 100 + i, bitmap (the element's
+  name) `small_<c>` (32 x 32) on the upper shelf or `large_<c>` (40 x 40) on
+  the lower one, `<c>` the Windows-1252 byte (`large_\xe6.bmp` for æ). A
+  bitmap change removes and re-adds the element at its old position and z
+  (`FUN_004833a0` / `FUN_00483800`); position and z stay in the structure
+  while it is off screen, z is 0 until a letter is first dragged (0x1e
+  while dragged, 0x14 after a drop). Port: elements `letter<i>` showing
+  the bitmaps through `SceneButtons::showBitmap`, the fields in `Letter`.
+  Upper shelf (`FUN_004836f0`): the word's length in 32 px places centred
+  in (188, 228)-(509, 260), letter at the place of its index in the
+  shuffled order `DAT_006e5f9c`. Lower shelf (`FUN_004835a0`): length x 40
+  centred in (110, 276)-(543, 366) (y 301); `FUN_00483460` puts revealed
+  letters at their own places and the placed ones (`DAT_006e62b0`, count
+  `DAT_006e5f88`) side by side centred in the rest.
+* **Shuffle** (`FUN_00482830`): up to five tries of a random permutation
+  (`FUN_00482860`: `rand() % left` from the remaining indices) until the
+  letters do not spell the word (compared as text, so equal letters count).
+* **Round** (state `DAT_006e614c`, time `DAT_006e63b8` = when it was set,
+  `FUN_00482780`): start (hotspot 1, `FUN_00482380`): game running, start
+  ball removed, hints, level hints and score 0, level 0 (`FUN_00482400`:
+  pool, level text, counters 0, level start time, `correct` 0, `time` and
+  `clock` full), first word. Word (`FUN_00482720`): stamp, hints 0, text
+  cleared, pass disabled (state 2), letters removed and shuffled, state 4,
+  `ballstart1` (3.2 s). Its end shows the first synonym, state 2 (rolling),
+  `ballstart2`. Rolling (`FUN_00484100`): n = (now - state time) / 133 + 1
+  letters (1..length) in shuffled order; a new one appears small at x 518.0
+  (under `overlayright`) and moves left 300 px/s until its place (x rounded
+  away from zero); all there: `sndstartball`, state 1 (playing).
+* **Playing** (state 1): mouse down on a letter that is not revealed
+  (`FUN_004832e0`) shows it large, starts the EVENT module's drag
+  (`FUN_0040c1f0`: the element follows the mouse by its delta, port: polled
+  in `onUpdate()`), z 0x1e, and takes it off the lower shelf (relayout).
+  Drop (0x10b, after the mouse up's 0x106; `FUN_00483640`): z 0x14; outside
+  the lower shelf rectangle the letter goes back small to its upper place
+  with `sndmiss`; inside it is inserted at round((x - left of the placed
+  group) / 40) clamped to 0..count (`FUN_00483770`, x = the mouse), relaid,
+  and in state 1 checked (`FUN_004838c0`): fewer letters than free places
+  `sndclick`; the letters (as text) between the revealed ones not the word
+  `sndwrong`; else `sndcorrect`, points (`FUN_00483950`: basepoints *
+  length >> hints, solved + 1, `correct` gauge), positions saved, state 4,
+  `../../common/animation/blank1` (1 s). With long words the ends of the
+  placed group can lie outside the shelf, so not every index can be
+  reached by a drop (as in the original). Pass is enabled (state 0) once
+  wordtime ms have passed in state 1 (`FUN_00484470`).
+* **Buttons** (`FUN_00483aa0`): pass `sndbutton1/2` (random) and
+  `FUN_00483b40` (state 1 only): the answer (the free letters in order) on
+  the lower shelf, state 4, blank1, no points. Hint (`FUN_00483bc0`, state 1,
+  hints < hintcount and hints + 1 < length): hints + 1, the revealed letters
+  leave the placed ones (`FUN_00483c20`), relayout and check (so a hint
+  plays `sndclick`, or completes the word), then `sndbutton1/2`; refused:
+  `sndnohint`. Hints reveal first, last, second, second to last, ...
+  (`FUN_00483360`: first = h / 2 + h % 2, last = length - h / 2). Shuffle
+  (`FUN_00483cf0`, state 1, silent): a new order; the free letters still
+  above move to their new places. Help `FUN_0041e580`, exit `FUN_0040cc30`.
+* **Falling**: the end of blank1 sets state 3 and starts `chain` (loop).
+  `FUN_00484260`: revealed or placed letters move right 400 px/s, from x >=
+  543 also down; at y >= 361 `sndballfall1/2` and gone; other letters
+  (upper shelf) move left 300 px/s and vanish at x <= 156. All gone: chain
+  removed, `FUN_00484000`: level hints += hints; solved >= numcorrect:
+  bonus (`FUN_004840b0`) = ((ms since the level started / 1000) * 2 /
+  (level hints + 1)) * secpoints and the next level; next word. The help
+  says the bonus is for the time left; the code counts the time spent
+  (kept).
+* **End**: the tick (`FUN_00483f10`) runs the clock in every state but 0;
+  when the level's time is over in state 1, `clockring` plays (state 4) and
+  its end calls `FUN_00483eb0`: game not running, state 0, a drag in
+  progress is dropped (`FUN_0040c260`), `FUN_0041f9d0(0, score, 0x4a0580)`
+  (verified: medals {2500, 5000, 10000, 20000}; the medal award brings no
+  car parts, a rise of the lowest medal over all sub games still does; the
+  help lists gold 10000, silver 5000, bronze 2500), then the start ball
+  again. Letters, word and score stay on screen until the next start.
+  Engine: `registerScoreNoCarParts(vm, "", score, kMedals)`.
+* **Tournament** (`FUN_00419490`, not ported): init shows
+  `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once without the
+  start ball; the game starts at level 2 * the player's difficulty
+  (`FUN_004194a0`, profile +0x24), i.e. 0, 2 or 4; at the end
+  `FUN_0041f9d0` hands the score to the tournament (`FUN_004196c0`,
+  `FUN_00419740` next game, no dialog) and the start ball does not come
+  back.
+* **Port notes**: sound effects (`FUN_00438250` clones) restart instead of
+  overlapping; `sound.ini` volumes (sound 0.56, music 0.18) are not
+  applied. Development aids: `synonym_level=<n>` (start level),
+  `synonym_time=<ms>` (every level's time), `synonym_solve=<ms>` (each
+  word solved by drags that long after the letters arrived); at debug
+  level 1 each word is logged with the centres of its letters (word order)
+  and the lower shelf, for scripted drags with `autoclick` `d`/`m`/`u`.
+
 ## Dialogs (`dialog.cpp`)
 
 `Dialog` is the modal box of the DIALOG/BUTTON modules: a bitmap from
@@ -2466,7 +2636,8 @@ Engine: `hiscore.h`.
   15000}); puzzle `FUN_00455890` (no medals). The tables not listed are
   {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
   (the callbacks are the code after the call; mountain passes its track as
-  the key); balloonhunt and the add-on set 3 games are not ported.
+  the key); synonym calls `registerScoreNoCarParts()`; balloonhunt,
+  gametrivia and mathlab are not ported.
 * Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
   (title a language.ini key or text, "" = scene title; returns the player
   row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
@@ -3917,6 +4088,12 @@ knights a free pawn, the pieces left over count as captured; when the
 player to move is the computer it starts thinking; e.g.
 `6k1/5ppp/8/8/8/8/8/R5K1 w`: Ra1-a8 mates). Chess logs each move and the
 computer's search (moves tried, depth, time, score) at debug level 1.
+`synonym_level=<n>` (synonym: games start at level n, 0 based),
+`synonym_time=<ms>` (synonym: every level lasts that long, to reach the end
+quickly), `synonym_solve=<ms>` (synonym: each word is solved that long
+after its letters have arrived, by drags through the mouse handlers); at
+debug level 1 synonym logs each word with the centres of its letters in
+the word's order and the lower shelf, for `autoclick` drags.
 
 ## Mini game checklist
 
@@ -3974,7 +4151,7 @@ Add-on set 3 (CD 2, fourth index group):
 | | gametrivia | Kjentmannsprøven | data3 |
 | | anaglyph | 3D-titter | data3 |
 | | mathlab | Reodors Tallmaskin | data3 |
-| | synonym | Reodors Ordmaskin | data3 |
+| x | synonym | Reodors Ordmaskin | data3 |
 
 Not games: `buildacar` and `racing` are story pages, `buttercol`
 (Sommerfugl kolleksjon) is the collection screen of `butterfly`.
