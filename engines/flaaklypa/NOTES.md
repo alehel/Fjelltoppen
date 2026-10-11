@@ -4091,6 +4091,130 @@ saving and loading are off, autosave too (slot -1).
   a new player). Race needs 8 car parts fitted (buildacar's value 0,
   second int) else `menu:RACE_LOCKED`. Exit and Escape ask `menu:QUIT`.
 
+## Race menu (`racemenu`, "Bilspillmeny", menu button 8)
+
+Handler `FUN_0047ad50` (`racemenu.cpp`, code 0x47aa50..0x47c630, byte
+table 0x47ae68, jump table 0x47ae40): 0x103 init `FUN_0047ae80`, 0x104
+close `FUN_0047ba50`, 0x105 `FUN_0047bcc0` (an oval opens its info page,
+else `FUN_004092d0` the sliders), 0x10a / 0x10b slider drag / release
+(`FUN_00409270` / `FUN_004092b0`), 0x113 / 0x114 hotspot enter / leave
+(`FUN_0047bc00` plays an oval's clip on from its frame, `FUN_0047bc80`
+stops it, `FUN_00412a60`), 0x116 buttons `FUN_0047bdb0`, 0x117 slider
+value `FUN_0047aa50`. No key handling (Escape is the global key: back to
+the menu); tooltips come from the BUTTON module (0x11a answered with the
+button's text, `FUN_00406910(id, 10, key)`). Engine: `RacemenuScene`.
+
+* **Entry**: the menu's button 8 (`FUN_004180a0`): buildacar's value 0
+  (20 bytes, second int = most parts ever fitted) below 8 gives
+  `menu:RACE_TITLE` / `RACE_LOCKED`, else `FUN_0040cd70("racemenu", 0)`.
+  The info pages return with their hotspot as the argument (3..5).
+* **Init** (`FUN_0047ae80`): music `theme`; `race.ini` of the scene
+  (data1's, data2's adds tracks 6/7, `FUN_00413910` + `FUN_0040dc10`);
+  tooltips (`FUN_00409b50(0)`); fonts `Arial Black 08` and `Arial Black
+  08 Gray` (the gray one is loaded and never used); the text areas
+  (`FUN_0047b530`, z 0, `Arial Black 08` centred): the names of the ovals
+  (115,267)-(278,282), (115,560)-(278,576), (522,560)-(684,576)
+  (0x4a01d0..) and the fixed labels `racemenu:TRACK` (110,29)-(282,48),
+  `PLAYER1` (110,323)-(282,342), `PLAYER2` (517,323)-(690,342), `MODE`
+  (511,29)-(696,44), `LAPS` (511,128)-(696,143), `DRIVERS`
+  (511,223)-(696,238), `RACETIME` (364,61)-(438,78), `LAPTIME`
+  (364,28)-(438,45), `SOUND` (364,93)-(438,110) (0x4a0200..0x4a0280);
+  buttons (`FUN_0047b700`, z 0): 1 help (0,0) and 2 exit (728,0)
+  transparent; 18 start (357,289) `start_0/1` (lang), 21 lap times
+  (439,28), 20 race times (439,61), 22 volumes (439,93) `button_0/1`, 19
+  the dirty tricks toggle (355,498) `tricks_0/1` (lang, `FUN_00407000`),
+  11 / 10 track next / prev (279,251) / (81,251), 14 / 13 car 1 next /
+  prev (279,546) / (81,546), 17 / 16 car 2 next / prev (687,546) /
+  (488,545) (the arrows transparent), 12 / 15 the controls of player 1 /
+  2 (30,512) / (730,511) `ply1_0/1`, `ply2_0/1`; tooltips TIP_START,
+  TIP_LAPTIME, TIP_RACETIME, TIP_SOUND, TIP_TRICKS, TRACK_NEXT/PREV,
+  CAR_NEXT/PREV, CAR_INFO (TIP_MODE/LAPS/DRIVERS and TRACK_INFO are not
+  used); sliders (`FUN_0047b440`, SCROLL module, horizontal, thumb
+  `slider_button` opaque at z 0): 6 mode (536,83)-(677,94) 0..2, 7 laps
+  (533,182)-(677,193) 0..2, 8 drivers (522,274)-(688,285) 0..3; the lists
+  (`FUN_0047b180`); the saved menu (`FUN_0047b0a0`); the blinking lights
+  `blinker` (381,148) at z -1, looping.
+* **Lists** (`FUN_0047b1d0(section, default state, list, max)`):
+  `resource<n>` (n from 0 until one is missing; at most 24 cars, 16
+  tracks), `state<n>` (default 2 for cars, 1 for tracks), `level<n>`
+  (default 0): state 0 always, 1 the track award item `level` won
+  (`FUN_0041b5d0(3, ...)`), 2 the car item won (type 2), 3 Il Tempo's
+  stage (`FUN_004231e0`: the most parts fitted less {13, 13, 14, 12, 10}
+  per stage until negative, 5 when complete) at least `level` (data2's
+  tracks 6 and 7: stage 2 and 4). The resource number is the award
+  item: car `n` = `CAR_<n+1>`, track `n` = `TRACK_<n+1>`. `FUN_0047b330`
+  then gives every listed car and track silently (counters 2 and 3,
+  `FUN_00411c40` when they changed), so the gallery and the info pages
+  know them. `name<n>` is a language.ini key formatted with `sprintf` and
+  Il Tempo's version `stage * 2 + 2` (`racemenu:ILTEMPO` "Il Tempo
+  Gigante V%d", `FUN_0047ac00`).
+* **Saved menu**: the scene's value 0, 0xf0 bytes (60 ints, `FUN_00411e70`
+  in the init over the defaults, `FUN_00411e40` on close): the track,
+  car 1 and car 2 (indices into the lists, clamped on load), the three
+  slider values (defaults 0, 0, 3), the clips' frames, the controls of
+  player 1 and 2 (25 ints each: three sets {6 keys, type, device} for
+  keyboard / gamepad 1 / gamepad 2 and the set in use), the tricks
+  switch (default on). After loading the types and devices are set again
+  (1 keyboard, 2 / 3 the gamepads, `FUN_0040e4f0` / `FUN_0040e500`).
+  Default keys (`FUN_0047a980`, 0x4a0150..0x4a01b0, virtual keys: up,
+  down, left, right, trick, horn): player 1 arrows, Ctrl, Shift; player 2
+  T, G, F, H, A, Z; gamepads axes 12, 13, 10, 11 and buttons 1, 2.
+* **Ovals** (`FUN_0047ac10(resource, section, element, text area,
+  arg)`): the clip `resource<n>` (272x180, 101 frames, 15 fps, looping,
+  transparent; elements " " with hotspots 3/4/5 at (64,67), (64,364),
+  (468,364), z 0) replaces the oval's clip at the frame the old one showed
+  (frame 1 for the first) and keeps playing if it played; it turns while
+  the mouse is on it. Prev/next wrap (`FUN_00469910`). A click opens the
+  info page (`FUN_0047bcf0`, request {0, "track"/"car", "racemenu",
+  hotspot, award category 3 / 2, resource}); back in the menu
+  (`FUN_0047b960`) the item shown last goes into the oval, and becomes the
+  choice when it is in the list.
+* **Sliders** (`FUN_0047aa50` on 0x117): bitmap `<name><value+1>` (opaque,
+  z 0) at 0x4a02c0 / 0x4a02d8 / 0x4a02f0: mode (520,53), (583,52),
+  (656,53); laps (522,153), (590,152), (663,152); drivers (507,245),
+  (555,245), (610,246), (659,245). Mode values map to 0x4a0134 {0 one
+  player, 2 two players, 1 demo}; with two cars (modes 1 and 2,
+  `FUN_0047ab30`) car 2's buttons 16, 17, 15 are enabled, else disabled,
+  `player2off` (472,362) covers the oval at z 1 and car 2's name is
+  cleared (`FUN_0047ab50`). Laps 0x4a0128 {3, 5, 8}, drivers value + 1.
+* **Start** (`FUN_0047bfa0` -> `FUN_0047c000`): the race's settings
+  (0x184 bytes, `DAT_006cfed0`, zeroed by the init with the saved
+  controls at +0xb4): +0 the track's `resource` name, +0x20.. four car
+  names (32 bytes each), +0xa0 laps, +0xa4 cars (drivers + 1, at least 2
+  in two player mode), +0xa8 mode, +0xac the best lap (the race fills it
+  in), +0xb0 tricks, +0xb4 / +0x118 the players' controls, +0x17c the
+  race time table key (0x4a0140 {0x40000000, 0x20000000, 0x10000000} by
+  laps | track), +0x180 the lap time key (track | 0x80000000). Cars
+  (`FUN_0047c120`): car 1 = player 1's, car 2 = player 2's in the modes
+  with two cars; the rest are drawn (`FUN_004120e0`, `rand() % n`
+  without repeats) from the resources 0..6 less the players' cars,
+  compared with their list indices (the original's mix-up; an index not
+  among 0..6 makes `FUN_0040a0b0` remove at -1, a memmove that drops the
+  first entry). The menu notes the track and laps for its tables
+  (`DAT_006d05cc`, `DAT_006d05d0`, `DAT_006d05c8` = 0) and goes to
+  `FUN_0040cd70("racing", &settings)`. Engine: `raceMenuSettings()`,
+  `changeScene("racing", 1)`.
+* **Times** (`FUN_0047c2a0`): `FUN_0041f030("racing", title, key, entry,
+  rows, 0x102)`: race times: `sprintf(racemenu:HISCORE_RACETIME, track
+  name, laps)` and the race key; lap times: `HISCORE_LAPTIME` and the lap
+  key. The race's last entries (`DAT_006d05d4`.., set by the race with
+  `FUN_0047aa00(1)`) are shown in bold when the track (and the laps)
+  match. Engine: `showScoreTables()`, `raceScoreState()`.
+* **Volumes** (`FUN_0047c400`): profile value 0x29a of "racing", three
+  floats (default 0.75: effects, commentator, engine), into
+  `FUN_00422180(labels racemenu:EFFECT/SPEECH/MUSIC, values, callback
+  LAB_0047c4e0)` = the options dialog without subtitles (`sounddlg`).
+  The callback keeps a slider's value and plays the menu's element
+  `../../common/sound/horn`, `speaker` or `engine` at that volume
+  (`FUN_00403620`, track 0), removing it on release; OK writes the value
+  (`FUN_004116c0`). Engine: `RaceSoundDialog` (the sample's volume is
+  relative to the sound volume, `Anim::setVolume()`).
+* **Close** (`FUN_0047ba50`): the menu is saved, the sliders, labels,
+  fonts and the ini freed.
+* Not ported: the controls dialog (`FUN_0041d140(&controls, player)`,
+  dialogue `ctrlcfg`: devices, the six inputs with CHANGE buttons, RESET);
+  the default keys apply.
+
 ## Development aids (config keys in the `[flaaklypa]` section)
 
 `start_scene`, `autoshot` / `autoshot_delay` / `autoshot_quit` (screenshot),
