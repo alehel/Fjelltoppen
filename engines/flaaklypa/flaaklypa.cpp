@@ -328,6 +328,24 @@ Common::Error FlaaklypaEngine::loadGameState(int slot) {
 	return selectProfile(slot) ? Common::kNoError : Common::kReadingFailed;
 }
 
+bool FlaaklypaEngine::subtitlesEnabled() const {
+	return ConfMan.hasKey("subtitles") && ConfMan.getBool("subtitles");
+}
+
+Common::String FlaaklypaEngine::subtitleLanguage() const {
+	switch (_gameDescription->language) {
+	case Common::SV_SWE:
+		return "se";
+	case Common::DA_DNK:
+		return "dk";
+	case Common::EN_ANY:
+	case Common::EN_GRB:
+		return "uk";
+	default:
+		return "no";
+	}
+}
+
 void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
 	switch (key.keycode) {
 	case Common::KEYCODE_TAB:

@@ -2534,6 +2534,26 @@ and tooltip modules are in `button.cpp`). Music `theme`.
   returns to the index (engine `startGame`); the original returns to the
   game's parent page.
 
+## Subtitles (SUBTITLE module, `subtitles.cpp`)
+
+Add-on set 1 brings `subtitle/<language>.ini` (no, se, dk, uk) for the 16
+scenes whose init calls `FUN_004094d0` (exactly the ones with the files,
+so the engine loads them for any scene that has them). A section per
+clip; `text<n>`, `font<n>` (a speaker's font of data1:
+`common/fonts/{ludvig,solan,reodor,ben,narrator}`, default `narrator`),
+`offset<n>` (seconds after the clip started, float), `length<n>` (default
+0.11 s per character, at least 2, at most 10 s). The handler (priority
+-10, `DAT_004095d0`): event 0x10f (clip started, `FUN_00409650`) queues
+the clip's lines in 32 slots (0x1c8 bytes at 0x53a1c0), with the game
+clock as start; 0x112 (`FUN_004098e0`) shows a due line and hides it
+after its length; space (0x10c, `FUN_00409ae0`) and close remove them
+all. One line shows at a time (`FUN_00409a30`): a box from x 100 to 700,
+bottom 570, as high as the text word wrapped to 580 pixels, every other
+pixel black (`FUN_00409a70`), each line centred, z 800 (`FUN_00409950`).
+On when the setting `DAT_0053dac4` is set (the options dialog chooses
+the language, `DAT_0053a1b8`); the port uses ScummVM's subtitles option
+and the game's language.
+
 ## Player profiles (PROFILE module, `profile.cpp`)
 
 The original keeps each player in `<Profiles dir>/<name>.pfl` (registry

@@ -36,6 +36,7 @@ namespace Flaaklypa {
 
 class FlaaklypaEngine;
 class Resources;
+class Subtitles;
 
 /** Profile key of the fact pages found in a scene (a bit per fact.ini section). */
 enum {
@@ -281,6 +282,8 @@ private:
 
 	AnimList _seqList;
 	AnimQueue _seq;
+
+	Subtitles *_subtitles;
 
 	struct Fact {
 		Common::String title;

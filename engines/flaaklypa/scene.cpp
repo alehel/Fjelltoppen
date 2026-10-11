@@ -31,12 +31,13 @@
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scene.h"
+#include "flaaklypa/subtitles.h"
 
 namespace Flaaklypa {
 
 Scene::Scene(FlaaklypaEngine *vm, const SceneDef *def) : _vm(vm), _def(def), _name(def->name),
 	_backdrop(nullptr), _mask(nullptr), _cursorTable(def->cursors), _cursorMode(kCursorNormal),
-	_lastHotspot(-1), _seqList(nullptr), _factsActive(false), _factsFound(0) {
+	_lastHotspot(-1), _seqList(nullptr), _subtitles(nullptr), _factsActive(false), _factsFound(0) {
 	_singleList[0] = _singleList[1] = nullptr;
 	if (def->anims)
 		for (const AnimDef *a = def->anims; a->name; a++)
@@ -47,6 +48,7 @@ Scene::~Scene() {
 	// FUN_0041df50 (close): the facts found so far go to the profile
 	if (_factsActive)
 		_vm->setSceneValue(_name, kProfileKeyFacts, _factsFound);
+	delete _subtitles;
 	for (auto *a : _anims)
 		delete a;
 	for (auto *d : _dynDefs)
@@ -69,6 +71,15 @@ bool Scene::load() {
 		return false;
 	}
 	_mask = resources()->loadMask(_name, "hotspots.bmp");
+	// FUN_004094d0: every scene with subtitles (add-on set 1) loads them
+	// in its init; they show when ScummVM's subtitles option is on
+	if (_vm->subtitlesEnabled()) {
+		_subtitles = new Subtitles(this);
+		if (!_subtitles->load(_vm->subtitleLanguage())) {
+			delete _subtitles;
+			_subtitles = nullptr;
+		}
+	}
 	return true;
 }
 
@@ -178,6 +189,8 @@ void Scene::animRemoved(Anim *anim) {
 }
 
 void Scene::animStarted(Anim *anim) {
+	if (_subtitles)
+		_subtitles->clipStarted(anim->name());
 	onAnimStarted(anim);
 }
 
@@ -624,8 +637,12 @@ void Scene::handleEvent(const Common::Event &event) {
 		onRightClick(event.mouse.x, event.mouse.y);
 		break;
 	case Common::EVENT_KEYDOWN:
-		if (event.kbd.keycode == Common::KEYCODE_SPACE && !handlesKey(event.kbd))
+		if (event.kbd.keycode == Common::KEYCODE_SPACE && !handlesKey(event.kbd)) {
 			stopSequence();
+			// FUN_00409ae0: the space bar removes the subtitles
+			if (_subtitles)
+				_subtitles->clear();
+		}
 		onKey(event.kbd);
 		// The global keys (FUN_0040d300) run after the scene's handler,
 		// unless it consumed the key.
@@ -772,6 +789,8 @@ void Scene::update() {
 	}
 
 	onUpdate();
+	if (_subtitles)
+		_subtitles->update();
 	_vm->_cursor->update();
 }
 

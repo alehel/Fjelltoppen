@@ -53,6 +53,7 @@ MODULE_OBJS = \
 	sceneindex.o \
 	sockdrawer.o \
 	sound.o \
+	subtitles.o \
 	textinvader.o \
 	town.o \
 	tvroom.o \

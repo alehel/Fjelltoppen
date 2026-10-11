@@ -175,6 +175,11 @@ public:
 	}
 	InfoRequest &infoRequest() { return _infoRequest; }
 
+	/** ScummVM's subtitles option (the original's subtitle setting, DAT_0053dac4). */
+	bool subtitlesEnabled() const;
+	/** The subtitle files' language: "no", "se", "dk" or "uk" (DAT_0053a1b8). */
+	Common::String subtitleLanguage() const;
+
 	/** Looks up "section:KEY" in lang/common/language.ini (Windows-1252), like the original's LANG_Get. */
 	Common::String getString(const Common::String &key);
 
