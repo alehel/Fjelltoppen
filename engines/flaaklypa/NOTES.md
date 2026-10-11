@@ -1798,6 +1798,137 @@ module follows): 0x103 `FUN_00482320` init, 0x104 `FUN_004830b0` close,
   level 1 each word is logged with the centres of its letters (word order)
   and the lower shelf, for scripted drags with `autoclick` `d`/`m`/`u`.
 
+## Sub game `gametrivia` ("Kjentmannsprøven", add-on set 3)
+
+A quiz: Solan shows slides on the screen (a picture, a line of text or a
+sound clip) and the player drags each onto the painting of the scene it
+comes from. Handler `FUN_0047e240` (code 0x47e240..0x47fe50, byte table
+0x47e358 / jump table 0x47e32c): 0x103 `FUN_0047e370` init, 0x104
+`FUN_0047f7a0` close, 0x105 `FUN_0047f960` mouse down, 0x10b `FUN_0047fd20`
+drop, 0x10c `FUN_0047fd10` (space eaten, returns 1; other keys pass on),
+0x10f `FUN_0047f9f0`, 0x110 `FUN_0047fa20`, 0x111 `FUN_0047e450` (thunk
+0x47fce0, the clock), 0x112 `FUN_0047fb80` tick, 0x116 `FUN_0047fcf0`
+buttons. Engine: `gametrivia.cpp`.
+
+* **Data** (`data3/gametrivia`, `lang3/gametrivia`). `trivia.ini`
+  `[round]` (`FUN_0047ef50`, 0x18 bytes each at `DAT_006da3b8`):
+  `questions<r>`, `difficulty<r>_<l>`, `time<r>_<l>` (ms), `scenes<r>`,
+  `basepoints<r>`, `secpoints<r>`; l = `DAT_006da3ac`, always 1 outside
+  tournaments. Level 1: 4 rounds of 8 slides: difficulty 0/1/1/2, 10/8/6/6
+  s, 3/4/5/6 paintings, 100 + 40/s, 150 + 70/s, 200 + 120/s, 250 + 140/s.
+  `[answers]` `scene<i>` / `name<i>` (0x18 each at `DAT_006d70f0`: index,
+  scene, painting number, first question, count, float key): 11 answers,
+  scenes 1..9, 0, 11. `[scenes]` the positions below. Questions (0x24
+  each at `DAT_006da3c4`: number, difficulty, last showing, image, mouse,
+  text, sound, scene, float key) from `bitmapq.ini` (307), `soundq.ini`
+  (68), `textq.ini` (124, lang3) in that order (0x511e78; the number runs
+  over the three files): `[questions]` `type<n>` (0 picture, 1 text, 2
+  sound; not read), `difficulty<n>`, `image<n>`, `mouse<n>`, `text<n>`,
+  `sound<n>`, `scene<n>`, each string defaulting to `[default]`
+  `image`/`mouse`/`text`/`sound` (sound: `image_sound`, text:
+  `image_text`, all: `mouse= slide_cursor`); a missing mouse is the
+  image. Counts = consecutive `scene<n>` keys (`FUN_0047f360`). Scenes 10
+  (one sound) and 13 (one picture) have no painting and are never asked.
+  The questions are sorted (`LAB_0047f330`) by scene, difficulty, last
+  showing (signed), number; each answer gets its block (`FUN_0047f3d0`).
+* **Last showing**: profile value record (0x402) key 0 of the scene,
+  one int per question by number (499 -> 1996 bytes), read in
+  `FUN_0047ef50` (all 0 when missing or of another size), written in
+  `FUN_0047f7d0` at close: `time() / 60 - 15120000` (minutes since
+  1998-10-01) stamped when a slide goes up (`FUN_0047e710`).
+* **Selection** (`FUN_0047ea50`, at the start and when a slide starts a
+  new round): `FUN_0047ea80`: each answer's key = the unsigned sum of the
+  last showings of its questions of the round's difficulty / their count
+  (`FUN_0047eb90`, 0/0 = NaN for none, which the data never has); sort
+  ascending (`LAB_0047eb50`, float compare), add the jitter
+  `FUN_0047ec00(first, last)` = `(rand() % 200 - 100) * 0.01f * ((last -
+  first) * 0.25f + 10.0f)` (keys of the sorted ends; floats 0x49c90c,
+  0x49f638, 0x49c784) to each, sort again. `FUN_0047ec40`: the questions
+  of the round's difficulty of the first `scenes` answers, key = last
+  showing, sorted, jittered, sorted (`LAB_0047ed40`) into `DAT_006da528`;
+  slide n of the game is entry n - `DAT_006da3b0` (the questions of the
+  earlier rounds). So unseen scenes and slides come first (keys 0 against
+  ~14 million minutes, the jitter is a quarter of the spread), the order
+  is random among equals; nothing repeats within a round, and a slide
+  shown sorts last for the later rounds (rounds 1 and 2 share difficulty 1).
+  `FUN_0047ed80`: removes the 32 painting elements (`DAT_006da530`, 0xa8
+  each) and the frame, shows `bitmap/set<n>/frame` at `set<n>_frame_x/y`
+  z 99 and for i = 1..n the painting `set<n>\<i>\<n>_pictures%04d` (the
+  answer's `name`) at `set<n>_<i>_x/y`, z 100, transparent, hotspot 100 +
+  the answer's scene, n = the round's `scenes`.
+* **Slide** (`FUN_0047e710`): a running drag is ended, the old sound
+  freed, the old slide removed; the stamp; `image\<image>` (element
+  0x511890, transparent, no hotspot) at z 100 centred (`FUN_00412cf0`) on
+  the screen rectangle 0x4a03b8 (636,154)-(783,295), i.e. (709, 224); a
+  sound slide loads `sound/<sound>.wav` and plays it (`FUN_0047e8b0`:
+  sound volume class 0, the `radio` bitmap at (727,330) z 0 shows while it
+  plays, removed by the tick); a text slide gets the text drawn into the
+  bitmap (`FUN_0047e990`): `Comic Sans MS_10_b`, word wrapped to 100
+  pixels, the block centred vertically in (5,5)-(105,95), each line
+  centred. Then the progress, deadline = now + the round's time, the time
+  bar, state (`DAT_006da518`) 1.
+* **Answer UI**: mouse down on the mask's hotspot 5 (the screen,
+  (648,171)-(769,284)) in state 1 adds `mouse\<mouse>` (0x511938) at z 500
+  centred on the mouse, plays `click` (`FUN_00412c20`, a clone) and drags
+  it (`FUN_0040c1f0`, data = the question). The drop (0x10b) removes it;
+  after the deadline nothing else happens; a hotspot - 100 that is no
+  answer's scene (`FUN_0047fe10`, all 11) plays `miss` and the slide stays;
+  the right scene plays `correct`, counts (`DAT_006da520`) and scores
+  `basepoints + secpoints * max(0, (deadline - now) / 1000)` (integer
+  seconds left; `DAT_006dba30`); a wrong one plays `wrong`. Hotspot 7 (the
+  radio, (711,299)-(773,355)) and button 6 replay the sound (DirectSound
+  `Play` carries on when it plays, else starts over). The tick (state 1)
+  times out: the drag ends (its drop comes too late), `timeout`, like a
+  wrong answer.
+* **Next slide** (`FUN_0047fc60(right)`): a random clip of
+  `solan_next_picture1..4` not played lately (`FUN_0040a150` with the
+  session wide mask `DAT_006d71a0`); after a wrong answer or a time out
+  the fourth (the long happy one) becomes the first (still marked
+  played); state 2, played as a sequence (`FUN_0040a770`: it waits for
+  Solan's idle clip, cursor hidden). Its start (0x10f) plays `shutter`
+  (the projector, (67,363)), removed at its end; its end (0x110,
+  `FUN_0047fa50`) shows the next slide (a new round's selection first)
+  or ends the game.
+* **End** (`FUN_0047fab0`): game not running, state 0, progress "32 /
+  32", slide removed (paintings and texts stay); message box
+  `interfaceh:GAMEOVER` / `gametrivia:GAMEOVER` (right answers, 32), OK;
+  `FUN_0041f9d0(0, score, 0x4a03d8 {5000, 10000, 15000, 20000})`: key 0,
+  points, the medal award without car parts (the rise of the lowest sub
+  game medal still gives them; gametrivia is a type 3 scene); then the
+  `start` bitmap again. No hidden car part, no other awards. Level 1
+  maximum 22800 (9/7/5/5 seconds left).
+* **Screen** (`FUN_0047f590`): fonts `Amerigo BT_10_` (texts, button
+  label), `Comic Sans MS_10_b` (text slides), `Amerigo BT_14_` (unused);
+  labels z 200: `gametrivia:SCORE` left aligned in (578,522)-(784,538),
+  `PROGRESS` centred in (11,572)-(131,588), `CORRECT` centred in
+  (11,551)-(131,566); text areas z 200: the score right aligned in the
+  SCORE rectangle, "%d / %d" progress (slide + 1 of 32) centred in
+  (511,572)-(562,588), right answers / slides shown centred in
+  (511,551)-(562,567) ("0 / 0" at the start), an unused one at
+  (144,522)-(561,538). Buttons (z 100): 1 help (0,0), 2 exit (728,0), 6
+  `button_0/1/2` (8,517) `gametrivia:SOUND`. PROGRESS bars z 200 (flags
+  0x100): `correct` (144,550) right answers / 32, `progress` (144,571)
+  slides / 32, `time` (580,558) time left / time. The clock on the wall
+  (`FUN_0047e450`, a 1 s periodic timer `FUN_0040c480(now + 1000, 1000,
+  0)`) shows the time of day: `clocklong` z -1 frame = minute,
+  `clockshort` z 0 frame = minute / 12 + (hour % 12) * 5. Music `track5`,
+  `fan` loop (audio), Solan character 1 (hotspot 10, idle list 0x511668,
+  no reaction), `start` (lang3 bitmap, hotspot 3) at (652,173) z 400;
+  mouse down on it starts (`FUN_0047e530`: game running, score/right
+  answers/round base 0, selection, slide 0).
+* **Tournament mode** (`FUN_00419490`, not ported): the level is the
+  player's tournament level (`FUN_004194a0`, +0x24 of the entry: 0 easy,
+  1 medium, 2 hard, so `difficulty<r>_0`/`time<r>_0` 14/11/8/8 s at easy,
+  `_2` 6/5/4/4 s at hard); init shows `tournament:PLAYERREADY` with the
+  player's name (`FUN_00419660`) and starts at once without the start
+  bitmap; the end skips the message box, `FUN_0041f8c0` sends the score to
+  the tournament and starts its next game, no start bitmap.
+* Port notes: `/` for the original's `\` in element names; the effects
+  restart instead of overlapping copies; the slide stamps use
+  `profileTime()` (local time, only the order matters); the jitter uses
+  ScummVM's random source; the NaN key is 0. Development aid
+  `test_gametrivia`.
+
 ## Dialogs (`dialog.cpp`)
 
 `Dialog` is the modal box of the DIALOG/BUTTON modules: a bitmap from
@@ -2812,7 +2943,7 @@ Engine: `hiscore.h`.
   {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
   (the callbacks are the code after the call; mountain passes its track as
   the key, balloonhunt's time trial the track); synonym calls
-  `registerScoreNoCarParts()`; gametrivia and mathlab are not ported.
+  `registerScoreNoCarParts()`, so does gametrivia; mathlab is not ported.
 * Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
   (title a language.ini key or text, "" = scene title; returns the player
   row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
@@ -4337,6 +4468,12 @@ quickly), `synonym_solve=<ms>` (synonym: each word is solved that long
 after its letters have arrived, by drags through the mouse handlers); at
 debug level 1 synonym logs each word with the centres of its letters in
 the word's order and the lower shelf, for `autoclick` drags.
+`test_gametrivia=[<delay>:]<moves>` (gametrivia: each slide is answered
+<delay> ms (1500) after it shows, move n for slide n, the last one
+repeating: `c` the right painting, `w` another one, `m` a drop beside the
+paintings, `t` nothing (time out); start the game with
+`autoclick=1500:708,227`). At debug level 1 gametrivia logs each slide
+with the centre of its right painting, each answer and the points.
 
 ## Mini game checklist
 
@@ -4386,7 +4523,7 @@ Add-on set 3 (CD 2, fourth index group):
 
 | Done | Scene | Title | Data |
 |---|---|---|---|
-| | gametrivia | Kjentmannsprøven | data3 |
+| x | gametrivia | Kjentmannsprøven | data3 |
 | | anaglyph | 3D-titter | data3 |
 | | mathlab | Reodors Tallmaskin | data3 |
 | x | synonym | Reodors Ordmaskin | data3 |

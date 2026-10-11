@@ -30,6 +30,7 @@
 #include "flaaklypa/colorfill.h"
 #include "flaaklypa/fence.h"
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/gametrivia.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/hopscotch.h"
 #include "flaaklypa/butterfly.h"
@@ -546,6 +547,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new SceneindexScene(vm, def);
 	if (!scumm_stricmp(name, "buildacar"))
 		return new BuildacarScene(vm, def);
+	if (!scumm_stricmp(name, "gametrivia"))
+		return new GametriviaScene(vm, def);
 	return new Scene(vm, def);
 }
 
