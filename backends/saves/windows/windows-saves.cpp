@@ -46,7 +46,12 @@ WindowsSaveFileManager::WindowsSaveFileManager(bool isPortable) {
 		}
 	}
 
+#ifdef FLAAKLYPA_APP
+	// The player profiles
+	_tcscat(defaultSavepath, TEXT("\\Profiler"));
+#else
 	_tcscat(defaultSavepath, TEXT("\\Saved games"));
+#endif
 	if (!CreateDirectory(defaultSavepath, nullptr)) {
 		if (GetLastError() != ERROR_ALREADY_EXISTS)
 			error("Cannot create ScummVM Saved games folder");

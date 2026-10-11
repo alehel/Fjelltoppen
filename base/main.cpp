@@ -35,6 +35,9 @@
 #include "base/commandLine.h"
 #include "base/plugins.h"
 #include "base/version.h"
+#ifdef FLAAKLYPA_APP
+#include "base/flaaklypa_app.h"
+#endif
 
 #include "common/archive.h"
 #include "common/config-manager.h"
@@ -471,6 +474,10 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		}
 	}
 
+#ifdef FLAAKLYPA_APP
+	FlaaklypaApp::updateStartSettings(settings);
+#endif
+
 	// Load the config file (possibly overridden via command line):
 	Common::Path initConfigFilename;
 	if (settings.contains("initial-cfg"))
@@ -486,6 +493,10 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 
 	// Update the config file
 	ConfMan.set("versioninfo", gScummVMVersion, Common::ConfigManager::kApplicationDomain);
+
+#ifdef FLAAKLYPA_APP
+	FlaaklypaApp::registerDefaults();
+#endif
 
 	// Immediately remove possible residue for Dump All Dialogs feature
 	ConfMan.removeKey("dumper_force_resize", Common::ConfigManager::kApplicationDomain);
@@ -757,7 +768,11 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 
 	// Unless a game was specified, show the launcher dialog
 	if (nullptr == ConfMan.getActiveDomain() && !ConfMan.hasKey("dump_all_dialogs"))
+#ifdef FLAAKLYPA_APP
+		FlaaklypaApp::selectGame();
+#else
 		launcherDialog();
+#endif
 
 	// FIXME: We're now looping the launcher. This, of course, doesn't
 	// work as well as it should. In theory everything should be destroyed
@@ -870,10 +885,16 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				GUI::displayErrorDialog(result, _("Error running game:"));
 			}
 
+#ifdef FLAAKLYPA_APP
+			// There is no launcher to return to
+			if (result.getCode() == Common::kNoError || result.getCode() == Common::kUserCanceled)
+				break;
+#else
 			// Quit unless an error occurred, or Return to launcher was requested
 			if (result.getCode() == Common::kNoError && !g_system->getEventManager()->shouldReturnToLauncher() &&
 			    !g_system->hasFeature(OSystem::kFeatureNoQuit) && !ConfMan.getBool("gui_return_to_launcher_at_exit"))
 				break;
+#endif
 
 			// Reset the return to launcher and quit flags in case we want to load another engine
 			g_system->getEventManager()->resetReturnToLauncher();
@@ -925,6 +946,12 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		// reset the graphics to default
 		setupGraphics(system);
 		if (nullptr == ConfMan.getActiveDomain()) {
+#ifdef FLAAKLYPA_APP
+			// After an error, ask for the game data again if it went missing
+			if (!FlaaklypaApp::selectGame(true))
+				break;
+			continue;
+#endif
 #ifdef PS3_MULTI_MODULES
 			// For engine instance, process was called with <target-id> param
 			// Return to launcher flow spawn new launcher process without params

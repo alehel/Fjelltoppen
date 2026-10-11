@@ -296,15 +296,24 @@ void replaceApplicationMenuItems() {
 		[[NSApp mainMenu] removeItemAtIndex:0];
 	}
 
+#ifdef FLAAKLYPA_APP
+	const Common::U32String aboutApp("Om Flåklypa Grand Prix");
+	const Common::U32String hideApp("Skjul Flåklypa Grand Prix");
+	const Common::U32String quitApp("Avslutt Flåklypa Grand Prix");
+#else
+	const Common::U32String aboutApp(_("About ScummVM"));
+	const Common::U32String hideApp(_("Hide ScummVM"));
+	const Common::U32String quitApp(_("Quit ScummVM"));
+#endif
 	NSMenu *appleMenu = addMenu(Common::U32String("ScummVM"), @"", @selector(setAppleMenu:));
 	if (appleMenu) {
-		addMenuItem(_("About ScummVM"), nil, @selector(orderFrontStandardAboutPanel:), @"", appleMenu);
+		addMenuItem(aboutApp, nil, @selector(orderFrontStandardAboutPanel:), @"", appleMenu);
 		[appleMenu addItem:[NSMenuItem separatorItem]];
-		addMenuItem(_("Hide ScummVM"), nil, @selector(hide:), @"h", appleMenu);
+		addMenuItem(hideApp, nil, @selector(hide:), @"h", appleMenu);
 		addMenuItem(_("Hide Others"), nil, @selector(hideOtherApplications:), @"h", appleMenu, (NSEventModifierFlagOption|NSEventModifierFlagCommand));
 		addMenuItem(_("Show All"), nil, @selector(unhideAllApplications:), @"", appleMenu);
 		[appleMenu addItem:[NSMenuItem separatorItem]];
-		addMenuItem(_("Quit ScummVM"), nil, @selector(terminate:), @"q", appleMenu);
+		addMenuItem(quitApp, nil, @selector(terminate:), @"q", appleMenu);
 	}
 
 	NSMenu *windowMenu = addMenu(_("Window"), @"", @selector(setWindowsMenu:));

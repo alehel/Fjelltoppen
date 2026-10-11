@@ -410,8 +410,13 @@ public:
 	void runFrame();
 
 	bool hasFeature(EngineFeature f) const override {
+#ifdef FLAAKLYPA_APP
+		// The stand-alone application has no launcher
+		return false;
+#else
 		return
 		    (f == kSupportsReturnToLauncher);
+#endif
 	};
 
 	// Profiles are saved automatically; the save slots are only loaded

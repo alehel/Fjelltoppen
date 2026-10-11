@@ -106,7 +106,11 @@ bool getApplicationDataDirectory(TCHAR *applicationDataDirectory) {
 		return false;
 	}
 
+#ifdef FLAAKLYPA_APP
+	_tcscat(applicationDataDirectory, TEXT("\\Flaaklypa Grand Prix"));
+#else
 	_tcscat(applicationDataDirectory, TEXT("\\ScummVM"));
+#endif
 	if (!CreateDirectory(applicationDataDirectory, NULL)) {
 		if (GetLastError() != ERROR_ALREADY_EXISTS) {
 			error("Cannot create ScummVM application data folder");

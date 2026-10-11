@@ -15,7 +15,11 @@
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "dists/win32/scummvm.exe.manifest"
 
 // Common resources
+#ifdef FLAAKLYPA_APP
+IDI_ICON               ICON    "dists/flaaklypa/flaaklypa.ico"
+#else
 IDI_ICON               ICON    "icons/scummvm.ico"
+#endif
 IDI_COUNT              ICON    "icons/count.ico"
 
 ID_GDF_XML             DATA    "dists/win32/scummvm.gdf.xml"
@@ -37,7 +41,9 @@ Roland_SC-55.sf2       FILE    "dists/soundfonts/Roland_SC-55.sf2"
 #ifdef BUILTIN_RESOURCES
 
 #include "dists/scummvm_rc_engine_data.rh"
+#ifndef FLAAKLYPA_APP
 #include "dists/scummvm_rc_engine_data_big.rh"
+#endif
 
 #ifdef USE_TRANSLATION
 translations.dat       FILE    "gui/themes/translations.dat"
@@ -243,6 +249,17 @@ BEGIN
     BEGIN
         BLOCK "040904b0" // US English, Unicode
         BEGIN
+#ifdef FLAAKLYPA_APP
+            VALUE "Comments", "Built on ScummVM (https://www.scummvm.org)\0"
+            VALUE "CompanyName", "scummvm.org\0"
+            VALUE "FileDescription", "Fl\xE5klypa Grand Prix\0"
+            VALUE "FileVersion", SCUMMVM_VERSION "\0"
+            VALUE "InternalName", "flaaklypa\0"
+            VALUE "LegalCopyright", "Copyright \xA9 2001-2026 The ScummVM Team\0"
+            VALUE "OriginalFilename", "Flaaklypa.exe\0"
+            VALUE "ProductName", "Fl\xE5klypa Grand Prix\0"
+            VALUE "ProductVersion", SCUMMVM_VERSION "\0"
+#else
             VALUE "Comments", "Look! A three headed monkey (TM)! .. Nice use of the TM!\0"
             VALUE "CompanyName", "scummvm.org\0"
             VALUE "FileDescription", "ScummVM: A free interpreter for numerous adventure games and role-playing games\0"
@@ -253,6 +270,7 @@ BEGIN
             VALUE "OriginalFilename", "scummvm.exe\0"
             VALUE "ProductName", "ScummVM\0"
             VALUE "ProductVersion", SCUMMVM_VERSION "\0"
+#endif
         END
     END
 

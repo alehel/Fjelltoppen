@@ -7,5 +7,10 @@ MODULE_OBJS := \
 	plugins.o \
 	version.o
 
+ifdef FLAAKLYPA_APP
+MODULE_OBJS += \
+	flaaklypa_app.o
+endif
+
 # Include common rules
 include $(srcdir)/rules.mk
