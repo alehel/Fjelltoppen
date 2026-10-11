@@ -10,6 +10,7 @@ MODULE_OBJS = \
 	bouquet.o \
 	bugzzz.o \
 	buildabike.o \
+	buildacar.o \
 	butterfly.o \
 	button.o \
 	console.o \

@@ -526,6 +526,114 @@ private:
 	uint32 _startTime;
 };
 
+/**
+ * Story page 11: the workshop where the player fits the car parts won in
+ * the game onto Il Tempo Gigante, in five stages (buildacar, "Bygg Il Tempo
+ * Gigante").
+ */
+class BuildacarScene : public Scene {
+public:
+	enum {
+		kStages = 5,
+		kMaxParts = 14   ///< parts of the largest stage (element slots of the original)
+	};
+
+	BuildacarScene(FlaaklypaEngine *vm, const SceneDef *def);
+	~BuildacarScene() override;
+
+	void onInit(int arg) override;
+	void onClose() override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onRightClick(int x, int y) override;
+	void onKey(const Common::KeyState &key) override;
+	void onAnimFinished(Anim *anim) override;
+	void onTimer(int id, int data) override;
+	void onUpdate() override;
+
+private:
+	/**
+	 * An element slot of the original (0xa8 byte structures that get the
+	 * name of a part of the stage): the element of that name and the
+	 * slot's position.
+	 */
+	struct Slot {
+		Anim *anim;
+		int x, y;
+		Slot() : anim(nullptr), x(0), y(0) {}
+	};
+
+	static bool slotAdded(const Slot &s) { return s.anim && s.anim->isAdded(); }
+	static void removeSlot(const Slot &s);
+	/** Gives the slot the element of a part's bitmap (transparent, FUN_00423480). */
+	void nameSlot(Slot &s, const Common::String &name, int hotspot);
+	static void addSlot(const Slot &s, int z);
+
+	void loadState();
+	void saveState();
+	void createControls();
+	void setLabel(const char *label, const Common::String &text);
+	void setStage(int stage);
+	void showStageBitmap(int stage);
+	void placeMenuParts(int stage);
+	void placeFittedParts(int stage);
+	int availableParts(int stage) const;
+	bool stageDone(int stage, uint32 mask) const;
+	bool isFitted(int stage, int part) const { return stageDone(stage, 1u << part); }
+	bool stageComplete() const;
+	int fittedCount();
+	void updatePercentages();
+	void playNarration(int stage);
+	void stopNarrations();
+	bool isNarration(const Anim *anim) const;
+	void namePlaced(int part);
+	bool isCovered(int part);
+	void showPlaced(int part);
+	void hidePlaced(int part);
+	void refreshCovered(int part);
+	int menuPartAt(int x, int y);
+	void endDrag(int x, int y);
+	void fitPart(int part);
+	void giveAwards(int from, int count);
+	void onButton(int id);
+	void changeStage(int delta);
+	void hint();
+	int nextHintPart();
+	void startHint(int part);
+	void demolish();
+	void showCar();
+	void hideCar();
+	bool isCarShown();
+	void playClone(const char *name);
+	void feedCheat(const Common::KeyState &key);
+	void addMesh(int z);
+	void removeMesh();
+
+	// The page's profile value 0 (DAT_005b7d48, 20 bytes)
+	int32 _won;           ///< car parts won (recounted from the awards on every visit)
+	int32 _fitted;        ///< the most parts ever fitted (awards and the navigator)
+	int32 _stage;         ///< the stage shown (0..4)
+	int32 _buildStage;    ///< the stage being built; the ones below are complete (0..5)
+	uint32 _fittedMask;   ///< parts fitted in the stage being built
+
+	int _lastPart;        ///< DAT_005b61d0: the part last picked up, -1 none
+	bool _hintRunning;    ///< DAT_005b72b0: the hint timer runs
+	int _blinks;          ///< DAT_005b7360
+	Slot _menu[kMaxParts];    ///< DAT_005b7410: the parts in the tray ("menu_part_NN")
+	Slot _placed[kMaxParts];  ///< DAT_005b7e08: the parts on the car ("part_NN")
+	Common::String _stageBitmap;
+	Anim *_drag;          ///< the part being dragged ("mouse_part_NN")
+	int _dragPart;
+	Common::Point _dragMouse, _dragPos;
+	int _cheatPos;        ///< typed characters of SHOWMETHECAR
+	Anim *_mesh;
+	Graphics::Surface *_solidMask;
+	BitmapFont _font;
+	SceneButtons _buttons;
+	Tooltip _tooltip;
+};
+
 /** Story page 3: Ludvig's bush (pee). */
 class PeeScene : public Scene {
 public:
