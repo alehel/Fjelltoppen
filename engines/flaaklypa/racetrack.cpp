@@ -229,8 +229,7 @@ bool RacingScene::loadPath(const Common::String &file) {
 		uint32 packed = s->readUint32LE();
 		n.seq = packed >> 16;
 		n.type = packed & 0xffff;
-		uint32 f = s->readUint32LE();
-		memcpy(&n.speed, &f, 4);
+		n.speed = s->readFloatLE();
 		n.index = 0;
 		n.used = 0;
 	}

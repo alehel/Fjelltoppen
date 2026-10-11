@@ -425,10 +425,8 @@ void RacingScene::onInit(int arg) {
 	_volumes[0] = _volumes[1] = _volumes[2] = 0.75f;
 	byte vol[12];
 	if (_vm->profile() && _vm->profile()->getRecord(_name, Profile::kRecordValue, 0x29a, vol, sizeof(vol))) {
-		for (int i = 0; i < 3; i++) {
-			uint32 u = READ_LE_UINT32(vol + 4 * i);
-			memcpy(&_volumes[i], &u, 4);
-		}
+		for (int i = 0; i < 3; i++)
+			_volumes[i] = READ_LE_FLOAT32(vol + 4 * i);
 	}
 	_helpFrames = 0;
 	if (arg != 0) {

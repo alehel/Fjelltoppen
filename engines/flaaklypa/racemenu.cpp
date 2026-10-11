@@ -1414,21 +1414,14 @@ void RacemenuScene::soundDialog() {
 	float volumes[3] = { 0.75f, 0.75f, 0.75f };
 	byte data[12];
 	if (_vm->profile() && _vm->profile()->getRecord("racing", Profile::kRecordValue, 0x29a, data, sizeof(data))) {
-		for (int i = 0; i < 3; i++) {
-			uint32 u = READ_LE_UINT32(data + 4 * i);
-			float f;
-			memcpy(&f, &u, 4);
-			volumes[i] = f;
-		}
+		for (int i = 0; i < 3; i++)
+			volumes[i] = READ_LE_FLOAT32(data + 4 * i);
 	}
 	RaceSoundDialog dlg(_vm, this, volumes);
 	int result = dlg.run();
 	if (result == 1 && _vm->profile()) {
-		for (int i = 0; i < 3; i++) {
-			uint32 u;
-			memcpy(&u, &volumes[i], 4);
-			WRITE_LE_UINT32(data + 4 * i, u);
-		}
+		for (int i = 0; i < 3; i++)
+			WRITE_LE_FLOAT32(data + 4 * i, volumes[i]);
 		_vm->profile()->setRecord("racing", Profile::kRecordValue, 0x29a, data, sizeof(data));
 		_vm->profileChanged();
 	}
