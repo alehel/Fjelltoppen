@@ -71,6 +71,7 @@ private:
 	bool installDeveloperProfile(const Common::String &name);
 	void removeProfile();
 	void startStory();
+	void showOptions();
 
 	int _highlighted;
 	Common::Array<FlaaklypaEngine::ProfileInfo> _profiles;

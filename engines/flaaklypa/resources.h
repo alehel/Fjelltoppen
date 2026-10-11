@@ -30,18 +30,28 @@
 #include "graphics/managed_surface.h"
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
+#include "video/smk_decoder.h"
 
 namespace Common {
 class INIFile;
 }
 
-namespace Video {
-class SmackerDecoder;
-}
-
 namespace Flaaklypa {
 
 class DataArchive;
+
+/**
+ * A Smacker clip of the game. The clips keep their sound effects in audio
+ * track 0 and their speech in track 1, and the PLAYER module sets the two
+ * volumes apart (FUN_004033c0: SmackVolumePan per track): track 0 plays as
+ * ScummVM sound effects, track 1 as speech.
+ */
+class SmackerClip : public Video::SmackerDecoder {
+public:
+	bool loadStream(Common::SeekableReadStream *stream) override;
+	/** The volumes of the effect and the speech track, 0..255. */
+	void setTrackVolumes(int effects, int speech);
+};
 
 /**
  * Finds files inside the per scene DATA containers.
@@ -79,7 +89,7 @@ public:
 	Graphics::Surface *loadMask(const Common::String &scene, const Common::String &file);
 
 	/** Opens a Smacker clip. The decoder owns the stream. */
-	Video::SmackerDecoder *openSmacker(const Common::String &scene, const Common::String &file);
+	SmackerClip *openSmacker(const Common::String &scene, const Common::String &file);
 
 	/**
 	 * Cleans an INI value like the original's loader (FUN_0040dc10 /

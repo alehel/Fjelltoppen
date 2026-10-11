@@ -54,7 +54,7 @@ Common::String Resources::iniValue(const Common::String &raw) {
 			case 't': out += '\t'; i++; continue;
 			case '"': out += '"'; i++; continue;
 			case '\\': out += '\\'; i++; continue;
-			case '0': out += '\0'; i++; continue;   // separators of option lists
+			case '0': out += Common::String("", 1); i++; continue;   // separators of option lists
 			default: break;
 			}
 		}
@@ -196,13 +196,31 @@ Graphics::Surface *Resources::loadMask(const Common::String &scene, const Common
 	return copy;
 }
 
-Video::SmackerDecoder *Resources::openSmacker(const Common::String &scene, const Common::String &file) {
+bool SmackerClip::loadStream(Common::SeekableReadStream *stream) {
+	if (!Video::SmackerDecoder::loadStream(stream))
+		return false;
+	// getAudioTrack(n) is Smacker track n (absent tracks are empty ones)
+	if (AudioTrack *effects = getAudioTrack(0))
+		effects->setSoundType(Audio::Mixer::kSFXSoundType);
+	if (AudioTrack *speech = getAudioTrack(1))
+		speech->setSoundType(Audio::Mixer::kSpeechSoundType);
+	return true;
+}
+
+void SmackerClip::setTrackVolumes(int effects, int speech) {
+	if (AudioTrack *track = getAudioTrack(0))
+		track->setVolume((byte)CLIP(effects, 0, 255));
+	if (AudioTrack *track = getAudioTrack(1))
+		track->setVolume((byte)CLIP(speech, 0, 255));
+}
+
+SmackerClip *Resources::openSmacker(const Common::String &scene, const Common::String &file) {
 	Common::SeekableReadStream *stream = open(scene, file);
 	if (!stream) {
 		warning("Resources: clip %s/%s not found", scene.c_str(), file.c_str());
 		return nullptr;
 	}
-	Video::SmackerDecoder *decoder = new Video::SmackerDecoder();
+	SmackerClip *decoder = new SmackerClip();
 	if (!decoder->loadStream(stream)) {
 		warning("Resources: could not open clip %s/%s", scene.c_str(), file.c_str());
 		delete decoder;

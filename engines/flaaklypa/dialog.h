@@ -114,6 +114,8 @@ protected:
 	virtual void onKey(const Common::KeyState &key) {}
 	/** Draws the dialog's own elements between its bitmap and its buttons. */
 	virtual void drawContents(Graphics::ManagedSurface &dst) {}
+	/** Called once per frame while the dialog runs, before the frame. */
+	virtual void onFrame() {}
 
 	FlaaklypaEngine *_vm;
 

@@ -308,11 +308,8 @@ void BalloonhuntScene::onInit(int arg) {
 	// ported); FUN_00401b30 limits the blits to the screen.
 	_vm->setScreenSize(kScreenW, kScreenH);
 
-	// sound.ini [Volume] sound= (the scene's sound volume, FUN_0040b3f0)
-	Common::INIFile volumes;
-	Common::String v;
-	if (resources()->loadIni(_name, "sound.ini", volumes) && volumes.getKey("sound", "Volume", v))
-		_master = CLIP((float)atof(v.c_str()), 0.0f, 1.0f);
+	// The engine's sound volume (FUN_0040b3f0: the options times sound.ini's sound=)
+	_master = _vm->channelVolume(FlaaklypaEngine::kVolumeSound);
 
 	// RGB565 -> screen colours; the game's cursor element is keyed with a
 	// colour the table never gives (RGB 1,1,1).
@@ -1286,9 +1283,9 @@ void BalloonhuntScene::ambience() {
 	}
 	float shore = clamp01((float)(1.0 - (double)best * 0.0016666667f));
 	float high = clamp01((float)(1.0 - (double)_y * 0.0016666667f));
-	anim("seashore")->setVolume((int)(_master * high * shore * 0.55f * 255.0f));
+	anim("seashore")->setVolume((int)(high * shore * 0.55f * 255.0f));
 	float wind = clamp01((float)(((double)_y - 150.0f) * 0.0018181818f));
-	anim("wind1")->setVolume((int)(_master * wind * 0.65f * 255.0f));
+	anim("wind1")->setVolume((int)(wind * 0.65f * 255.0f));
 
 	best = 3.6e9f;
 	for (int i = 0; i < 35; i++) {
@@ -1302,7 +1299,7 @@ void BalloonhuntScene::ambience() {
 		best = sqrtf(best);
 	float forest = clamp01((float)(1.0 - (double)best * 0.0025f));
 	float low = clamp01((float)(1.0 - (double)_y * 0.0025f));
-	anim("forest1")->setVolume((int)(_master * low * forest * 255.0f));
+	anim("forest1")->setVolume((int)(low * forest * 255.0f));
 
 	best = 3.6e9f;
 	for (int i = 0; i < 3; i++) {
@@ -1315,11 +1312,11 @@ void BalloonhuntScene::ambience() {
 	if (0.0f < best)
 		best = sqrtf(best);
 	float sheep = clamp01((float)(1.0 - (double)best * 0.0025f));
-	anim("sheep")->setVolume((int)(_master * low * sheep * 255.0f));
+	anim("sheep")->setVolume((int)(low * sheep * 255.0f));
 
 	setMixPitch((float)(((double)fabsf(_roll) * 0.083f + 1.0) * (1.0 - (double)_pitch * 0.083f) *
 	                    (((double)_speed - 300.0f) * 0.00083333335f + 1.0)));
-	anim("off limits1")->setVolume(_autopilot ? (int)(_master * 255.0f) : 0);
+	anim("off limits1")->setVolume(_autopilot ? 255 : 0);
 }
 
 // FUN_0042c160: the balloons.

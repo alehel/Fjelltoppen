@@ -200,34 +200,40 @@ private:
 };
 
 /**
- * A vertical scroll bar (the SCROLL module, FUN_00408e20..FUN_004094c0):
- * the logic only; the owner draws the thumb at thumbRect() and handles the
- * arrow buttons (one step each, FUN_00409450). Value changes are what the
- * original posts as event 0x117; the methods that can change the value
- * return true then.
+ * A vertical or horizontal scroll bar (the SCROLL module,
+ * FUN_00408e20..FUN_004094c0): the logic only; the owner draws the thumb at
+ * thumbRect() and handles the arrow buttons (a step each, FUN_00409450).
+ * Value changes are what the original posts as event 0x117; the methods
+ * that can change the value return true then.
  */
 class ScrollBar {
 public:
 	ScrollBar();
 
-	/** The track (x, y, w, h of FUN_004090e0) and the thumb bitmap's size. */
-	void init(const Common::Rect &track, int thumbW, int thumbH);
+	/**
+	 * The track (x, y, w, h of FUN_004090e0) and the thumb bitmap's size;
+	 * horizontal is flag 0x10 clear.
+	 */
+	void init(const Common::Rect &track, int thumbW, int thumbH, bool horizontal = false);
 	/** FUN_00408e20: the values are 0..max. */
 	void setRange(int max);
 	int value() const { return _value; }
 	int maximum() const { return _max; }
 	/** FUN_00408eb0: moves the thumb to the value (clamped). */
 	bool setValue(int value);
-	/** FUN_00408f30: the thumb's centre follows y within the track; the value is rounded to the nearest step. */
-	bool setThumbPos(int y);
+	/**
+	 * FUN_00408f30: the thumb's centre follows pos (y, or x when horizontal)
+	 * within the track; the value is rounded to the nearest one.
+	 */
+	bool setThumbPos(int pos);
 	/**
 	 * FUN_004092d0: a press on the track (widened by half the thumb on each
 	 * side) or on the thumb moves the thumb there and starts a drag; hit
 	 * tells whether it hit.
 	 */
 	bool mouseDown(int x, int y, bool &hit);
-	/** Event 0x10a: the dragged thumb follows the mouse. */
-	bool drag(int y);
+	/** Event 0x10a: the dragged thumb follows the mouse (pos as in setThumbPos()). */
+	bool drag(int pos);
 	/** Event 0x10b (FUN_004092b0): the drag ends, the thumb snaps to its value. */
 	bool release();
 	bool isDragging() const { return _dragging; }
@@ -237,9 +243,10 @@ public:
 private:
 	Common::Rect _track;
 	int _thumbW, _thumbH;
-	int _thumbY;      ///< the thumb's centre
+	int _thumbPos;    ///< the thumb's centre along the track
 	int _value, _max;
 	bool _dragging;
+	bool _horizontal;
 };
 
 /**

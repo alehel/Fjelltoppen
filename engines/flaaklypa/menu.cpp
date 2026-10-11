@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "common/config-manager.h"
 #include "common/debug.h"
 
 #include "flaaklypa/activity.h"
@@ -43,6 +44,7 @@
 #include "flaaklypa/draughts.h"
 #include "flaaklypa/entrydlg.h"
 #include "flaaklypa/pipeline.h"
+#include "flaaklypa/options.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/puzzle.h"
 #include "flaaklypa/sceneindex.h"
@@ -161,6 +163,23 @@ void MenuScene::cycleProfile(int delta) {
 void MenuScene::useProfile() {
 	if (_current >= 0 && _current < (int)_profiles.size())
 		_vm->selectProfile(_profiles[_current].slot);
+}
+
+// FUN_00418140: the options dialog with the subtitle part; OK keeps the
+// subtitle setting and the volumes in the player's profile.
+void MenuScene::showOptions() {
+	useProfile();
+	OptionsDialog dialog(_vm, _vm->subtitlesEnabled());
+	if (dialog.run() != 1)
+		return;
+	if (dialog.hasSubtitlePart() && dialog.subtitlesOn() != _vm->subtitlesEnabled()) {
+		// The switch is ScummVM's subtitles option
+		ConfMan.setBool("subtitles", dialog.subtitlesOn());
+		ConfMan.flushToDisk();
+	}
+	// FUN_0040b5a0; a new game language (FUN_00484580, the menu reloaded)
+	// cannot happen, the dialog keeps it
+	_vm->saveOptions();
 }
 
 // FUN_00417a20
@@ -358,7 +377,9 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 		useProfile();
 		_vm->changeScene("mainscore", 0);
 		break;
-	case 3:  // options (FUN_00418140)
+	case 3:
+		showOptions();
+		break;
 	case 7:  // tournament
 		useProfile();
 		debug(1, "Menu: button %d not implemented", hotspot);

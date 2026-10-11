@@ -27,13 +27,10 @@
 
 #include "flaaklypa/scenedata.h"
 
-namespace Video {
-class SmackerDecoder;
-}
-
 namespace Flaaklypa {
 
 class Scene;
+class SmackerClip;
 
 /**
  * A scene element: a Smacker clip or a bitmap drawn at a position, mirroring
@@ -83,8 +80,13 @@ public:
 	/** Shows frame n of a clip without playing it (SmackGoto of the original). */
 	void showFrame(int n);
 	int frameCount() const;
-	/** Sets the playback volume of a clip, 0..255. */
+	/**
+	 * Sets the volume of a clip's sound effects, 0..255, a factor to the
+	 * engine's sound volume (FlaaklypaEngine::channelVolume()).
+	 */
 	void setVolume(int volume);
+	/** Gives the clip's audio tracks the engine's sound and speech volumes. */
+	void applyVolume();
 	/** Forces the playback frame rate of a playing clip (SmackFrameRate of the original). */
 	void setFrameRate(int fps);
 
@@ -137,7 +139,8 @@ private:
 	Scene *_scene;
 	const AnimDef *_def;
 
-	Video::SmackerDecoder *_video;
+	SmackerClip *_video;
+	int _volume;                          ///< setVolume(), 0..255
 	Graphics::ManagedSurface *_frame;     ///< current frame (clip) or the bitmap, in screen format
 	bool _hasKey;
 	uint32 _keyColor;

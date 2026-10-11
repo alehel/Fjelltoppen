@@ -54,6 +54,12 @@ FlaaklypaEngine *g_engine;
 FlaaklypaEngine::FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 	_gameDescription(gameDesc), _randomSource("Flaaklypa"), _scene(nullptr), _nextSceneArg(0), _language(nullptr) {
 	g_engine = this;
+	// The volume table at 0x4a68bc: the options 0.75, the others 1
+	for (int c = 0; c < kVolumeChannels; c++) {
+		_volumes[kVolumeOptions][c] = 0.75f;
+		_volumes[kVolumeScene][c] = 1.0f;
+		_volumes[kVolumeGame][c] = 1.0f;
+	}
 }
 
 FlaaklypaEngine::~FlaaklypaEngine() {
@@ -244,6 +250,7 @@ bool FlaaklypaEngine::selectProfile(int slot) {
 	if (_profile && slot == _profileSlot) {
 		_profile->setLastUsed(profileTime());
 		profileChanged();
+		loadOptions();
 		return true;
 	}
 	Profile *p = new Profile();
@@ -262,6 +269,8 @@ bool FlaaklypaEngine::selectProfile(int slot) {
 	_playTimeStart = g_system->getMillis();
 	_profileDirty = true;
 	flushProfile();
+	// FUN_0040d860 -> FUN_0040b490: the player's volumes and subtitles
+	loadOptions();
 	debug(1, "Profile '%s' (slot %d) selected", _profile->name().c_str(), slot);
 	return true;
 }
@@ -343,6 +352,12 @@ bool FlaaklypaEngine::subtitlesEnabled() const {
 }
 
 Common::String FlaaklypaEngine::subtitleLanguage() const {
+	if (!_subtitleLanguage.empty())
+		return _subtitleLanguage;
+	return gameLanguage();
+}
+
+Common::String FlaaklypaEngine::gameLanguage() const {
 	switch (_gameDescription->language) {
 	case Common::SV_SWE:
 		return "se";
@@ -354,6 +369,70 @@ Common::String FlaaklypaEngine::subtitleLanguage() const {
 	default:
 		return "no";
 	}
+}
+
+void FlaaklypaEngine::setVolumeFactor(int group, int channel, float value) {
+	_volumes[group][channel] = value;
+	// FUN_0040b430
+	if (channel == kVolumeMusic) {
+		if (_music)
+			_music->updateVolume();
+	} else if (_scene) {
+		_scene->applyVolumes();
+	}
+}
+
+float FlaaklypaEngine::channelVolume(int channel) const {
+	float volume = 1.0f;
+	for (int g = 0; g < kVolumeGroups; g++)
+		volume *= _volumes[g][channel];
+	return volume;
+}
+
+int FlaaklypaEngine::mixerVolume(int channel) const {
+	return CLIP((int)(channelVolume(channel) * Audio::Mixer::kMaxChannelVolume + 0.5f), 0, (int)Audio::Mixer::kMaxChannelVolume);
+}
+
+// The profile keeps the options as values of the scene "options": value 0
+// the three option volumes (floats), value 1 the subtitle switch (int), the
+// subtitle language and the game language (char[8] each, "NO" or "no").
+static const char *const kOptionsScene = "options";
+
+void FlaaklypaEngine::loadOptions() {
+	// FUN_0040b490
+	float volumes[kVolumeChannels] = { 0.75f, 0.75f, 0.75f };
+	byte data[20];
+	if (_profile && _profile->getRecord(kOptionsScene, Profile::kRecordValue, 0, data, 12))
+		for (int c = 0; c < kVolumeChannels; c++)
+			volumes[c] = READ_LE_FLOAT32(data + 4 * c);
+	for (int c = 0; c < kVolumeChannels; c++)
+		setVolumeFactor(kVolumeOptions, c, volumes[c]);
+	// The subtitle switch is ScummVM's subtitles option, and the game's
+	// language is the one ScummVM detected (the original would switch to
+	// the profile's); the subtitle language is the player's.
+	_subtitleLanguage.clear();
+	if (_profile && _profile->getRecord(kOptionsScene, Profile::kRecordValue, 1, data, 20)) {
+		Common::String language((const char *)data + 4, Common::strnlen((const char *)data + 4, 8));
+		language.toLowercase();
+		_subtitleLanguage = language;
+	}
+}
+
+void FlaaklypaEngine::saveOptions() {
+	// FUN_0040b5a0
+	if (!_profile)
+		return;
+	byte data[20];
+	for (int c = 0; c < kVolumeChannels; c++)
+		WRITE_LE_FLOAT32(data + 4 * c, _volumes[kVolumeOptions][c]);
+	_profile->setRecord(kOptionsScene, Profile::kRecordValue, 0, data, 12);
+	memset(data, 0, sizeof(data));
+	WRITE_LE_UINT32(data, subtitlesEnabled() ? 1 : 0);
+	Common::String subtitles = subtitleLanguage(), game = gameLanguage();
+	memcpy(data + 4, subtitles.c_str(), MIN<uint>(subtitles.size(), 8));
+	memcpy(data + 12, game.c_str(), MIN<uint>(game.size(), 8));
+	_profile->setRecord(kOptionsScene, Profile::kRecordValue, 1, data, 20);
+	profileChanged();
 }
 
 void FlaaklypaEngine::setScreenSize(int w, int h) {
@@ -521,6 +600,21 @@ void FlaaklypaEngine::switchScene() {
 		_profileDirty = true;
 	}
 	flushProfile();
+	// FUN_0040b630: the scene's sound.ini [Volume] gives its volume factors
+	// (1 without the file or a key)
+	{
+		static const char *const kKeys[kVolumeChannels] = { "sound", "speech", "music" };
+		float volumes[kVolumeChannels] = { 1.0f, 1.0f, 1.0f };
+		Common::INIFile ini;
+		if (_scene->resources()->loadIni(name, "sound.ini", ini)) {
+			Common::String value;
+			for (int c = 0; c < kVolumeChannels; c++)
+				if (ini.getKey(kKeys[c], "Volume", value))
+					volumes[c] = (float)atof(value.c_str());
+		}
+		for (int c = 0; c < kVolumeChannels; c++)
+			setVolumeFactor(kVolumeScene, c, volumes[c]);
+	}
 	// The original resets the cursor while ending the previous scene
 	// (FUN_0040c930) and sends the init event last (FUN_0040c8e0), so a
 	// sequence started by the init keeps the cursor hidden.

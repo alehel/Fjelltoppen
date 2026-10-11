@@ -4,12 +4,13 @@ Status: scene framework in place (see "Engine structure" below): backdrop,
 hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
-The menu (partly), the scene index, every story page (the race aside),
-the message box, navigator and help dialogs, 16 sub games and several
-activities work (see the checklist at the end), with player profiles
-(save slots), the award dialog and the high score tables with their
-medals. Not done: the remaining sub games and activities, the high score
-overview (`mainscore`), tournament mode, racing.
+The menu, the scene index, every story page (the race aside), the
+message box, navigator, help and options dialogs, the 15 sub games and
+the activities of the base game and add-on sets 1 and 2 work (see the
+checklist at the end), with player profiles (save slots), the volumes,
+the award dialog, the high score tables with their medals and the high
+score overview (`mainscore`). Not done: the add-on set 3 scenes,
+tournament mode, racing.
 
 ## The game
 
@@ -310,7 +311,6 @@ Handler `0x454fb0` (not a function in the Ghidra project; dispatches 0x103 ->
 * Game over message box `puzzle:GAMEOVER` / `puzzle:LOOSE` (OK), then
   `lid2`; the pending flag is cleared before the box (its nested frames run
   the tick again).
-* Not done: `sound.ini` volumes.
 
 ## Sub game `sockdrawer` ("Sokkeskapet", from `desk`)
 
@@ -370,7 +370,7 @@ A memory game: a cabinet with 5x4 hatches hides pairs of socks. Handler
 * Game over (`FUN_0044c380`): state 0, message box `interfaceh:GAMEOVER` /
   `sockdrawer:ENDMESSAGE`. The start cabinet sets the "sub game running"
   flag (`FUN_0040d8a0`), so leaving a running game asks first.
-* Not done: tournament mode (`FUN_00419490`), `sound.ini` volumes.
+* Not done: tournament mode (`FUN_00419490`).
 ## Sub game `hopscotch` ("Solan og Ludvig i Paradis", add-on set 1)
 
 A Simon says game on a hopscotch grid. Handler `0x43bbd0` (jump table, not a
@@ -494,8 +494,7 @@ table, not a function in the Ghidra project): 0x103 -> `FUN_00428bd0` init,
   original tests the rectangle. `Scene::defineAnim()` got a `visible`
   parameter (default true) for the audio only clips, which have no palette
   to convert a frame with.
-* Not done: profile difficulty,
-  `sound.ini` volumes.
+* Not done: profile difficulty.
 ## Sub game `wheelbarrow` ("Eplehøsten", started from `pee`)
 
 Catch the apples that ripen on the roof. Handler `0x44ed50` (not a function
@@ -562,7 +561,7 @@ finished, 0x111 -> `450270` timer, 0x112 -> `44fb70` tick, 0x116 ->
   (356, 296, 89 x 33) z 101; labels `wheelbarrow:SCORE` / `:LIFE` centred in
   (6, 85)-(85, 110) and (715, 85)-(795, 110), values below in (6, 110)-
   (85, 135) and (715, 110)-(795, 135), z 200. Music `subgame18`, ambient
-  loop `birds`. `sound.ini` volumes are not applied.
+  loop `birds`.
 * Game over (`FUN_00450180`): Solan neutral, pie/pickup/putdown removed,
   then the message box `interfaceh:GAMEOVER` / `wheelbarrow:GAMEOVER` and
   the high score registration `FUN_0041f9a0`
@@ -636,7 +635,7 @@ finished -> `43ea80`, 0x111 the 250 ms timer -> `43f750`, 0x112 ->
   -44/-46, letters 0..59. Music `subgame8`.
 * Not done: tournament mode
   (`FUN_00419490`: immediate start at level difficulty * 3), the registry
-  value `FUN_0040b940` writes at init, `sound.ini` volumes. A
+  value `FUN_0040b940` writes at init. A
   delivery clip that is still playing when the next level starts is
   restarted (the original only renames the struct).
 ## Sub game `hustle` ("Emanuels utfordring")
@@ -775,7 +774,7 @@ Ghidra project; jump table: 0x103 -> `FUN_004391a0` init, 0x104 ->
   `buildabike:ENDMESSAGE` formatted with the minutes, seconds and score.
 * Not done: the profile difficulty, the
   "MAJKA" cheat (fills the store), the belt items'
-  hit rectangle margin (`0x49dbf0`), `sound.ini` volumes.
+  hit rectangle margin (`0x49dbf0`).
 ## Sub game `pipeline` ("Oljeeventyret", started from `outtent`)
 
 A Pipe Mania style game: an oil well and a refinery (Ben Redic's oil lamp)
@@ -858,7 +857,7 @@ flowing after a countdown, reaches an open pipe end. Handler `0x448410`
 * Message boxes: `pipeline:LEVELCOMPLETE` / `pipeline:LEVELMESSAGE` before
   the next level is built, `interfaceh:GAMEOVER` / `pipeline:ENDMESSAGE`
   at game over (both OK, the oil is stopped meanwhile).
-* Not done: tournament mode, `sound.ini` volumes.
+* Not done: tournament mode.
   Deviation: the bend's inflow rectangle is
   always drawn up to the corner square (the original stops once the corner
   phase starts, which leaves a one pixel gap at low frame rates).
@@ -930,7 +929,7 @@ down, 0x10d -> `42f340` key up, 0x110 -> `432d30` anim finished, 0x111 ->
 * Game over (`FUN_004328e0`): message box `interfaceh:GAMEOVER` /
   `beemaze:GAMEOVER`, then the maze is cleared.
 * Not done: tournament mode (`FUN_00419490`: one life, level from the
-  round), `sound.ini` volumes, the cheat console commands (SHROOMS, ...).
+  round), the cheat console commands (SHROOMS, ...).
   Development: `autohold=t:d;t:d` holds (l/r/u/d) or releases (0) an
   arrow key t ms after the scene starts.
 ## Sub game `bugzzz` ("Larveliv i leiren", started from `yard`)
@@ -1113,7 +1112,7 @@ table: 0x103 -> `FUN_0044c740`, 0x104 -> `44cf70`, 0x105 -> `44d720`,
   then the start sign again (without a profile).
 * Difficulty comes from the profile (`FUN_004194a0`); without one it is 0.
   With a profile the original shows `tournament:PLAYERREADY` and starts at
-  once. Not done: profiles/difficulty, `sound.ini` volumes.
+  once. Not done: profiles/difficulty.
 ## Sub game `whackamole` ("Dra meg baklengs!", add-on set 2)
 
 A whack-a-mole with birds: they peek out of seven bird houses and five nests
@@ -1180,7 +1179,7 @@ Handler `0x44d980` (not a function in the Ghidra project; dispatches 0x103 ->
   clips have no palette and must not be decoded for drawing).
 * The frame tick is skipped while the next level box is open (the level
   time is still up then).
-* Not done: tournament mode auto start, `sound.ini` volumes.
+* Not done: tournament mode auto start.
 ## Sub game `butterfly` ("Sommerfugler i magen") and its album `buttercol`
 
 Catch butterflies with a net on a meadow; wasps and bees cost points. Handler
@@ -1256,8 +1255,8 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   profiles exist. After game over the start clip is shown again (the
   original stays in the end state behind its dialogs). `debug(3)` dumps all
   entity positions once a second.
-* Not done: the album button's disabled state during a game, `sound.ini`
-  volumes, the LOVELYFLIES cheat.
+* Not done: the album button's disabled state during a game, the
+  LOVELYFLIES cheat.
 
 ## Sub game `mountain` ("Solan i farta", started from `morning`, 640x480)
 
@@ -1444,8 +1443,8 @@ work. Engine: `mountain.cpp`.
 * **Port notes**: the original is 16 bit; colour keys compare in RGB565
   (`normaliseKey()`, `rgb565()`: New.bmp has 830 near-red pixels that are
   transparent there). WAV sounds play through the scene's own voices
-  (pitch with `Mixer::setChannelRate`, sound.ini `sound=` as the scene
-  volume, DirectSound percentages linear); clip audio at the scene volume.
+  (pitch with `Mixer::setChannelRate`, the engine's sound volume,
+  DirectSound percentages linear); clip audio relative to it.
   Clip frames advance at their rate (SmackWait). The playfield is cleared
   to black where layer 0 has no tile (the original leaves the back
   buffer). Not done: tournament mode (`FUN_00419490`: no start screen,
@@ -1624,7 +1623,7 @@ no awards besides the medals. Engine: `balloonhunt.cpp`.
   labels, buttons and the game's cursor (`bh_cursor`, z 200, with an
   empty cursor table so clicks still work) stay elements. (Full screen
   keyed elements cost about 35 ms a frame in the engine.) Volumes:
-  sound.ini `sound=` as the sound volume, DirectSound percentages linear.
+  the engine's sound volume, DirectSound percentages linear.
   The flight keys are held states (reset when a dialog closes). Not done:
   tournament mode, the loading box. Development aid:
   `balloonhunt_warp=<n>` (below).
@@ -2194,7 +2193,7 @@ layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
   engine reports moves only on hotspot changes); the message flag is
   cleared before the box; rasterisers in float with the same fill rules,
   not bit-exact; the backdrop under the board keeps 24 bits (tiles in
-  565). Not done: `sound.ini` volumes.
+  565).
 
 
 ## Activity `colorfill` ("Reodors tegnebord", add-on set 2, from `desk`)
@@ -2336,7 +2335,7 @@ lists it.
 * Engine: `ColorfillScene`. The scene table's "cross" has +0x44 = 0, which
   `FUN_00412840` only reads for clips (bitmaps are always loaded) but
   `Anim` treats as invisible, so the cross is shown as the element
-  "crossmark". Not done: `sound.ini` volumes.
+  "crossmark".
 
 ## Activity `fence` ("Musikkgjerdet", from `pee`)
 
@@ -2465,7 +2464,7 @@ B2). No music (`FUN_0040b2f0`), no title.
   OK only, text rows (flag 0x100). Each note plays on a duplicated
   DirectSound buffer from a pool of 1024 (`FUN_00467ec0`), so notes ring
   out and mix; the port plays each on its own mixer channel
-  (`SoundPlayer`, volume from `sound.ini`). Text rows: the port renders
+  (`SoundPlayer`, at the engine's sound volume). Text rows: the port renders
   them like `FUN_00408720` / `FUN_00408530` (list font Amerigo BT_14_,
   set by `FUN_00408990` at init; the text on 0x00ff00, cut to the box) in
   `FenceScene::textItem()` and hands them to `runListDialog()`.
@@ -2948,7 +2947,7 @@ cannot move has lost.
   and the original's does not. The ring of moves is a member (the
   original's globals keep it across visits). Not ported: the `Debug Log`
   file `c:\draughts.log` (debug output instead), the CORRUPT error of the
-  board checks (warnings), `sound.ini` volumes.
+  board checks (warnings).
 
 ## Activity `chess` ("Sjakk", from `intent`)
 
@@ -3080,7 +3079,7 @@ book, no list dialog (the list dialog caller next to chess,
   4 s spread over the frames in a debug build. The ring of moves is reset
   with each game (unlike draughts'). Not ported: the `Debug Log` file
   `c:\chess.log` (debug output instead), the CORRUPT error of the board
-  checks (warnings), `sound.ini` volumes.
+  checks (warnings).
 
 ## Activity `activity` ("Aktivitetssenteret", from the scene index)
 
@@ -3935,6 +3934,68 @@ and tooltip modules are in `button.cpp`). Music `theme`.
   returns to the index (engine `startGame`); the original returns to the
   game's parent page.
 
+## Volumes and the options dialog (`options.cpp`, menu button 3)
+
+* **Channels** (`FUN_0040b380`..`FUN_0040b430`): sound effects, speech,
+  music. Each channel's volume is the product of three factors (the table
+  at 0x4a68bc, `FUN_0040b3b0`): the player's options (0.75 by default),
+  the scene's `sound.ini` `[Volume]` `sound=`/`speech=`/`music=` (1 without;
+  set by the scene change before the scene's init, `FUN_0040b630`) and the
+  scene's own (story pages lower the music: intent 0.25 under the dance
+  and trance clips, tvroom 0.25 under the TV sound, outtent 0 during the
+  dream; all back to 1 afterwards). `FUN_0040b410` sets a factor and
+  applies the channel: effects and speech to every clip of the scene
+  (`FUN_004131b0`), music to the music player. Engine:
+  `FlaaklypaEngine::setVolumeFactor()`, `channelVolume()`,
+  `mixerVolume()`; ScummVM's own volume settings apply on top.
+* **Clips**: Smacker audio track 0 holds a clip's sound effects, track 1
+  its speech (`common/sound/effect.smk` has track 0 only, `speech.smk`
+  track 1 only; 127 clips have both, 126 only speech). The PLAYER module
+  gives each track its volume (`FUN_004037c0` at open: track 0 the sound
+  volume, track 1 the speech volume; `FUN_004033c0` = SmackVolumePan per
+  track). Engine: `SmackerClip` (resources.h) plays track 0 as ScummVM
+  sound effects and track 1 as speech with their own volumes;
+  `Anim::setVolume()` is a factor to the sound volume (the original's game
+  code multiplies by `FUN_0040b3f0` itself). WAV sounds (`SoundPlayer`,
+  `FUN_00413a40`) play at the sound volume times their own.
+* **Options in the profile** (`FUN_0040b490` reads them when a player is
+  selected, `FUN_0040b5a0` writes them): values (0x402 records) of the
+  scene `options`: key 0 the three option volumes (floats, 12 bytes), key 1
+  (20 bytes) the subtitle switch (int), the subtitle language and the game
+  language (char[8] each, "NO" from the dialog or the default "no").
+  Without them: 0.75, subtitles off, "no". The port takes the volumes and
+  the subtitle language; the switch is ScummVM's subtitles option and the
+  game's language the detected one (the original would switch the
+  language pack, `FUN_00484580`).
+* **Dialog** (`FUN_00418140` -> `FUN_00422a00(0x100, ...)` ->
+  `FUN_004221a0`, handler `LAB_00422ca0` at 0x32): `subtitledlg` (add-on
+  set 1; `sounddlg` without the 0x100 flag, 0x180 x 0xd7) of 0x180 x 0x121
+  centred, dimmed. Title `sounddlg:TITLE` (`Amerigo BT_14_`) in (13,8)-
+  (364,38); labels `EFFECT`/`SPEECH`/`MUSIC` (`Amerigo BT_10_`, centred)
+  in (11,52)-(80,75), (11,90)-(80,112), (11,129)-(80,151); value boxes
+  (0x146, 52/90/129, 0x27 x 0x17) showing "%d". Horizontal scroll bars
+  0x3e9..0x3eb (`FUN_004076b0`: track (0x7b, 53/91/130, 0xa3 x 0x15),
+  opaque `thumb`), range 0..100 (`FUN_00408e20`), arrows `down` at 0x5b
+  and `up` at 300 stepping 10 (`FUN_004090c0`); initial values
+  round(volume x 100). OK 0x3ec at (0xc5, 0xcd) and CANCEL 0x3ed at
+  (0x11e, 0xcd) (y 0xa8 without subtitles), `button_0`/`_1` with
+  `interfaceh:OK`/`CANCEL`. Subtitle part (`FUN_00422650`): label
+  `SUBTITLE` (11,167)-(80,189), the language name in (0x7b, 0xa7, 0xa3 x
+  0x17), arrows 0x3ef/0x3f0 at (0x5b/300, 0xa8) cycling through
+  `sounddlg:COUNTRIES` ("DK:Dansk\0UK:Engelsk\0NO:Norsk\0SE:Svensk\0",
+  wrapping, `FUN_00469910`; the start entry is the one whose code starts
+  the current subtitle language, else `COUNTRYDEF`), the switch 0x3ee
+  (`toggle_0`/`_1` at 0x144, 0xa5) labelled `ON`/`OFF`.
+* Events: a slider's value change (0x117, `FUN_00423050`) updates its box
+  and calls the callback `LAB_00422b80(0, channel, value / 100)`, which
+  sets the option volume at once and, for effects and speech, plays
+  `common/sound/effect` or `speech` (once) at the channel's volume; a drag
+  (0x10a) plays it too, the release (0x10b, callback event 1) stops it.
+  Enter = OK, Escape = Cancel (`FUN_00423020`). Cancel puts the volumes
+  back (`FUN_00422b50`); OK (`FUN_00422080`) returns the switch and
+  "<subtitle code>;<game code>", then the menu sets them and saves the
+  options in the profile.
+
 ## Subtitles (SUBTITLE module, `subtitles.cpp`)
 
 Add-on set 1 brings `subtitle/<language>.ini` (no, se, dk, uk) for the 16
@@ -3953,7 +4014,7 @@ bottom 570, as high as the text word wrapped to 580 pixels, every other
 pixel black (`FUN_00409a70`), each line centred, z 800 (`FUN_00409950`).
 On when the setting `DAT_0053dac4` is set (the options dialog chooses
 the language, `DAT_0053a1b8`); the port uses ScummVM's subtitles option
-and the game's language.
+and the language the player chose in the options dialog, else the game's.
 
 ## Player profiles (PROFILE module, `profile.cpp`)
 
@@ -4108,7 +4169,7 @@ they get ported; each needs a scene class, `createScene()` and
 `FlaaklypaEngine::startGame()`.
 
 Sub games (`[subgame]`, score based). Common gaps of the ported ones:
-profiles / tournament mode, `sound.ini` volumes.
+profiles / tournament mode.
 
 | Done | Scene | Title | Started from | Data |
 |---|---|---|---|---|
@@ -4136,13 +4197,8 @@ Activities (`[activity]`, open ended):
 | x | bouquet | Ludvigs blomsterbinderi | desk | data |
 | x | fence | Musikkgjerdet | pee | data |
 | x | colorfill | Reodors tegnebord | desk | data2 |
-| | jigsaw | Puslespillet | yard | data |
-| x | mahjong | Mah Jongg | outtent | data2 |
-| x | draughts | Damm | tvroom | data |
-| x | puzzle | Solines Smykkeskrin | intent | data2 |
-| | sliding | Skyvepusslespillet | garage | data |
 | x | jigsaw | Puslespillet | yard | data (high score open) |
-| | mahjong | Mah Jongg | outtent | data2 |
+| x | mahjong | Mah Jongg | outtent | data2 |
 | x | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
 | x | sliding | Skyvepusslespillet | garage | data (high score open) |

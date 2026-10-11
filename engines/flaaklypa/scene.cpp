@@ -662,6 +662,11 @@ void Scene::pauseAnims(bool pause) {
 		a->pause(pause);
 }
 
+void Scene::applyVolumes() {
+	for (auto *a : _anims)
+		a->applyVolume();
+}
+
 void Scene::dispatchAnimFinished(Anim *a) {
 	if (a->removeWhenDone()) {
 		a->remove();

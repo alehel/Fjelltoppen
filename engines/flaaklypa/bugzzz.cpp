@@ -350,13 +350,8 @@ bool BugzzzScene::load() {
 	_font10.load("Amerigo BT_10_");
 	_font18.load("Amerigo BT_18_");
 
+	// The sounds play at the engine's sound volume (sound.ini included).
 	_sounds = new SoundPlayer(_name);
-	Common::INIFile ini;
-	if (resources()->loadIni(_name, "sound.ini", ini)) {
-		Common::String v;
-		if (ini.getKey("sound", "Volume", v))
-			_sounds->setMasterVolume(CLIP((int)(atof(v.c_str()) * 255), 0, 255));
-	}
 
 	// Elements the scene tables do not have: the green panels (the
 	// generator skipped them), the button highlights and the text areas.

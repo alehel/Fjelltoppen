@@ -178,13 +178,8 @@ FenceScene::~FenceScene() {
 // FUN_00466b90
 void FenceScene::onInit(int arg) {
 	_vm->_music->stop();
+	// The sounds play at the engine's sound volume (sound.ini included).
 	_sounds = new SoundPlayer(_name);
-	Common::INIFile soundIni;
-	if (resources()->loadIni(_name, "sound.ini", soundIni)) {
-		Common::String v;
-		if (soundIni.getKey("sound", "Volume", v))
-			_sounds->setMasterVolume(CLIP((int)(atof(v.c_str()) * 255), 0, 255));
-	}
 	_birdsChannel = -1;
 	_birdCount = 0;
 	_lastTick = _vm->getGameMillis();

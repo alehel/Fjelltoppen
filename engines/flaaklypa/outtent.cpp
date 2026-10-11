@@ -228,7 +228,8 @@ void OuttentScene::onRightClick(int x, int y) {
 
 void OuttentScene::onKey(const Common::KeyState &key) {
 	if (key.keycode == Common::KEYCODE_SPACE) {
-		// TODO: FUN_0040b410(2, 2, 1.0f): music track volume factor back to 1
+		// FUN_0040b410(2, 2, 1.0f): the music back to full volume
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 1.0f);
 		static const char *const clips[] = { "backdrop2", "bike", "banana", "paper", "S09AN-SS-D01a", "S09AN-SS-010b2" };
 		for (const char *c : clips)
 			if (isAnimAdded(c))
@@ -241,7 +242,7 @@ void OuttentScene::onAnimStarted(Anim *a) {
 	if (n == "S09AN-SS-D01" || n == "S09AN-SS-D02") {
 		// The dream: night backdrop behind the clip, music muted, and the
 		// narration the first time one of the two dream clips is shown.
-		// TODO: FUN_0040b410(2, 2, 0.0f): music track volume factor 0
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 0.0f);
 		addAnim("backdrop2", Anim::kDefaultPos, Anim::kDefaultPos, -10);
 		if (_dreamNarrationCount == 0)
 			playAnim("S09AN-SS-D01a");
@@ -258,7 +259,7 @@ void OuttentScene::onAnimFinished(Anim *a) {
 	} else if (n == "S09AN-SS-001a") {
 		addAnim("bike", Anim::kDefaultPos, Anim::kDefaultPos, -20);
 	} else if (n == "S09AN-SS-D01" || n == "S09AN-SS-D02") {
-		// TODO: FUN_0040b410(2, 2, 1.0f): music track volume factor back to 1
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 1.0f);
 		removeAnim("backdrop2");
 	} else if (n == "S09AN-SS-001d1") {
 		if (isAnimAdded("paper"))

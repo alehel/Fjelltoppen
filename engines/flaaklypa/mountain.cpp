@@ -352,11 +352,8 @@ void MountainScene::onInit(int arg) {
 	} else {
 		warning("Mountain: maps.ini not found");
 	}
-	// sound.ini [Volume] sound= scales the sound effects
-	Common::INIFile volumes;
-	Common::String v;
-	if (resources()->loadIni(_name, "sound.ini", volumes) && volumes.getKey("sound", "Volume", v))
-		_masterVolume = CLIP((int)(atof(v.c_str()) * 255), 0, 255);
+	// The engine's sound volume (FUN_0040b3f0: the options times sound.ini's sound=)
+	_masterVolume = _vm->mixerVolume(FlaaklypaEngine::kVolumeSound);
 
 	_loadedDifficulty = -1;
 	_loadedTrack = -1;

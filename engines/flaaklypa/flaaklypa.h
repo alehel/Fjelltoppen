@@ -96,6 +96,8 @@ private:
 	Common::String _nextScene;
 	int _nextSceneArg;
 	bool _gameRunning = false;     ///< DAT_0054bf98, see setGameRunning()
+	float _volumes[3][3];           ///< [VolumeGroup][VolumeChannel]
+	Common::String _subtitleLanguage; ///< empty: the game's language
 	Common::INIFile *_language;
 
 	struct AutoClick {
@@ -208,8 +210,50 @@ public:
 
 	/** ScummVM's subtitles option (the original's subtitle setting, DAT_0053dac4). */
 	bool subtitlesEnabled() const;
-	/** The subtitle files' language: "no", "se", "dk" or "uk" (DAT_0053a1b8). */
+	/**
+	 * The subtitle files' language: "no", "se", "dk" or "uk" (DAT_0053a1b8),
+	 * the player's choice in the options dialog, else the game's language.
+	 */
 	Common::String subtitleLanguage() const;
+	void setSubtitleLanguage(const Common::String &language) { _subtitleLanguage = language; }
+	/** The game's language as a subtitle language (DAT_006ea158). */
+	Common::String gameLanguage() const;
+
+	/** The volume channels (FUN_0040b380). */
+	enum VolumeChannel {
+		kVolumeSound = 0,   ///< sound effects: WAV files, clip audio track 0
+		kVolumeSpeech = 1,  ///< clip audio track 1
+		kVolumeMusic = 2,
+		kVolumeChannels = 3
+	};
+	/**
+	 * The factors multiplied into each channel's volume (the table at
+	 * 0x4a68bc). ScummVM's own volume settings apply on top.
+	 */
+	enum VolumeGroup {
+		kVolumeOptions = 0, ///< the player's options dialog (0.75 by default)
+		kVolumeScene = 1,   ///< the scene's sound.ini, set before its init (FUN_0040b630)
+		kVolumeGame = 2,    ///< the scene's own: the story pages lower the music under some clips
+		kVolumeGroups = 3
+	};
+	float volumeFactor(int group, int channel) const { return _volumes[group][channel]; }
+	/**
+	 * FUN_0040b410: sets a factor and applies the channel's volume to the
+	 * clips of the scene (FUN_004131b0) or to the music.
+	 */
+	void setVolumeFactor(int group, int channel, float value);
+	/** FUN_0040b3b0: the product of a channel's factors, 0..1. */
+	float channelVolume(int channel) const;
+	/** channelVolume() as a mixer volume, 0..255. */
+	int mixerVolume(int channel) const;
+	/**
+	 * FUN_0040b490: takes the volumes and the subtitle language from the
+	 * profile's options (values 0 and 1 of the scene "options"), the
+	 * defaults without them.
+	 */
+	void loadOptions();
+	/** FUN_0040b5a0: keeps the volumes and the subtitle setting in the profile. */
+	void saveOptions();
 
 	/** Looks up "section:KEY" in lang/common/language.ini (Windows-1252), like the original's LANG_Get. */
 	Common::String getString(const Common::String &key);

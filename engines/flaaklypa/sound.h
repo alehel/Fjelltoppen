@@ -46,15 +46,15 @@ public:
 	explicit SoundPlayer(const Common::String &scene);
 	~SoundPlayer();
 
-	/** Master volume of all sounds started afterwards, 0..255 (the sound.ini "sound=" value times 255). */
-	void setMasterVolume(int volume) { _masterVolume = volume; }
-
-	/** Starts <scene>/sound/<name>.wav; returns a channel id or -1. */
+	/**
+	 * Starts <scene>/sound/<name>.wav; returns a channel id or -1. The volume
+	 * (0..255) is a factor to the engine's sound volume (FUN_00413a40).
+	 */
 	int play(const Common::String &name, bool loop = false, int volume = 255);
 	void stop(int channel);
 	void stopAll();
 	bool isPlaying(int channel) const;
-	/** Changes the volume of a playing channel, 0..255. */
+	/** Changes the volume of a playing channel, 0..255 (a factor to the sound volume). */
 	void setVolume(int channel, int volume);
 
 private:
@@ -66,8 +66,9 @@ private:
 
 	const byte *load(const Common::String &name, uint32 &size);
 
+	int mixerVolume(int volume) const;
+
 	Common::String _scene;
-	int _masterVolume;
 	Common::HashMap<Common::String, Common::Array<byte> *, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _cache;
 	Common::Array<Channel> _channels;
 };

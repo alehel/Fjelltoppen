@@ -400,28 +400,31 @@ void Tooltip::show(const Common::String &text, int mouseX, int mouseY) {
 
 // ---- ScrollBar ---------------------------------------------------------------
 
-ScrollBar::ScrollBar() : _thumbW(0), _thumbH(0), _thumbY(0), _value(0), _max(0), _dragging(false) {
+ScrollBar::ScrollBar() : _thumbW(0), _thumbH(0), _thumbPos(0), _value(0), _max(0), _dragging(false), _horizontal(false) {
 }
 
-void ScrollBar::init(const Common::Rect &track, int thumbW, int thumbH) {
+void ScrollBar::init(const Common::Rect &track, int thumbW, int thumbH, bool horizontal) {
 	// FUN_004090e0: range 0..0, value 0
 	_track = track;
 	_thumbW = thumbW;
 	_thumbH = thumbH;
 	_value = _max = 0;
 	_dragging = false;
-	_thumbY = track.top;
+	_horizontal = horizontal;
+	_thumbPos = horizontal ? track.left : track.top;
 }
 
 void ScrollBar::setRange(int max) {
 	_max = MAX(max, 0);
 }
 
-bool ScrollBar::setThumbPos(int y) {
-	y = CLIP<int>(y, _track.top, _track.bottom);
-	_thumbY = y;
-	// value = round((y - top) * range / height), halves away from zero
-	int value = (2 * (y - _track.top) * _max + _track.height()) / (2 * MAX<int>(_track.height(), 1));
+bool ScrollBar::setThumbPos(int pos) {
+	const int start = _horizontal ? _track.left : _track.top;
+	const int length = _horizontal ? _track.width() : _track.height();
+	pos = CLIP<int>(pos, start, start + length);
+	_thumbPos = pos;
+	// value = round((pos - start) * range / length), halves away from zero
+	int value = (2 * (pos - start) * _max + length) / (2 * MAX<int>(length, 1));
 	if (value == _value)
 		return false;
 	_value = value;
@@ -431,7 +434,8 @@ bool ScrollBar::setThumbPos(int y) {
 bool ScrollBar::setValue(int value) {
 	value = CLIP(value, 0, _max);
 	if (_max > 0)
-		return setThumbPos(_track.height() * value / _max + _track.top);
+		return _horizontal ? setThumbPos(_track.width() * value / _max + _track.left)
+		                   : setThumbPos(_track.height() * value / _max + _track.top);
 	return setThumbPos(0);
 }
 
@@ -441,11 +445,11 @@ bool ScrollBar::mouseDown(int x, int y, bool &hit) {
 	if (!hit)
 		return false;
 	_dragging = true;
-	return setThumbPos(y);
+	return setThumbPos(_horizontal ? x : y);
 }
 
-bool ScrollBar::drag(int y) {
-	return _dragging && setThumbPos(y);
+bool ScrollBar::drag(int pos) {
+	return _dragging && setThumbPos(pos);
 }
 
 bool ScrollBar::release() {
@@ -456,8 +460,9 @@ bool ScrollBar::release() {
 }
 
 Common::Rect ScrollBar::thumbRect() const {
-	int cx = _track.left + _track.width() / 2;
-	return Common::Rect(cx - _thumbW / 2, _thumbY - _thumbH / 2, cx - _thumbW / 2 + _thumbW, _thumbY - _thumbH / 2 + _thumbH);
+	int cx = _horizontal ? _thumbPos : _track.left + _track.width() / 2;
+	int cy = _horizontal ? _track.top + _track.height() / 2 : _thumbPos;
+	return Common::Rect(cx - _thumbW / 2, cy - _thumbH / 2, cx - _thumbW / 2 + _thumbW, cy - _thumbH / 2 + _thumbH);
 }
 
 // ---- ListBox -------------------------------------------------------------------

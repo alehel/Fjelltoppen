@@ -45,7 +45,13 @@ void Music::play(const Common::String &name) {
 	if (!_video)
 		return;
 	_video->setSoundType(Audio::Mixer::kMusicSoundType);
+	updateVolume();
 	_video->start();
+}
+
+void Music::updateVolume() {
+	if (_video)
+		_video->setVolume((byte)g_engine->mixerVolume(FlaaklypaEngine::kVolumeMusic));
 }
 
 void Music::stop() {

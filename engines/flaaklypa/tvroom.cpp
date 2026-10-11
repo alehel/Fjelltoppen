@@ -202,8 +202,8 @@ void TvroomScene::updateClock() {
 }
 
 void TvroomScene::onClose() {
-	// TODO: music volume: FUN_0040b410(2, 2, 1.0f) restores the music to full volume
-	debug(1, "tvroom: music volume back to 1.0");
+	// FUN_0040b410(2, 2, 1.0f) restores the music to full volume
+	_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 1.0f);
 	// FUN_00407840: removes the dark room element and frees its bitmap
 	if (isAnimAdded(kDark))
 		removeAnim(kDark);
@@ -311,8 +311,7 @@ void TvroomScene::onKey(const Common::KeyState &key) {
 			playAnim("candle1");
 		if (!isAnimPlaying("candle2"))
 			playAnim("candle2");
-		// TODO: music volume: FUN_0040b410(2, 2, 1.0f)
-		debug(1, "tvroom: music volume back to 1.0");
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 1.0f);
 		setNormalLists();
 		_sequence = nullptr;
 		stopSequence();
@@ -321,8 +320,8 @@ void TvroomScene::onKey(const Common::KeyState &key) {
 
 void TvroomScene::onAnimStarted(Anim *a) {
 	if (!strcmp(a->name(), kTvSound)) {
-		// TODO: music volume: FUN_0040b410(2, 2, 0.25f) lowers the music while the TV sound plays
-		debug(1, "tvroom: music volume 0.25");
+		// FUN_0040b410(2, 2, 0.25f) lowers the music while the TV sound plays
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 0.25f);
 	}
 }
 
@@ -344,8 +343,7 @@ void TvroomScene::onAnimFinished(Anim *a) {
 		addAnim(kDark, Anim::kDefaultPos, Anim::kDefaultPos, -10);
 		playAnim(kTvSound);
 	} else if (n == kTvSound) {
-		// TODO: music volume: FUN_0040b410(2, 2, 1.0f)
-		debug(1, "tvroom: music volume back to 1.0");
+		_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, 1.0f);
 		removeAnim(kTvSound);
 		sequence(kTvEnd);
 		hideCursor();

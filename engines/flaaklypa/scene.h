@@ -92,6 +92,8 @@ public:
 	void handleEvent(const Common::Event &event);
 	/** Pauses or resumes the clips of all added elements (scene freeze). */
 	virtual void pauseAnims(bool pause);
+	/** FUN_004131b0: the clips take the engine's sound and speech volumes. */
+	void applyVolumes();
 	void update();
 	void draw(Graphics::ManagedSurface &dst);
 

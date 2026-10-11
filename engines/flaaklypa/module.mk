@@ -50,6 +50,7 @@ MODULE_OBJS = \
 	mountain.o \
 	movieplayer.o \
 	music.o \
+	options.o \
 	outro.o \
 	outtent.o \
 	pee.o \

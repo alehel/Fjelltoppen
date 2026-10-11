@@ -30,7 +30,11 @@
 
 namespace Flaaklypa {
 
-SoundPlayer::SoundPlayer(const Common::String &scene) : _scene(scene), _masterVolume(255) {
+SoundPlayer::SoundPlayer(const Common::String &scene) : _scene(scene) {
+}
+
+int SoundPlayer::mixerVolume(int volume) const {
+	return CLIP(volume * g_engine->mixerVolume(FlaaklypaEngine::kVolumeSound) / 255, 0, 255);
 }
 
 SoundPlayer::~SoundPlayer() {
@@ -86,7 +90,7 @@ int SoundPlayer::play(const Common::String &name, bool loop, int volume) {
 	}
 	_channels[channel].used = true;
 	g_system->getMixer()->playStream(Audio::Mixer::kSFXSoundType, &_channels[channel].handle, stream, -1,
-	                                 CLIP(volume * _masterVolume / 255, 0, 255));
+	                                 mixerVolume(volume));
 	return channel;
 }
 
@@ -111,7 +115,7 @@ bool SoundPlayer::isPlaying(int channel) const {
 void SoundPlayer::setVolume(int channel, int volume) {
 	if (!isPlaying(channel))
 		return;
-	g_system->getMixer()->setChannelVolume(_channels[channel].handle, CLIP(volume * _masterVolume / 255, 0, 255));
+	g_system->getMixer()->setChannelVolume(_channels[channel].handle, mixerVolume(volume));
 }
 
 } // End of namespace Flaaklypa

@@ -107,9 +107,9 @@ void IntentScene::onInit(int arg) {
 }
 
 void IntentScene::setMusicVolume(float volume) {
-	// TODO: FUN_0040b410(2, 2, volume): the music is ducked to 0.25 while
+	// FUN_0040b410(2, 2, volume): the music is ducked to 0.25 while
 	// Soline dances / the trance clip plays and restored to 1.0 afterwards.
-	debug(1, "Intent: music volume %.2f (TODO)", volume);
+	_vm->setVolumeFactor(FlaaklypaEngine::kVolumeGame, FlaaklypaEngine::kVolumeMusic, volume);
 }
 
 void IntentScene::restoreLists(int chars) {

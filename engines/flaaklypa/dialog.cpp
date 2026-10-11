@@ -318,8 +318,10 @@ int Dialog::run() {
 	_vm->_cursor->set("default");
 	_done = false;
 	_vm->freezeScene(true);
-	while (!_done && !_vm->shouldQuit())
+	while (!_done && !_vm->shouldQuit()) {
+		onFrame();
 		_vm->runFrame();
+	}
 	_vm->freezeScene(false);
 	_vm->_dialog = previous;
 	_vm->_cursor->set(cursor);

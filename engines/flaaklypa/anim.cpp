@@ -31,7 +31,7 @@
 namespace Flaaklypa {
 
 Anim::Anim(Scene *scene, const AnimDef *def) : _scene(scene), _def(def),
-	_video(nullptr), _frame(nullptr), _hasKey(false), _keyColor(0),
+	_video(nullptr), _volume(255), _frame(nullptr), _hasKey(false), _keyColor(0),
 	_x(def->x), _y(def->y), _z(def->zOrder), _hotspot(def->hotspot), _hitMask(nullptr), _hitRadius(0), _group(def->group),
 	_added(false), _playing(false), _removeWhenDone(false), _ownSurface(false), _lastFrameTime(0), _lastFrameShown(false) {
 }
@@ -47,6 +47,7 @@ void Anim::load() {
 	const Common::String &sceneName = _scene->name();
 	if (_def->smacker) {
 		_video = res->openSmacker(sceneName, Common::String::format("animation/%s.smk", _def->name));
+		applyVolume();
 		if (_video && _def->visible) {
 			// Decode the first frame so the element can be drawn (and hit
 			// tested) before it starts playing, like the original does.
@@ -106,8 +107,16 @@ void Anim::showFrame(int n) {
 }
 
 void Anim::setVolume(int volume) {
+	_volume = CLIP<int>(volume, 0, 255);
+	applyVolume();
+}
+
+void Anim::applyVolume() {
+	// FUN_004037c0 / FUN_004131b0: track 0 at the sound volume, track 1 at
+	// the speech volume
 	if (_video)
-		_video->setVolume((byte)CLIP<int>(volume, 0, 255));
+		_video->setTrackVolumes(_volume * g_engine->mixerVolume(FlaaklypaEngine::kVolumeSound) / 255,
+		                        g_engine->mixerVolume(FlaaklypaEngine::kVolumeSpeech));
 }
 
 void Anim::setFrameRate(int fps) {

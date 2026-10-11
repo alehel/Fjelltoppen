@@ -43,6 +43,8 @@ public:
 	/** Pauses or resumes the track (FUN_0040b6f0 / FUN_0040b720). */
 	void pause(bool pause);
 	void update();
+	/** The track takes the engine's music volume (FUN_0040b430). */
+	void updateVolume();
 
 private:
 	Common::String _name;
