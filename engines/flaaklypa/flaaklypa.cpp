@@ -100,6 +100,7 @@ static const char *const kImplementedGames[] = {
 	"puzzle",
 	"bouquet",
 	"colorfill",
+	"fence",
 	"gallery",
 	"movieplayer",
 	"mahjong",

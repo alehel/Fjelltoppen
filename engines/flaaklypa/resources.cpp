@@ -137,6 +137,26 @@ bool Resources::exists(const Common::String &sceneIn, const Common::String &file
 	return false;
 }
 
+void Resources::listFiles(const Common::String &sceneIn, const Common::String &patternIn, Common::StringArray &files) {
+	Common::String scene = sceneIn, pattern = patternIn;
+	resolve(scene, pattern);
+	for (const char *const *dir = kDataDirs; *dir; dir++) {
+		DataArchive *arc = archive(*dir, scene);
+		if (!arc)
+			continue;
+		Common::ArchiveMemberList members;
+		arc->listMatchingMembers(members, Common::Path(pattern, '/'));
+		for (const auto &m : members) {
+			const Common::String name = m->getPathInArchive().toString('/');
+			bool known = false;
+			for (const auto &f : files)
+				known |= f.equalsIgnoreCase(name);
+			if (!known)
+				files.push_back(name);
+		}
+	}
+}
+
 Graphics::ManagedSurface *Resources::loadBitmap(const Common::String &scene, const Common::String &file, const Graphics::PixelFormat &format) {
 	Common::ScopedPtr<Common::SeekableReadStream> stream(open(scene, file));
 	if (!stream) {

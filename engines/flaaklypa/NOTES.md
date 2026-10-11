@@ -1971,6 +1971,178 @@ lists it.
   `Anim` treats as invisible, so the cross is shown as the element
   "crossmark". Not done: `sound.ini` volumes.
 
+## Activity `fence` ("Musikkgjerdet", from `pee`)
+
+Handler `FUN_00466250` (`fence.cpp`, code 0x466250..0x468e70): 0x103
+`FUN_00466b90` init, 0x104 `FUN_00467650` close, 0x105 `FUN_00467790`
+(returns 1 in play mode, so the BUTTON and SCROLL modules miss the
+press: no help/exit/load/save, no sock while a tune plays), 0x107
+`FUN_004680a0`, 0x10a `FUN_00466870` drag move, 0x10b `FUN_004663c0` drop
+(any drag), 0x10c `FUN_00468330`, 0x111 `FUN_00468380` (timer data 0 next
+note, 1 marker), 0x112 `FUN_004683c0` frame tick, 0x116 `FUN_00468130`,
+0x117 `FUN_00466b70`. A xylophone fence: the 18 boards are the white keys
+A..D two octaves up (pitch 0 = A1 .. 17 = D3, sound suffixes 0x508ba4),
+the five power lines a treble staff (E1 on the lowest wire, middle line
+B2). No music (`FUN_0040b2f0`), no title.
+
+* Data: `data/fence` (backdrop, mask, `bitmap/`, bird clips in
+  `animation/`, `sound/<instrument>-<A1..D3>.wav` 22050 Hz mono 16 bit and
+  `birds.wav`, `sound.ini` sound=0.94), `instrument.ini` in data1/2/3
+  (10/13/18 instruments, `[instrument] resource<n>` and `name<n>`, the
+  newest set wins; data2/3 add `bass`, `timpani`, `trombone`, `clavinet`,
+  `elpiano`, `koto`, `string`, `whistle`; `303` and `orch` WAVs are
+  unused), `lang/fence/bitmap/` (`letters`, `A`..`G`, B drawn as H),
+  `tunes/tune0..9.tun` in the lang container (Norwegian titles; the same
+  files ship loose in CD 2's `data/fence/tunes`) and in the data container
+  (Swedish titles, unused since lang comes first). The original reads
+  only loose files.
+* Mask hotspots: 1..18 boards (x 98..699, y 375..537), 0x13 Fri / 0x14
+  Spill (also the gramophone) / 0x15 Komp. (also the microphone), 0x17
+  music stand (load), 0x18 guitar (instruments), 0x19 blackboard (note
+  names), 0x1a power box (new tune). Cursor table `fence_0`: hand over
+  0x13..0x15, 0x17..0x1e and 0x21, `sound` over the boards.
+* Buttons (z 0, labels Amerigo BT_10_, all transparent): 0x1f help (0,0),
+  0x20 exit (0x2d8,0), 0x1b `bpminc` (0xf9,0x222), 0x1c `bpmdec`
+  (0xbf,0x224), 0x18 `instruments` (0x1e3,0x224), 0x1d `load` +
+  `fence:LOAD` (0x229,0x222), 0x1e `save` + `fence:SAVE` (0x229,0x23d).
+  0x1b/0x1c/0x18 act on the press (a button element's hotspot is its
+  id; after the instrument dialog the button module still takes the press and shows
+  the button pressed until the next release, like the original), 0x1d..
+  0x20 on the release (event 0x116) in free and record mode only.
+  Labels `fence:FREE/PLAY/RECORD` centred in (0x111,0x223)-(0x14d,0x247),
+  (0x153,..)-(0x18f,..), (0x194,..)-(0x1d0,..) z 3 (0x49fe58); the tempo
+  `%d` centred in (0xd4,0x224)-(0xf3,0x242) z 2. Mode lights (`<unknown>`
+  element 0x508ee0, `FUN_004674c0`): `free_1` (0x112,0x224), `play_1`
+  (0x153,0x225), `edit_1` (0x192,0x223), z 2; `mike` lit in record mode,
+  `player` while playing, both z 2 at their table positions.
+* Staff (`FUN_004665a0`): 16 notes per page (DAT_006b3820, a multiple of
+  16), slot s at x = 0x32 + 0x2b s, y = trunc(182 - 6 ((x - 395) / 367)^2
+  - 8.5 pitch - 42) (`FUN_00466810` / `FUN_00466840`, doubles at
+  0x509268..; the wires sag 6 px). Bitmap `<length>-<up|down>` (down for
+  pitch > 7), z 4, hotspot 0x22 + s, hit on its rectangle (mode 2: an
+  all-ones hit mask in the port). Ledger lines `line` z 2 at pitch 14 and
+  16 (pitch > 13 / > 15), 2 and 0 (pitch < 3 / < 1); note names
+  `A`..`G` z 3 and `letters` on the boards (default position, z 2) while
+  the blackboard is on. `cursor` (z 1) sits on the current note
+  (DAT_006b1bb8) in free and record mode when it is on the page
+  (`FUN_004664f0`, using the slot element's position). `marker-<up|down>`
+  (`<unknown>` 0x508d90, z 5, 250 ms, timer 1) shows the pitch played in
+  the current note's column (`FUN_00467dc0`; column 0 when the current
+  note lies before the page).
+* Lengths 0..7 (0x508b84): quaver, dotted quaver, crotchet, dotted
+  crotchet, minim, dotted minim, semibreve, dotted semibreve; units
+  4, 6, 8, 12, 16, 24, 32, 48 (0x49fe98) with 8 per beat:
+  ms = units * 60000 / 8 / bpm (integer). Tempo 60..240 in steps of 10
+  (`FUN_004673b0`), 120 for a new tune.
+* Modes (DAT_006b6228): 0 birds land, 1 birds leave (both with the wait
+  cursor and `birds.wav` looped; the scene ignores input), 2 free
+  (`FUN_00467480`: page and current note 0): a board plays its note, the
+  current note's pitch moves the cursor on (playing along); 3 play
+  (`FUN_00467f00`): from the first note, each note starts the timer for
+  its length (`FUN_00467f70`, drift from frame granularity like the
+  original), pages turn (`FUN_00467cb0`) and the sock follows; Spill again
+  or the last note (the original stops when it starts the last note)
+  returns to the mode before it (DAT_006b3814: free or record); boards
+  still sound; 4 record (`FUN_00468020`, the page of the current note): a
+  board inserts a crotchet after the current note (up to 0x400; the first
+  note at 0) and plays it. Leaving a mode (`FUN_004675b0` / `FUN_004675d0`
+  / `FUN_00467620`) takes its light (and mike/player, the play timer) away.
+* Record mode editing: a press on a note (`FUN_00468070`) makes it current
+  and drags it (EVENT `FUN_0040c1f0`); each move re-places it
+  (`FUN_00466870`): pitch = the first one whose y is above mouse y - 42
+  (half its height), at most 17, z 2; when y(x, -1) is above that too
+  the `trash` (z 5) and the note are centred on the mouse, and the drop
+  deletes the note (`FUN_004663c0`: the current note is kept in range and
+  scrolled to). Right button: length + 2 mod 8, with Shift the dot
+  toggles (GetAsyncKeyState(VK_SHIFT); the port asks the event manager's
+  modifier state). Keys 1..9: pitch 2..10, with Left held 0..8, else with
+  Right held 9..17 (`FUN_00468330`, GetAsyncKeyState; the port tracks the
+  arrows' key events). Left is checked first.
+* Sock (SCROLL bar 0x21, `FUN_004090e0(0x21, 0x28, 0xe6, 0x2cb, 0x23,
+  "sock", 0x101)`: flag 0x10 clear = horizontal, bit 0 a transparent thumb
+  whose hotspot is the bar id; z 0): range 0..(count - 16) / 16 + 1 (C
+  division, so one empty page more), value page / 16 (`FUN_004664b0`).
+  `FUN_00408f30`: the thumb's centre at (pos, y + h/2) with pos clamped to
+  the line, value = round((pos - x) * range / w); `FUN_00408eb0`: pos =
+  w * value / range + x. A press on the thumb drags it; one on the line
+  (widened by half the thumb, `FUN_004092d0`) moves it there first; the
+  drop snaps it (`FUN_004092b0`). Value changes post 0x117: page = value
+  * 16, redraw (`FUN_00466b70`). The port has its own small horizontal
+  scroll bar (the engine's `ScrollBar` is vertical).
+* Birds (16 records of 0x16c at 0x6b04f8: an animation structure, pitch,
+  length, n, points[], t, speed, delay, state; `FUN_00468420` /
+  `FUN_00468870` each frame with dt in seconds): a new tune (0x1a) or a
+  loaded one (`FUN_00466ee0`) first turns the notes of the page into
+  birds (`FUN_00467060` / `FUN_004670e0`): path of n + 1 points (n =
+  10 + rand() % 10), s = i / (n - 1), x = X - 825 s^2 (stem up: to the
+  left; stem down: + to the right), y = Y - trunc(200 s + 10 (0.5 -
+  rand()/32767)); state 5 shows the note bitmap for 0..3 s, 6 `land-init`
+  (looped, at (X - 9, Y - 2) / (X + 9, Y - 2)), 7 `fly-<up|down>` once 100 px from the
+  start, gone at t >= 1. Then the first 16 notes of the tune come
+  (`FUN_00468520` / `FUN_004685a0`): from X + (300..500) s (stem up: from
+  the right) and Y - (225..375) s^2, s = 1 - i / (n - 1), to (X + 9, Y + 2)
+  / (X - 9, Y + 2); state 0 waits 0..4 s (`fly-*` looped), 1 flies, 2
+  `land-init` within 150 px of the end, 3 `land-*` on arrival (offsets
+  0x509228: (0,9) / (0,3)), 4 `crotchet|minim|semibreve-*` (0x509248) at
+  the note (offsets (9,-7) / (-9,-1)). Speed 0.3..0.5 of the path per
+  second; positions are linear between the points. Only states 2, 3, 5
+  and playing clips count as busy; with none busy the landed birds become
+  the notes and free mode starts. Re-added clips go to z 0 (the records'
+  default z). The port gives each bird its own elements
+  `fbird<b|s|l><n>/../<clip>` (`Resources::resolve()` drops the
+  `fbirdX/..` part) instead of renaming one structure; randoms come from
+  the engine's random source.
+* Instruments (`FUN_00466e50`): `resource<n>` (default `piano`), its 18
+  WAVs (`FUN_004139c0`; a missing one stays silent). `FUN_00467990`: the
+  list dialog `fence:INSTRUMENTS` with the `name<n>` texts (up to 24),
+  OK only, text rows (flag 0x100). Each note plays on a duplicated
+  DirectSound buffer from a pool of 1024 (`FUN_00467ec0`), so notes ring
+  out and mix; the port plays each on its own mixer channel
+  (`SoundPlayer`, volume from `sound.ini`). Text rows: the port renders
+  them like `FUN_00408720` / `FUN_00408530` (list font Amerigo BT_14_,
+  set by `FUN_00408990` at init; the text on 0x00ff00, cut to the box) in
+  `FenceScene::textItem()` and hands them to `runListDialog()`.
+* `.tun` (`FUN_004672e0` read, `FUN_00468260` write): u8 0xff, char
+  title[0x400] (NUL terminated; the original writes the rest of its stack
+  buffer, the port zeros), u8 bpm, u8 note count, then per note int32
+  pitch, int32 length (little endian). The count is written with fputc:
+  tunes over 255 notes lose the rest when loaded again (kept). Load
+  failures (`fence:IOERR` with the path, title `fence:IOERR_TITLE`) leave
+  the birds flying with the old notes on screen. The port clamps loaded
+  pitches and lengths (the original indexes its tables with them).
+* Loading (`FUN_00467a20`): the original lists `<data>/fence/tunes/*.tun`
+  (`_findfirst`), the titles inside, in the list dialog `fence:TUNES` (OK
+  only); none gives `fence:NOTUNES`. The port lists the scene containers'
+  `tunes/*.tun` (`Resources::listFiles()`, added for this), loose files
+  `data/fence/tunes/*.tun` of the game directory (an installed original
+  with its players' tunes; they replace container files of the same
+  name) and the save files `<target>-fence-*.tun`, sorted by file name
+  like NTFS (tune0, tune1, tune10, tune2, ...). A file without the 0xff
+  mark is listed by its file name (the original shows stale memory).
+* Saving (0x1e): the text entry (0xf9, 0xf7, `fence:SAVETITLE`, the tune's
+  name, 32 characters, flags 0x19); the first free `tunes/tune<n>.tun`
+  (fopen probing from 0) gets the tune; the tune keeps its old name in
+  memory. `fence:OVERWRITE` is unused. The port writes the uncompressed
+  save file `<target>-fence-tune<n>.tun` (n free among all listed tunes,
+  so 10 and up next to the shipped ones) and names it in `fence:SAVED`
+  (the original shows the full path).
+* State: the notes and their count are globals that outlive the scene:
+  on the next visit the old tune shows and flies away before the empty
+  `fence:DEFTUNE` tune starts (static members in the port). Instrument
+  (piano), tempo, letters and page reset on init. Profile: value 0 =
+  hidden car part found; the car part (`carpart`, z -10 at (0,536)) has
+  hotspot -1 (`FUN_00467790` case -1, only outside the bird modes:
+  value 0 = 1, `FUN_0041c150`); the engine's hit test skips negative
+  hotspots, so the scene tests the element itself.
+* Tested (2026-10-11, `start_scene=fence`): composing and editing by
+  autoclick (inserts, right clicks, a drag up, a drag into the bin),
+  playback timing (crotchet 500 ms at 120 bpm), page turns and the sock,
+  loading `tune1` (birds landing), the new tune's birds leaving, the
+  instrument list, digits with arrows, save + reload of a user tune,
+  loose files and a damaged one, re-entry, help, the car part's award.
+  Not checked against the running original: the birds' look and the
+  audio balance.
+
 ## High scores (`hiscore.cpp`, HISCORE module)
 
 The tables every sub game updates at the end of a round and the
@@ -2249,7 +2421,8 @@ under the mouse (`FUN_00407ec0`), the list keys (`FUN_00407f60`: PgUp/PgDn,
 Home/End, Up/Down) move the selection and set the scroll bar to the top,
 Enter = OK, Escape and close = Cancel. Returns the selected row (and its
 id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
-0x100, rows rendered from strings by `FUN_00408720`, is not ported). Used
+0x100, rows rendered from strings by `FUN_00408720`, is not ported; the
+fence renders its string rows itself). Used
 by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), colorfill
 (`FUN_00461970`), the 3D viewer (`FUN_0047d880`) and `FUN_0041a080`.
 
@@ -2922,7 +3095,7 @@ its own hotspot numbering, not the 55..99/251.. ranges of the other pages.
   1 in `FUN_00413750`: the square [c - r, c + r) and the distance to the
   centre); the engine defines the 24 clips with `defineAnim(.., loop)` and
   uses `Anim::setHitRadius()`.
-* TODO: activity `fence`.
+* Activity `fence`: see its section.
 
 ## Story page `buildacar` ("Bygg Il Tempo Gigante")
 
@@ -3289,7 +3462,7 @@ Activities (`[activity]`, open ended):
 |---|---|---|---|---|
 | x | gallery | Karakter galleri | tvroom | data |
 | x | bouquet | Ludvigs blomsterbinderi | desk | data |
-| | fence | Musikkgjerdet | pee | data |
+| x | fence | Musikkgjerdet | pee | data |
 | x | colorfill | Reodors tegnebord | desk | data2 |
 | | jigsaw | Puslespillet | yard | data |
 | x | mahjong | Mah Jongg | outtent | data2 |

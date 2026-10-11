@@ -21,6 +21,7 @@ MODULE_OBJS = \
 	dialog.o \
 	draughts.o \
 	entrydlg.o \
+	fence.o \
 	flaaklypa.o \
 	font.o \
 	gallery.o \
