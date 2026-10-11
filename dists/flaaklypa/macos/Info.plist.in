@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>nb</string>
+	<key>CFBundleDisplayName</key>
+	<string>Flåklypa Grand Prix</string>
+	<key>CFBundleExecutable</key>
+	<string>flaaklypa</string>
+	<key>CFBundleGetInfoString</key>
+	<string>@VERSION@, built on ScummVM @SCUMMVM_VERSION@</string>
+	<key>CFBundleIconFile</key>
+	<string>flaaklypa.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.github.alehel.flaaklypa</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>nb</string>
+		<string>en</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>Flåklypa Grand Prix</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.racing-games</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Built on ScummVM, copyright 2001-2026 The ScummVM Team. Free software under the GNU GPL version 3 or later.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<false/>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Spillet leser spilldataene fra CD-ene.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Spillet leser spilldataene fra mappen du har valgt.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Spillet leser spilldataene fra mappen du har valgt.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Spillet leser spilldataene fra mappen du har valgt.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Spillet leser spilldataene fra mappen du har valgt.</string>
+</dict>
+</plist>

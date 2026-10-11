@@ -1,0 +1,68 @@
+Flåklypa Grand Prix
+===================
+
+Dette er Flåklypa Grand Prix (Gullutgaven fra 2002) for moderne
+maskiner. Programmet inneholder ikke selve spillet: du trenger de
+originale CD-ene.
+
+
+Første gang du starter
+----------------------
+
+Spillet ber deg velge CD 1, eller en mappe der spillet er installert
+eller kopiert (mappen som inneholder «data» og «lang»).
+
+Velger du CD-ene, kopieres dataene til maskinen (omtrent 1 GB). Når
+CD 1 er kopiert, ber spillet om CD 2. Etterpå trenger du ikke CD-ene.
+
+Har du CD-ene som diskbilder (.iso), kan du åpne dem og velge dem på
+samme måte.
+
+Bare Gullutgaven (versjon 1.2) støttes foreløpig.
+
+
+Hvor ligger dataene og profilene?
+---------------------------------
+
+macOS:   ~/Library/Application Support/Flaaklypa Grand Prix
+Windows: %APPDATA%\Flaaklypa Grand Prix
+Linux:   ~/.local/share/flaaklypa (innstillingene i ~/.config/flaaklypa)
+
+«Spilldata» er dataene som er kopiert fra CD-ene, «Profiler» er
+spillerprofilene.
+
+
+Første start på macOS
+---------------------
+
+Programmet er ikke godkjent av Apple. Første gang: høyreklikk på
+programmet og velg «Åpne». Får du bare valget «Flytt til papirkurven»,
+åpner du Systeminnstillinger > Personvern og sikkerhet og trykker
+«Åpne likevel».
+
+
+Første start på Windows
+-----------------------
+
+Windows kan advare om at programmet er ukjent. Trykk «Mer informasjon»
+og deretter «Kjør likevel».
+
+
+Taster
+------
+
+Ctrl+F5 åpner menyen med innstillinger for lyd og grafikk (på Mac
+med fn-tasten i tillegg hvis F5 styrer noe annet).
+Alt+Enter (Option+Retur på Mac) skifter mellom vindu og fullskjerm.
+
+
+Om programmet
+-------------
+
+Programmet bygger på ScummVM (https://www.scummvm.org) og er fri
+programvare under GNU General Public License versjon 3 eller senere.
+Kildekoden finnes på https://github.com/alehel/scummvm (grenen
+«flaaklypa»).
+
+Flåklypa Grand Prix ble laget av Capricornus Computer Game Productions
+AS (Caprino Video Games). Dette er et uoffisielt fanprosjekt.
