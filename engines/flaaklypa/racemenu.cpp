@@ -359,6 +359,204 @@ void RaceSoundDialog::drawContents(Graphics::ManagedSurface &dst) {
 	}
 }
 
+
+// ---- the controls dialog (FUN_0041d140, dialogue "ctrlcfg") ----------------------
+
+/**
+ * A player's controls: the device tabs (keyboard; the gamepads are greyed
+ * without one), the six inputs with their keys and CHANGE buttons (then
+ * the next key pressed that no other input uses; F1..F24 are refused,
+ * Escape stops waiting and leaves the input on "?"), RESET (the device's
+ * defaults, FUN_0047a980), OK (Enter) and CANCEL (Escape). The handler
+ * LAB_0041d7d0 ignores the mouse while waiting for a key.
+ */
+class ControlsDialog : public Dialog {
+public:
+	ControlsDialog(FlaaklypaEngine *vm, RacePlayerControls &target, int player) :
+		Dialog(vm, false), _target(target), _copy(target), _player(player), _waiting(-1) {
+		Graphics::ManagedSurface *backdrop = loadBitmap("ctrlcfg", "backdrop");
+		if (!backdrop) {
+			close(2);
+			return;
+		}
+		// FUN_00407290("ctrlcfg", 0xe2, 0x5d, 500)
+		setSurface(backdrop, 0xe2, 0x5d);
+		if (_vm->_resources->exists("common", "dialogue/ctrlcfg/hotspot.bmp"))
+			setHitMask(_vm->_resources->loadMask("common", "dialogue/ctrlcfg/hotspot.bmp"));
+		_font.load("Amerigo BT_10_");
+		_title.load("Amerigo BT_14_");
+		addButton(kCancel, 0xfb, 0x16f, "ctrlcfg", "button_0", "button_1", nullptr, _vm->getString("interfaceh:CANCEL"), false);
+		addButton(kOk, 0xa5, 0x16f, "ctrlcfg", "button_0", "button_1", nullptr, _vm->getString("interfaceh:OK"), false);
+		addButton(kReset, 10, 0x16f, "ctrlcfg", "button_0", "button_1", nullptr, _vm->getString("ctrlcfg:RESET"), false);
+		// the title (0x100: centred, at the top) in (13, 11) 318 x 30
+		const Common::String title = _vm->getString("ctrlcfg:TITLE");
+		_title.drawString(*backdrop, 13 + (0x13e - _title.stringWidth(title)) / 2, 11, title);
+		// the device tabs (group 1): kb, gp1, gp2 with their grey bitmaps
+		static const char *const kTabs[3] = { "kb", "gp1", "gp2" };
+		static const int kTabX[3] = { 0x17, 0x7f, 0xe6 };
+		for (int i = 0; i < 3; i++) {
+			_tabs[i][0] = loadBitmap("ctrlcfg", Common::String::format("%s_0", kTabs[i]).c_str());
+			_tabs[i][1] = loadBitmap("ctrlcfg", Common::String::format("%s_1", kTabs[i]).c_str());
+			_tabs[i][2] = loadBitmap("ctrlcfg", Common::String::format("%s_grey", kTabs[i]).c_str());
+			_tabX[i] = kTabX[i];
+		}
+		// the six rows: label, key, CHANGE (0x138c + i at (0xf6, 0x8f + 32 i))
+		static const char *const kLabels[6] = { "ctrlcfg:ACCELERATE", "ctrlcfg:REVERSE", "ctrlcfg:LEFT", "ctrlcfg:RIGHT", "ctrlcfg:TRICK", "ctrlcfg:HORN" };
+		for (int i = 0; i < 6; i++) {
+			const int y = 0xe9 - 0x5d + 32 * i;
+			const Common::String label = _vm->getString(kLabels[i]);
+			_font.drawString(*backdrop, 0xf1 - 0xe2, y + (32 - _font.height()) / 2, label);
+			addButton(kChange + i, 0xf6, 0xe9 - 0x5a + 32 * i, "ctrlcfg", "button_0", "button_1", nullptr, _vm->getString("ctrlcfg:CHANGE"), false);
+		}
+	}
+
+	~ControlsDialog() override {
+		for (auto &t : _tabs)
+			for (auto *b : t)
+				delete b;
+	}
+
+protected:
+	enum {
+		kOk = 0x1389,
+		kCancel = 0x138a,
+		kReset = 0x138b,
+		kChange = 0x138c,
+		kTabKeyboard = 0x1392
+	};
+
+	RaceControls &current() { return _copy.configs[CLIP<int32>(_copy.selected, 0, 2)]; }
+
+	// FUN_0041d660: a key's name (0x4af730), else the character; a
+	// gamepad's buttons and axes
+	Common::String keyName(int32 key, int32 type) {
+		static const struct {
+			int vk;
+			const char *name;
+		} kNames[15] = {
+			{ 0x0d, "ctrlcfg:RETURN" }, { 0x20, "ctrlcfg:SPACE" }, { 0x26, "ctrlcfg:ARROW_UP" },
+			{ 0x28, "ctrlcfg:ARROW_DOWN" }, { 0x25, "ctrlcfg:ARROW_LEFT" }, { 0x27, "ctrlcfg:ARROW_RIGHT" },
+			{ 0x10, "ctrlcfg:SHIFT" }, { 0x11, "ctrlcfg:CONTROL" }, { 0x09, "ctrlcfg:TAB" }, { 0x2d, "ctrlcfg:INS" },
+			{ 0x2e, "ctrlcfg:DEL" }, { 0x24, "ctrlcfg:HOME" }, { 0x23, "ctrlcfg:END" }, { 0x22, "ctrlcfg:PGDN" },
+			{ 0x21, "ctrlcfg:PGUP" }
+		};
+		if (type == RaceControls::kTypeKeyboard) {
+			for (const auto &n : kNames)
+				if (n.vk == key)
+					return _vm->getString(n.name);
+			return Common::String::format("%c", (char)key);
+		}
+		switch (key) {
+		case 1:
+			return _vm->getString("ctrlcfg:BUTTON1");
+		case 2:
+			return _vm->getString("ctrlcfg:BUTTON2");
+		case 3:
+			return _vm->getString("ctrlcfg:BUTTON3");
+		case 4:
+			return _vm->getString("ctrlcfg:BUTTON4");
+		case 10:
+			return _vm->getString("ctrlcfg:JOY_LEFT");
+		case 11:
+			return _vm->getString("ctrlcfg:JOY_RIGHT");
+		case 12:
+			return _vm->getString("ctrlcfg:JOY_UP");
+		case 13:
+			return _vm->getString("ctrlcfg:JOY_DOWN");
+		default:
+			return "??";
+		}
+	}
+
+	void onButton(int id) override {
+		if (_waiting >= 0)
+			return;
+		// FUN_0041dae0
+		if (id == kOk) {
+			_target = _copy;
+			close(1);
+		} else if (id == kCancel) {
+			close(2);
+		} else if (id == kReset) {
+			raceDefaultControls(current(), _player, current().type);
+		} else if (id >= kChange && id < kChange + 6) {
+			// FUN_0041dbd0: "?" until a key comes
+			_waiting = id - kChange;
+			current().keys[_waiting] = 0x3f;
+		}
+	}
+
+	void onMouseDown(int x, int y, bool onDialog) override {
+		if (_waiting >= 0)
+			return;
+		// the tabs (FUN_004075c0, group 1): a device chosen; no gamepads here
+		for (int i = 0; i < 3; i++) {
+			const Graphics::ManagedSurface *b = _tabs[i][0];
+			if (!b)
+				continue;
+			Common::Rect r(this->x() + _tabX[i], this->y() + 0x57, this->x() + _tabX[i] + b->w, this->y() + 0x57 + b->h);
+			if (r.contains(x, y) && i == 0)
+				_copy.selected = 0;
+		}
+	}
+
+	// FUN_0041d970
+	void onKey(const Common::KeyState &key) override {
+		int vk = raceVirtualKey(key);
+		if (vk <= 3)
+			return;
+		if (_waiting < 0) {
+			if (vk == 0x0d) {
+				_target = _copy;
+				close(1);
+			} else if (vk == 0x1b) {
+				close(2);
+			}
+			return;
+		}
+		if (vk == 0x1b) {
+			_waiting = -1;
+			return;
+		}
+		RaceControls &c = current();
+		if (c.type != RaceControls::kTypeKeyboard || (0x70 <= vk && vk <= 0x87))
+			return;
+		bool used = false;
+		for (int i = 0; i < RaceControls::kKeys; i++)
+			if (c.keys[i] == vk)
+				used = true;
+		if (!used || vk == c.keys[_waiting]) {
+			c.keys[_waiting] = vk;
+			_waiting = -1;
+		}
+	}
+
+	void drawContents(Graphics::ManagedSurface &dst) override {
+		for (int i = 0; i < 3; i++) {
+			int state = i == 0 ? (_copy.selected == 0 ? 1 : 0) : 2;   // FUN_0040e500: no gamepads
+			const Graphics::ManagedSurface *b = _tabs[i][state] ? _tabs[i][state] : _tabs[i][0];
+			if (b)
+				dst.blitFrom(*b, Common::Point(x() + _tabX[i], y() + 0x57));
+		}
+		// FUN_0041d5a0: the keys right aligned in (0x16e, row) 100 x 32
+		const RaceControls &c = _copy.configs[CLIP<int32>(_copy.selected, 0, 2)];
+		for (int i = 0; i < 6; i++) {
+			const Common::String name = keyName(c.keys[i], c.type);
+			const int top = 0xe9 + 32 * i;
+			_font.drawString(dst, 0x16e + 100 - _font.stringWidth(name), top + (32 - _font.height()) / 2, name);
+		}
+	}
+
+private:
+	RacePlayerControls &_target;
+	RacePlayerControls _copy;   ///< DAT_0059ec00
+	int _player;
+	int _waiting;               ///< DAT_005a01e0: the input waiting for a key, -1
+	BitmapFont _font, _title;
+	Graphics::ManagedSurface *_tabs[3][3];
+	int _tabX[3];
+};
+
 // ---- the scene -----------------------------------------------------------------
 
 RacemenuScene::RacemenuScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _buttons(this), _tooltip(this),
@@ -1245,10 +1443,13 @@ void RacemenuScene::soundDialog() {
 	refreshCursor();
 }
 
-// FUN_0041d140(&controls, player): the "ctrlcfg" dialog (keys and device of
-// a player). TODO: not ported; the default controls stay in use.
+// FUN_0041d140(&controls, player): the "ctrlcfg" dialog edits the menu's
+// copy of the player's controls (DAT_006cff84 / DAT_006cffe8), kept with
+// the menu on close
 void RacemenuScene::controlsDialog(int player) {
-	debug(1, "Racemenu: the controls dialog of player %d is not ported", player + 1);
+	ControlsDialog dlg(_vm, _controls[player], player);
+	dlg.run();
+	refreshCursor();
 }
 
 } // End of namespace Flaaklypa

@@ -26,6 +26,7 @@
 #include "common/formats/ini-file.h"
 #include "common/hashmap.h"
 #include "common/hash-str.h"
+#include "common/keyboard.h"
 #include "common/rect.h"
 #include "common/scummsys.h"
 #include "graphics/managed_surface.h"
@@ -100,6 +101,9 @@ void raceDefaultControls(RaceControls &controls, int player, int type);
  * like the original's global.
  */
 RaceSettings &raceMenuSettings();
+
+/** The Windows virtual key code of a key (0 when it has none here). */
+int raceVirtualKey(const Common::KeyState &key);
 
 /**
  * The high score entries of the last race of the menu's settings

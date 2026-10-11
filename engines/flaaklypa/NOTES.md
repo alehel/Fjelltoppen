@@ -4211,9 +4211,25 @@ button's text, `FUN_00406910(id, 10, key)`). Engine: `RacemenuScene`.
   relative to the sound volume, `Anim::setVolume()`).
 * **Close** (`FUN_0047ba50`): the menu is saved, the sliders, labels,
   fonts and the ini freed.
-* Not ported: the controls dialog (`FUN_0041d140(&controls, player)`,
-  dialogue `ctrlcfg`: devices, the six inputs with CHANGE buttons, RESET);
-  the default keys apply.
+* **Controls** (buttons 12 / 15, `FUN_0041d140(&controls, player)`,
+  dialogue `ctrlcfg` at (226,93), not dimmed, handler `LAB_0041d7d0`):
+  edits a copy of the player's 25 ints. Title `ctrlcfg:TITLE` (`Amerigo
+  BT_14_`, centred at the top of (13,11) 318x30); device tabs (group 1)
+  0x1392 keyboard (23,87) `kb_0/1/grey`, 0x1393 gamepad 1 (127,87)
+  `gp1_*`, 0x1394 gamepad 2 (230,87) `gp2_*` (greyed without the device,
+  `FUN_0040e500`; a tab selects the set in use); six rows from y 233
+  (screen) 32 apart: the input's name (`ctrlcfg:ACCELERATE`, `REVERSE`,
+  `LEFT`, `RIGHT`, `TRICK`, `HORN`, `Amerigo BT_10_`, left in (241, y)
+  220x32), its key right aligned in (366, y) 100x32 (`FUN_0041d660`: the
+  names of 0x4af730 `ctrlcfg:RETURN`, `SPACE`, `ARROW_*`, `SHIFT`,
+  `CONTROL`, `TAB`, `INS`, `DEL`, `HOME`, `END`, `PGDN`, `PGUP`, else
+  `"%c"` of the key code; a gamepad's `BUTTON1..4`, `JOY_*`, else "??"),
+  CHANGE 0x138c + n at (246, 143 + 32 n) of the dialog: the key becomes
+  "?" (0x3f) and the next key no other input uses is taken (not F1..F24;
+  Escape stops waiting and leaves "?"; the mouse is ignored meanwhile,
+  `FUN_0041d8d0`..); RESET 0x138b (10,367) the device's defaults; OK
+  0x1389 (165,367) / Enter copies back, CANCEL 0x138a (251,367) / Escape.
+  Engine: `ControlsDialog` (keyboard only, no gamepads).
 
 ## Race (`racing`, "Bilspill", 640x480)
 

@@ -846,7 +846,7 @@ void RacingScene::freeCar(Car *c) {
 
 // The virtual key code of a key (the original reads its keys with
 // GetAsyncKeyState)
-static int virtualKey(const Common::KeyState &key) {
+int raceVirtualKey(const Common::KeyState &key) {
 	using namespace Common;
 	switch (key.keycode) {
 	case KEYCODE_UP:
@@ -904,7 +904,7 @@ static int virtualKey(const Common::KeyState &key) {
 // FUN_0047a7f0: Escape asks (not in the demo) and ends the race; Page Up /
 // Page Down show more or less of the HUD (layouts 0..4, 50 ms apart)
 void RacingScene::onKey(const Common::KeyState &key) {
-	int vk = virtualKey(key);
+	int vk = raceVirtualKey(key);
 	if (vk > 0 && vk < 256)
 		_keys[vk] = true;
 	if (vk == 0x1b) {
@@ -930,7 +930,7 @@ void RacingScene::onKey(const Common::KeyState &key) {
 }
 
 void RacingScene::onKeyUp(const Common::KeyState &key) {
-	int vk = virtualKey(key);
+	int vk = raceVirtualKey(key);
 	if (vk > 0 && vk < 256)
 		_keys[vk] = false;
 }
