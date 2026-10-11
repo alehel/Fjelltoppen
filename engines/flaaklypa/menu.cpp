@@ -344,8 +344,11 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 		useProfile();
 		_vm->changeScene("credits", 0);
 		break;
+	case 4:
+		useProfile();
+		_vm->changeScene("mainscore", 0);
+		break;
 	case 3:  // options (FUN_00418140)
-	case 4:  // high scores (mainscore)
 	case 7:  // tournament
 		useProfile();
 		debug(1, "Menu: button %d not implemented", hotspot);
@@ -411,6 +414,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return nullptr;
 	if (!scumm_stricmp(name, "menu"))
 		return new MenuScene(vm, def);
+	if (!scumm_stricmp(name, "mainscore"))
+		return new MainscoreScene(vm, def);
 	if (!scumm_stricmp(name, "info"))
 		return new InfoScene(vm, def);
 	if (!scumm_stricmp(name, "movieplayer"))

@@ -1554,6 +1554,32 @@ as 0 and changes are lost). Engine: free functions in `award.h` on
   medal bitmap. More than five car parts overflow the original's item
   buffers; the port awards them all and shows five.
 
+## High score overview (`mainscore`, menu button 4)
+
+Handler `FUN_00416760` (`mainscore.cpp`), music `theme`, title
+`mainscore:SCENENAME` in `Amerigo BT_18_` in (206,25)-(587,73), the
+player's name (`profile:NONAME` without one) in (41,102)-(160,127),
+`interfaceh:NAME`/`DATE`/`POINTS` column heads, `logo` z 0x31.
+`subgame.ini` (data3's: 19 games, `mountain` twice with `version` 0/1)
+lists `game<n>`, `version<n>` (the table key) and `name<n>` (a
+language.ini key; else the scene's title), n < 20. A game is listed
+only when the player's table has entries (`FUN_00416960`); its row in
+the list box (0x49c938 (48,143)-(132,518), bar COLORREF 0x808080) is
+`bitmap/<game>[<version>]` centred in a bitmap as wide as the list less
+2 and 4 higher than the icon, the table's medal (`bronze` .. `platinum`)
+in its top right corner (`FUN_00416ba0` / `FUN_00416b40`). Scroll bar
+0x65: track (149,168) 14x326, thumb `scrolltab`, arrows at (149,136) /
+(149,509), range rows - visible rows, scrolling moves the list. Tabs
+(group 1, `tab_0`/`tab_1`, labels `Amerigo BT_10_`): 3 player, 4 global,
+5 best per player (`interfaceh:SCORE_*`), 6 `mainscore:CARPARTS`: the
+`carpartsbg` (z 0x3b) and the parts won,
+`common/bitmap/award/part_NN` at (0xd7 + 0x3b col, 0x97 + 0x35 row), 9 per
+row, hotspot 500 + n, z 0x3c, with their names as tooltips. The table box
+(206,210)-(748,523): rows 30 apart from y 5 in `Amerigo BT_14_`: name
+left, date centred, score (`"%d"`) right aligned (`FUN_00417060`); the
+game's title in `Amerigo BT_14_` centred in (201,138)-(751,165). A
+click on a row or a list key shows that game. Help 2, exit 1.
+
 ## Credits (`credits`, menu button 13)
 
 Handler `FUN_00415710` (`credits.cpp`), music `track16`. `credits.ini`

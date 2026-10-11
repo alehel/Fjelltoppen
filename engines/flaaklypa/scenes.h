@@ -26,6 +26,7 @@
 #include "flaaklypa/button.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/font.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/scene.h"
 
 namespace Flaaklypa {
@@ -227,6 +228,50 @@ private:
 	InfoRequest _request;
 	Common::Array<Page> _sections;
 	int _index;
+};
+
+/** The high score overview of the menu: the games played, their tables, the car parts won. */
+class MainscoreScene : public Scene {
+public:
+	MainscoreScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	void onKey(const Common::KeyState &key) override;
+	void onUpdate() override;
+
+private:
+	struct Game {
+		Common::String scene;
+		int version;
+		Common::String title;
+		ScoreTable tables[3];   ///< player, global, best per player
+	};
+
+	void loadGames();
+	void redrawList();
+	void createTexts();
+	void label(const char *name, const Common::Rect &r, const BitmapFont &font, const Common::String &text);
+	void createButtons();
+	void showThumb();
+	void setScroll(int value);
+	void scrolled();
+	void showGame(int index);
+	void drawTable(const ScoreTable &table);
+	void showCarParts();
+	void hideCarParts();
+	void onButton(int id);
+
+	SceneButtons _buttons;
+	Tooltip _tooltip;
+	ListBox _list;
+	ScrollBar _scroll;
+	BitmapFont _font10, _font14, _font18;
+	Common::Array<Game> _games;
+	int _current, _tab, _partsWon;
+	bool _leftDown;
 };
 
 /** Story page 1: the yard (tunet). */
