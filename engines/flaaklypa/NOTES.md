@@ -1347,6 +1347,76 @@ while a dialog is open waits until it closes.
     step by one line. The port also scrolls with the mouse wheel.
   * OK (`button_0`/`_1` at 383,365), Enter and Escape close the dialog
     (result 1); the scene closing under it gives 2.
+* Push buttons (`FUN_00407390` → `FUN_004073e0` → `FUN_00406ed0(id, x,
+  y, normal, pressed, disabled, 4th, label, tooltip, flags)`): bit 0 of
+  the last argument makes the bitmaps transparent (+0x48 of the button's
+  element); every dialog seen passes 0 (opaque). The button's element
+  has the hotspot `id`, and a press (`FUN_00406b50`) needs the hotspot
+  under the mouse to be `id` and the point in the rectangle of the
+  first bitmap the button has (`FUN_004069b0`). The label is an element
+  of its own centred on that rectangle, z + 1 (`FUN_00406950`), in the
+  font set by `FUN_004068a0`. The name and calendar dialogs give their
+  buttons no normal bitmap (the backdrop shows them): the dialog's
+  `hotspot.bmp` holds the button ids there, and the pressed bitmap, while
+  shown, covers its whole rectangle. Engine: `Dialog::buttonAt()` /
+  `hotspotAt()`.
+* **Text entry** (`FUN_0041ffb0(x, y, prompt, text, maxLen, flags, out)`
+  → `FUN_00420040`, dialog `name` at x, y, dimmed, handler
+  `LAB_004201d0` at 0x32): `name/backdrop.bmp` 309x113, prompt text area
+  (11,5) 281x18 in `Amerigo BT_10_`, edit text area (11,30) 281x33 in
+  `Amerigo BT_14_`, both left aligned and centred vertically (z 0x1fe);
+  OK (0xc9, `ok_1` at 15,69) and CANCEL (0xca, `cancel_1` at 204,69),
+  labels `interfaceh:OK`/`CANCEL` in `Amerigo BT_10_`. The edit buffer
+  at 0x5a7090: text[0x101], +0x104 max length (at most 0x100), +0x108
+  caret, +0x10c first character shown, +0x110 length, +0x114 flags. The
+  initial text is cut to the maximum, caret at its end (`FUN_0041fa40`).
+  Keys (event 0x10c, `FUN_0041fc90`): Backspace/Delete delete before/at
+  the caret (`FUN_0041fbf0`), Home/End/Left/Right move it
+  (`FUN_0041fa80`); then Enter gives 1, Escape 2. Characters (event
+  0x10e, not 0x10d, `FUN_0041fab0`) are inserted at the caret while the
+  text is shorter than the maximum if `FUN_0041fb20` accepts them: flags
+  0x01 or 0x10 letters and digits (`_pctype & 0x107`), 0x02 digits, 0x04
+  punctuation, 0x08 the space. The game sets LC_CTYPE to
+  "Russian_Russia.1251" at start-up (`FUN_0040e7e0`), so the classes of
+  the bytes above 0x7f are those of code page 1251: 0xc0..0xff (ÆØÅæøå,
+  but also × and ÷) are letters. Redraw (`FUN_0041fd80`): no scrolling
+  while the whole text is narrower than the field, else the first
+  character shown follows the caret (`FUN_0041fdc0`/`FUN_0041fe80`);
+  the caret is the font's `|` (`FUN_0041fee0`) placed as a box as wide as
+  the font is high centred on the caret position, so it starts
+  (height - width of `|`) / 2 = 6 pixels left of it and overlaps narrow
+  glyphs; it does not blink. OK copies the text with `strncpy(out, text,
+  maxLen)`; the result is 2 unless OK closed it (the window closing gives
+  2). Callers: menu new profile (`FUN_00417a20`: 0xf9, 0xf7,
+  `menu:ENTERNAME`, none, 16, 0x1b), activity text (`FUN_0045b610`: 0xf5,
+  0xf3, `activity:EDITTEXT`, the text itself, 64, 0x1f), activity save
+  (`FUN_0045d290`: `activity:SAVEPATH`, none, 24, 0x1b), music fence save
+  (`FUN_00468130`: 0xf9, 0xf7, `fence:SAVETITLE`, the string at
+  0x6b8238, 32, 0x19). Engine: `TextEntryDialog` / `runTextEntry()` (`entrydlg.cpp`);
+  the typed character (`KeyState::ascii`, Unicode) is converted to
+  Windows-1252 first, and the virtual keyboard is shown where there is
+  one.
+* **Birthday calendar** (`FUN_0041c470(x, y, &month, &day)` →
+  `FUN_0041c4f0` (clamps month 0..11, day 1..31), `FUN_0041c710`, dialog
+  `calendar` at x, y, dimmed, handler `LAB_0041c8b0` at 0x32):
+  `calendar/backdrop.bmp` 307x293; title `calendar:TITLE` in
+  `Amerigo BT_10_` left aligned in (13,10) 275x20, month name
+  `calendar:JAN`..`DES` (table 0x4aee38) in `Amerigo BT_14_` centred in
+  (55,44) 190x27, the days `%2d` in `Amerigo BT_14_` at (8 + 39 col, 4 +
+  38 row) in the text area (13,81) 270x185 (`FUN_0041c540`), lengths at
+  0x49cb24 (February 29). `mark.bmp` (transparent, z 0x1fe, under the
+  text areas at 0x208) frames the cell at (13 + 39 col, 81 + 38 row)
+  (`FUN_0041c610`). Buttons prev (0xc9, `prev_1` at 11,40), next (0xca,
+  `next_1` at 249,38), OK (0xcb, `ok_1` at 194,239, `interfaceh:OK`);
+  the hit mask numbers the day cells 0x64..0x82. A mouse down on a day
+  of the month picks it (`FUN_0041c9a0`); prev/next and Tab change the
+  month with wrap around (`FUN_0041ca20`), arrows move the day by 1 / 7
+  within the month (`FUN_0041cbd0`), OK and Enter give 1; Escape does
+  nothing and there is no cancel (the window closing gives 2). The day
+  stored is kept across months; the mark and the result
+  (`FUN_0041c6e0`) use it cut to the month's length (only the initial
+  mark is not cut). The menu calls it as (0xfa, 0x9d, month 0, day 1)
+  after the name. Engine: `CalendarDialog` / `runCalendar()`.
 * **Fact pages** (FACT module, "Faktatek"): ten story pages (yard, desk,
   garage, house, intent, outtent, pee, tvroom, tvstation, goodbye) call
   `FUN_0041dbf0` in their init. It loads the page's `fact.ini` and
@@ -2045,15 +2115,19 @@ saving and loading are off, autosave too (slot -1).
 only, `u` = release only for drags, `r` = right click, t in ms after
 start), `autokey=t:key[:hold];...` (key press at t held for hold ms, default
 100; `left`, `right`, `up`, `down`, `space`, `esc`, `tab`, `return`, `f1`,
-`f8`, a
+`f8`, `backspace`, `delete`, `home`, `end`, a
 character, or a string of characters typed one after the other with `~` =
 Escape), `random_seed` (deterministic boards), `autohold` (beemaze: held
 arrow keys), `test_msgbox=<title>|<text>` (opens a message box with OK and
 Cancel one second after the start; language.ini keys or plain text),
-`profile_import=<path>` (adds an original .pfl file as a new profile and
-makes it the active one). Use `savepath=/tmp/...` in test configs so test
-profiles stay out of the real save directory. Without `start_scene` the
-game starts with the logo like the original.
+`test_entry=1` (the menu's name entry one second after the start;
+`test_entry=<max>,<flags>[,<text>]` another one), `test_calendar=1`
+(the menu's birthday calendar; `test_calendar=<month>,<day>` with that
+date); both log their result. `profile_import=<path>` adds an original
+.pfl file as a new profile and makes it the active one. Use
+`savepath=/tmp/...` in test configs so test profiles stay out of the
+real save directory. Without `start_scene` the game starts with the logo
+like the original.
 
 ## Mini game checklist
 

@@ -105,10 +105,11 @@ Graphics::ManagedSurface *nineSlice(const Graphics::ManagedSurface &src, const C
 // ---- Dialog --------------------------------------------------------------
 
 Common::Rect Dialog::Button::rect() const {
-	const Graphics::ManagedSurface *b = bitmaps[0];
-	if (!b)
-		return Common::Rect(x, y, x, y);
-	return Common::Rect(x, y, x + b->w, y + b->h);
+	// FUN_004069b0: the size of the first bitmap the button has
+	for (const Graphics::ManagedSurface *b : bitmaps)
+		if (b)
+			return Common::Rect(x, y, x + b->w, y + b->h);
+	return Common::Rect(x, y, x, y);
 }
 
 Dialog::Dialog(FlaaklypaEngine *vm, bool dimBackground) : _vm(vm), _surface(nullptr), _hitMask(nullptr),
@@ -182,14 +183,34 @@ Dialog::Button *Dialog::findButton(int id) {
 
 Dialog::Button *Dialog::buttonAt(int x, int y) {
 	for (auto &b : _buttons) {
-		const Graphics::ManagedSurface *bm = b.bitmaps[0];
-		if (!bm || !b.rect().contains(x, y))
+		if (!b.rect().contains(x, y))
 			continue;
+		// FUN_00406b50 matches the hotspot under the mouse against the
+		// button id: a button without a normal bitmap is the dialog's hit
+		// mask until its pressed bitmap shows.
+		const Graphics::ManagedSurface *bm = b.bitmaps[0];
+		if (!bm && b.state == kButtonPressed && b.hover)
+			bm = b.bitmaps[1];
+		if (!bm) {
+			if (hotspotAt(x, y) == b.id)
+				return &b;
+			continue;
+		}
 		if (b.transparent && bm->getPixel(x - b.x, y - b.y) == bm->getPixel(0, 0))
 			continue;
 		return &b;
 	}
 	return nullptr;
+}
+
+int Dialog::hotspotAt(int x, int y) const {
+	if (!_hitMask)
+		return 0;
+	x -= _x;
+	y -= _y;
+	if (x < 0 || y < 0 || x >= _hitMask->w || y >= _hitMask->h)
+		return 0;
+	return *(const byte *)_hitMask->getBasePtr(x, y);
 }
 
 bool Dialog::hitDialog(int x, int y) const {
@@ -279,12 +300,11 @@ void Dialog::draw(Graphics::ManagedSurface &dst) {
 		else if (b.state == kButtonPressed && b.hover)
 			which = 1;
 		const Graphics::ManagedSurface *bm = b.bitmaps[which] ? b.bitmaps[which] : b.bitmaps[0];
-		if (!bm)
-			continue;
-		if (b.transparent)
+		if (bm && b.transparent)
 			dst.transBlitFrom(*bm, Common::Point(b.x, b.y), bm->getPixel(0, 0));
-		else
+		else if (bm)
 			dst.blitFrom(*bm, Common::Point(b.x, b.y));
+		// FUN_00406950: the label is an element of its own over the button
 		if (!b.label.empty())
 			_labelFont.drawStringCentred(dst, b.rect(), b.label);
 	}

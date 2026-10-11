@@ -23,6 +23,7 @@
 #include "flaaklypa/cursor.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
+#include "flaaklypa/entrydlg.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
@@ -389,8 +390,9 @@ void FlaaklypaEngine::parseAutoClicks() {
 
 // Development aid: "autokey=t:key[:hold];..." presses a key at t ms after
 // start and releases it hold ms later (default 100). key is left, right, up,
-// down, space, esc, tab, return, f1, f8, a single character, or a string of
-// characters typed one after the other ('~' stands for Escape).
+// down, space, esc, tab, return, f1, f8, backspace, delete, home, end, a
+// single character, or a string of characters typed one after the other
+// ('~' stands for Escape).
 void FlaaklypaEngine::parseAutoKeys() {
 	if (!ConfMan.hasKey("autokey"))
 		return;
@@ -406,6 +408,8 @@ void FlaaklypaEngine::parseAutoKeys() {
 			{ "space", Common::KEYCODE_SPACE }, { "esc", Common::KEYCODE_ESCAPE },
 			{ "tab", Common::KEYCODE_TAB }, { "return", Common::KEYCODE_RETURN },
 			{ "f1", Common::KEYCODE_F1 }, { "f8", Common::KEYCODE_F8 },
+			{ "backspace", Common::KEYCODE_BACKSPACE }, { "delete", Common::KEYCODE_DELETE },
+			{ "home", Common::KEYCODE_HOME }, { "end", Common::KEYCODE_END },
 			{ nullptr, Common::KEYCODE_INVALID }
 		};
 		AutoKey k;
@@ -530,6 +534,32 @@ void FlaaklypaEngine::runFrame() {
 		uint bar = spec.findFirstOf('|');
 		int r = messageBox(spec.substr(0, bar), bar == Common::String::npos ? "" : spec.substr(bar + 1), MessageBox::kButtonOk | MessageBox::kButtonCancel);
 		debug(1, "Message box returned %d", r);
+	}
+	// "test_entry=1" opens the menu's name entry, "test_entry=<max>,<flags>[,<text>]"
+	// another one; "test_calendar=1" the menu's calendar, "test_calendar=<month>,<day>"
+	// one with that date.
+	if (!_dialog && _scene && ConfMan.hasKey("test_entry") && g_system->getMillis() - _startTime > 1000) {
+		Common::String spec = ConfMan.get("test_entry");
+		ConfMan.removeKey("test_entry", ConfMan.getActiveDomainName());
+		int maxLength = 0x10, flags = TextEntryDialog::kAcceptName;
+		Common::String text;
+		if (spec.contains(',')) {
+			Common::StringTokenizer tok(spec, ",");
+			maxLength = atoi(tok.nextToken().c_str());
+			flags = strtol(tok.nextToken().c_str(), nullptr, 0);
+			text = tok.nextToken();
+		}
+		runTextEntry(this, 0xf9, 0xf7, getString("menu:ENTERNAME"), text, maxLength, flags);
+	}
+	if (!_dialog && _scene && ConfMan.hasKey("test_calendar") && g_system->getMillis() - _startTime > 1000) {
+		Common::String spec = ConfMan.get("test_calendar");
+		ConfMan.removeKey("test_calendar", ConfMan.getActiveDomainName());
+		int month = 0, day = 1;
+		if (sscanf(spec.c_str(), "%d,%d", &month, &day) != 2) {
+			month = 0;
+			day = 1;
+		}
+		runCalendar(this, 0xfa, 0x9d, month, day);
 	}
 
 	// A scene change requested under a dialog waits until the dialog is gone
