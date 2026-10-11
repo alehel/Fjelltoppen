@@ -2149,6 +2149,116 @@ n = 3 + item % 3 (`FUN_0046eb20`).
 * High scores: `addScore()` in `solved()` (`FUN_0041ee50`, key = the
   picture, 0x102) and `showScoreTables()` for button 3 (`FUN_0041f640`).
 
+## Activity `draughts` ("Damm", from `tvroom`)
+
+Handler `FUN_00463f60` (`draughts.cpp`, code 0x463f60..0x466250): 0x103
+init `FUN_00464070`, 0x104 close `FUN_00464710`, 0x105 `FUN_00464770`
+(returns 1 for the level tabs 2..4 once a move was made, so the BUTTON
+module never sees them), 0x10b drop `FUN_00464ae0`, 0x10c key
+`FUN_004649d0`, 0x112 tick `FUN_00466060`, 0x116 buttons `FUN_00465fb0`.
+No music (`FUN_0040b2f0`), no cursor table. English draughts: 8 x 8, 12
+men a side; men move and capture diagonally forward only, captures are
+compulsory and go on with the same piece, a man reaching the far row
+becomes a king (all four diagonals), which ends the move; a side that
+cannot move has lost.
+
+* **Screen**: board origin (188,137), squares 53.5 x 54 (0x49fd00..
+  0x49fd0c, the width a float), a piece's bitmap at its square + (5,-3)
+  (`FUN_00464680`); the square of a point is `(int)((x - 188) / 53.5)`,
+  `(y - 137) / 54` (`FUN_00464980`). Mask hotspots: 1 board, 2..4 level
+  tabs, 5 mode, 6 hint, 7 reset. Buttons (font Amerigo BT_14_, z 1): 11
+  help (0,0) `help_0/1` and 10 exit (0x2d8,0) `exit_0/1` (transparent);
+  opaque 5 (12,554) `button1_1` labelled with the mode, 6 (699,497)
+  `button2_1` `draughts:HINT` (`START` in auto mode), 7 (700,548)
+  `button2_1` `RESET`; tabs (group 10) 2/3/4 at (15/48/81,502) `level_1`
+  labelled `LETTER_EASY/MEDIUM/HARD`, with the tooltips `EASY/MEDIUM/HARD`
+  (tooltip table 0x508608 given to `FUN_00409b50`). Title
+  `draughts:SCENENAME` in Amerigo BT_18_ centred in (246,8)-(579,55)
+  (`FUN_00407a30`); the pieces side 0 / side 1 have lost ("%d", 12 - on
+  the board, `FUN_004643c0`) centred in (29,231)-(87,273) /
+  (722,231)-(780,273).
+* **Pieces** (`DAT_006a8d58`: 24 x {type 0 man / 1 king, side, x, y, anim},
+  the board `DAT_006a8f38` 64 pointers; start table 0x506460, 0xb8 byte
+  records {type, side, x, y, pawn anim}). Side 0 = pieces 0..11 on rows
+  0..2 moving down, bitmaps `w_pawn` / `w_king`, which are the black
+  pieces; side 1 = 12..23 on rows 5..7 moving up, `b_pawn` / `b_king`
+  (white). Player p plays side p (0x49fd48); player 1 starts. The kings
+  are separate elements (0x5075a0 + 0xa8 n, added at z 0 on crowning);
+  a picked up or computer moved piece gets z 15, a piece put down z = its
+  row (`FUN_00465f70`). Directions per type + 2 side at 0x49fd50 and
+  0x49fdd0 (identical; men 2, kings 4).
+* **Modes** (`FUN_00464270` / `FUN_00465150`, player types
+  `DAT_006aa374/378`, 0 human 1 computer): 0 one player (player 0 the
+  computer), 1 two players, 2 auto (both computer); button 5 cycles them
+  (`FUN_00466040`) while no turn has been played (`DAT_006a9190`). Level:
+  `DAT_00508628` = 3 + 2 level plies (3/5/7), medium (tab 3) at the start;
+  the tabs play `click 1`.
+* **Player's move**: a press on the board (`FUN_00464790`, state 0 only)
+  picks up a piece of the side to move (during a capture sequence only the
+  capturing piece, `DAT_006a7a10`), plays `pickup 1/2` and drags it
+  (`FUN_0040c1f0`). The drop (`FUN_00464ae0`) outside the board, on the
+  same square or as an illegal move (`FUN_00465a80`: diagonal, empty
+  square, men not backwards, one square only when the side has no capture
+  (`FUN_00465490`), two squares over an opponent's piece) puts it back
+  (`FUN_0040c240`; `wrong 1` for an illegal move). Playing a move
+  (`FUN_00464d50`) enters it in a ring of 32 moves (`FUN_00464f60`,
+  `DAT_006a7a18`), plays `down 1..3`, or for a capture removes the piece,
+  updates the counters and plays `fall 1..4`. The same player goes on
+  after a capture when the piece can capture again (`FUN_00465cf0(piece,
+  1)`) and was not crowned; else `FUN_00464cc0` passes the turn, and a
+  side without a movable piece (`FUN_00465ca0`) has lost.
+* **Computer** (`FUN_00465180`: state 2, wait cursor, thread
+  `FUN_004651c0`): plain minimax without pruning on the global board,
+  which is copied before and restored after each move tried.
+  `FUN_004655a0(depth, out, filter, maximize)`: depth 0 returns the
+  evaluation; else the moves of the pieces of side 0 (maximize) or 1, in
+  piece and direction order, only captures when filter >= 0 (0x18: any
+  piece, a capture is possible; n: the piece continuing a capture); the
+  best starts at -FLT_MAX / FLT_MAX. `FUN_00465880` tries a move: plays it
+  (without animation); a capture goes on with the same piece at the same
+  depth (even after a crowning); when that gives +-FLT_MAX (no move) the
+  opponent answers at depth - 1 (captures only if it has one); a
+  non-capturing move that repeats one in the ring (same piece and
+  squares, `FUN_00465a10`) costs 10000; the move replaces the best when
+  better, or within 0.075 when `rand() % 8 == 0` (`FUN_00460b30`, shared
+  with chess). Evaluation (`FUN_00465680` / `FUN_004656c0`): the sum over
+  the pieces of (11 + y for side 0, 18 - y for side 1) x (man 1, king 5),
+  side 1 negative. The thread searches at the level's depth (captures only
+  when possible); a +-FLT_MAX result (forced win or loss) is replaced by
+  a depth 1 search; it plays the move on the board and continues a
+  capture with searches restricted to that piece until one returns
+  +-FLT_MAX, the piece is crowned or the move is no capture; then it
+  restores the board and sets state 3. The tick (`FUN_00466060`) logs the
+  moves (`FUN_004660b0`), sets z 15, plays `pickup` and shows them
+  (`FUN_00466170`, state 4): each step takes 50 ticks (0x49fd10), the
+  piece moving (target - start) x t pixels, and is played on tick 49;
+  after the last step or a crowning the cursor comes back and the turn
+  passes.
+* **Buttons** (`FUN_00465fb0`): 6 (state 0) lets the computer play the
+  current player's move (the hint; in the middle of a capture sequence it
+  may move another piece); 7 (`FUN_00464a80`) asks `interfaceh:WARNING` /
+  `draughts:ABORT` (Yes / No) unless the game is over, then starts a new
+  game (`FUN_00464350`; mode, level and the ring stay). Keys
+  (`FUN_004649d0`): while the wait cursor shows, any key but Pause,
+  Escape, P and F5 asks the same; the global keys follow in any case.
+* **End** (`FUN_00465010`): `interfaceh:GAMEOVER` with
+  `draughts:ENDMESSAGE` of `WHITE` when side 0 lost, else `BLACK` ("Hvit
+  spiller vant."), state 5. Award (`FUN_004650c0`): in one player mode
+  when side 0 lost, with l = (depth - 3) / 2 and v = the profile's value 0
+  (`FUN_00411e70`): if v < l + 1, `awardDifficulty(l, l + 1 - v)`
+  (`FUN_0041c0b0`) and value 0 := l + 1 (`FUN_00411e40`). So the first win
+  on a level gives the car parts up to it: 1 easy, 2 medium, 3 hard.
+* Engine: the search runs without recursion (`SearchFrame` stack,
+  `runSearch()`) for 25 ms per frame instead of in a thread; it was
+  checked against a recursive transcription (same moves, scores, node
+  counts and random draws over a whole auto game at hard). Depth 7 with
+  kings takes up to about 1.6 s in a debug build. The wait cursor is set
+  directly every frame, because the scene's wait mode blocks the mouse
+  and the original's does not. The ring of moves is a member (the
+  original's globals keep it across visits). Not ported: the `Debug Log`
+  file `c:\draughts.log` (debug output instead), the CORRUPT error of the
+  board checks (warnings), `sound.ini` volumes.
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2991,6 +3101,12 @@ all tiles but n are removed, leaving n/2 matching pairs that are all
 free; a negative n removes the hint's pair until none is left, usually
 a lost game); with `--debuglevel=2` mahjong logs where to click each
 free tile (the camera follows the mouse) and what each click picks.
+`test_draughts=<side 0>/<side 1>` (draughts: the position at the start,
+squares "xy" (column, row 0..7, "k" appended for a king) separated by
+commas; the pieces of each side are used in order, the rest count as
+captured; the player, side 1 at the bottom, moves first). Draughts logs
+each move, and the computer's search (positions, depth, time) at debug
+level 1.
 
 ## Mini game checklist
 
@@ -3029,12 +3145,12 @@ Activities (`[activity]`, open ended):
 | | colorfill | Reodors tegnebord | desk | data2 |
 | | jigsaw | Puslespillet | yard | data |
 | x | mahjong | Mah Jongg | outtent | data2 |
-| | draughts | Damm | tvroom | data |
+| x | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 |
 | | sliding | Skyvepusslespillet | garage | data |
 | x | jigsaw | Puslespillet | yard | data (high score open) |
 | | mahjong | Mah Jongg | outtent | data2 |
-| | draughts | Damm | tvroom | data |
+| x | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
 | x | sliding | Skyvepusslespillet | garage | data (high score open) |
 | | chess | Sjakk | intent | data |
