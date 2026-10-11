@@ -1667,6 +1667,144 @@ centred in (295,3)-(503,36).
   scene's print page. Deviation: the port opens ScummVM's print dialog
   (`g_gui.printImage`) with it.
 
+## Activity `jigsaw` ("Puslespillet", from `yard`)
+
+Handler `FUN_00469960` (`jigsaw.cpp`, code 0x469910..0x46d1f0), music
+`activity9`. A gallery picture (`common/bitmap/large/<item>`, 490x490)
+cut into n x n jigsaw pieces, n = 3 + item % 4 (`FUN_0046bad0`); from 4 x 4
+on the pieces lie turned in quarter turns (+0x38 of the motive).
+
+* **Start** (`FUN_0046bb80`): the clock label (0x2b0,0x6a) 0x5c x 0x1d in
+  `LCD_14_` ("%c%02d:%02d", sign blank or '-', `FUN_0046ae50`), buttons
+  (z -1000, labels in Amerigo BT_10_): help 1, exit 2, print 4 (2,0x210,
+  hidden: state 3 has no bitmap), 3 (0xf,0x66) `solution_0/1` labelled
+  `jigsaw:START` / `SOLUTION` (`FUN_00406910(3, 0xb, text)`, engine
+  `SceneButtons::setLabel`), 5 (0xf,0x9b) `jigsaw:HISCORE` (disabled until
+  a game starts); 3 and 5 are opaque. The scene argument is a gallery
+  category (`DAT_006bfb9c`, -1 for 0: all 79 items); the 3D viewer passes
+  9 (the 3D images), and exit / Escape (consumed, `FUN_0046b0c0`) then go
+  back to `anaglyph` instead of the parent. The picture chooser opens at
+  once.
+* **Chooser** (`FUN_0046b800`, shared with sliding: `choosePuzzlePicture`):
+  the list dialog (below) with a 238x40 row per available gallery item
+  (`FUN_0041b3f0`): `small/<item>` at (2,5), the name (40,6) and the best
+  time "%02d:%02d" of the player's table for the item (40,22) in Amerigo
+  BT_10_, "%dx%d" (190,6) in Amerigo BT_18_, and `cross` (value 2, begun)
+  or `check` (value 3, solved) at (160,6). Cancel keeps the running game.
+* **Cutting** (`FUN_0046c1b0`): two 800x800 byte maps, the piece numbers
+  (`DAT_006bfbc0`) and a height map (`DAT_006bfbc8`, 0x80). `FUN_0046c3d0`
+  `srand(rand())`s and lays an (n + 4)^2 grid of 0x90 byte cells, each with
+  a vertical line at its left and a horizontal one at its top, nine control
+  points each: point 1 the cell corner (side s = 490 / n), 0 and 8 30
+  pixels / one cell beyond, 2..7 a tab to a random side (`FUN_0046c940`:
+  `FUN_0046cc50` vertical, `FUN_0046c9a0` horizontal, offsets from s/7,
+  s/8, s/4, s/5, s/2, s/3, s/12 plus `rand()` terms); the lines of row 0 /
+  column 0 / row n / column n are straight at 0 / 490. Each segment k = 0..5
+  is drawn with 400 points of `FUN_0046c820`, a Hermite curve from point
+  k+1 to k+2 with the tangents 0.7 (p1 - p0) and 0.7 (p3 - p2), t = m *
+  (1/399.0f); every point writes the piece number into the number map and
+  0 into the height map at it and one pixel right (horizontal) or below
+  (vertical), x and y truncated and clamped to 0..799. The number starts
+  at 100 and counts per cell except after column n - 1, and goes back by n
+  after row n - 1's last cell, so a line belongs to the piece below /
+  right of it. `FUN_0046ced0` flood fills (`FUN_0046cf40`, breadth first,
+  4-connected, within 490x490) each piece 100 + row * n + column from its
+  cell's centre; `FUN_0046d0c0` gives a single empty pixel its right
+  neighbour's number and fails (cut again) on two or more (it checks the
+  row two above instead of one: a bug; the port treats the bytes before
+  the map as filled). The height map is then blurred 8 times
+  (`FUN_0046c0f0`: average of the pixel and its up to four neighbours,
+  truncated). For each rotation r a copy of the picture is lit
+  (`FUN_0046bd30`, light r) and turned with the number map
+  (`FUN_00401f70` / `FUN_00402060`: 0 copy, 1 quarter clockwise, 2 half, 3
+  quarter anticlockwise); a piece's image is its bounding box in the turned
+  number map (`FUN_0046d1f0`), other pixels and pixel (0,0) the colour key,
+  its element's +0x54/+0x58 the box's corner.
+* **Lighting** (`FUN_0046bd30`, also sliding): per pixel nx = 3 (h[x+1] -
+  h[x]) / 255, ny = 3 (h[x+800] - h[x]) / 255 (float 0x49ff50), d =
+  sqrt(1 - nx^2 - ny^2) cos a + ny l0 + nx l1 with a = 1.0471975511666667
+  (double 0x49ff58) and (l0, l1) = (0, sin a), (-sin a, 0), (0, -sin a),
+  (sin a, 0), (sin a, sin a) for lights 0..4; d clamped to 0..1 (a negative
+  root gives NaN, which ends up 0), v = (int)(d * 255). `FUN_0046bfe0` per
+  channel: v < 128: c * v / 127; v > 128: c + (255 - c) (v - 128) / 127.
+  Flat areas give v = 127: unchanged. The original works on 16 bit pixels
+  (`FUN_00462500` / `FUN_0046bf80` convert 565 or 555 to 24 bit and back);
+  the port keeps 8 bit channels.
+* **Game** (`FUN_0046b2d0`, `FUN_0046baf0`, `FUN_0046b4a0`, `FUN_0046b410`):
+  the motive's value (key = item) becomes 2 (begun) when it is 0; each
+  piece gets `rand() % 4` turns (when turning is on) and its edge flags
+  (`DAT_006bea40`: 1 up, 2 left, 4 right, 8 down; the picture's border
+  counts as joined); the pieces lie at random in (153 + rand(490 - s), 55
+  + rand(490 - s)), z = index; the medium picture (688,151) z -1000; the
+  clock runs (timer every 500 ms, `FUN_0046ae20`; the tick 0x112 keeps the
+  elapsed time, `FUN_0046abc0`). Not ported: the `gamec:LOADING` box
+  (`FUN_0040cb20`, pausing the music) while cutting.
+* **Pieces**: hotspot 1000 + index (pixel exact). Press (`FUN_0046a960`,
+  not after the solution, not when solved) picks a piece and raises it and
+  the pieces joined to it (`FUN_0046aa10` / `FUN_0046a810`: z = max + 1, or
+  all z - max and 1 above 100; `FUN_0046a810` does not look up from index
+  n). Dragging (0x109, `FUN_0046aad0`) moves it, the joined pieces follow
+  with its z (`FUN_0046a140`). Right click (`FUN_0046a350`): on a lying
+  piece sends its group to the bottom (`FUN_0046a750`, min - 1 or all z -
+  min and -1 below -100); while holding (from 4 x 4) turns the group a
+  quarter clockwise around the mouse (`FUN_0046a3b0` / `FUN_0046a530`; the
+  held piece is centred on the mouse); the arrow keys turn it either way
+  (`FUN_0046ab80`). Release (`FUN_0046ab30`, `FUN_00469c00`): the piece and
+  its group join each unjoined neighbour of the same rotation whose offset
+  from its place differs by less than 8 pixels in x and y (the piece moves
+  to it), `drop1`/`drop2` (a clone, `FUN_00469b60`) when any joined; then
+  the group lines up behind the held piece. Solved (`FUN_00469bb0`): all
+  upright and all flags 15.
+* **Solved** (`FUN_00469b90`, `FUN_0046abc0`): the clock stops and the
+  picture glides (5 px per frame) until piece 0 is at (153,55); then the
+  pieces get z 0, `frame` (131,34) z 1 and the whole picture (153,55) z 2
+  come, and unless the solution was used: when the value is 2, the motives
+  with value 3 are counted plus this one and every sixth gives
+  `awardJigsaw` (`FUN_0041c180`), the value becomes 3; the time goes to the
+  high score table (`FUN_0041ee50(item, ms, 0, 0x102, entry, tables)`).
+  Print shows, button 3 reads START again.
+* **Solution** (button 3 while playing, `FUN_0046aee0`, timer 100 ms with
+  data `FUN_0046aee0`): marks the game cheated; piece by piece (in index
+  order) is turned upright (`FUN_0046b000`) and put in its place, joined
+  without the group line-up, and the next one comes when it lies exactly
+  there; at the end the clock stops and button 3 reads START (no award, no
+  table entry). Button 3 when solved: a new game.
+* **Print** (4, solved only): the pieces on a 490x490 picture (the original
+  fills it with the 16 bit value 0xff00 first; white here), "%s   %s   %s"
+  (the player or `profile:NONAME`, today "dd.mm.yy", the time "mm:ss.cc")
+  at the bottom right in Amerigo BT_10_; the original hands it to the
+  `activity` scene, the port to ScummVM's print dialog.
+* **Table** (5): `FUN_0041f640(0, item, entry, highlights, 0x102)`, entry
+  and highlights only when solved by the player.
+* Deviations: 16 bit colour quantisation not reproduced; the cutter's
+  `rand()` is an MSVC compatible generator seeded from the engine's random
+  source; the other `rand()` uses (turns, scatter, drop sound) use the
+  engine's. Events 0x10a / 0x10b (drag messages of another module, the
+  same as 0x109 / 0x106 here) are not ported.
+* TODO: the high score calls (`FUN_0041ee50` in `tick()`, `FUN_0041f640`
+  for button 5) wait for the HISCORE module; the chooser reads the best
+  time from the profile's record itself (`FUN_0041ebd0`).
+
+## List dialog (`listdlg.cpp`, `common/dialogue/listdlg`)
+
+`FUN_00420750(title, bitmaps, ids, count, flags, &id)` /
+`FUN_00420430`: a 320x483 box centred on the screen (dimmed background),
+the title in Amerigo BT_14_ centred in (17,13)-(286,40), a list box
+(`FUN_004085a0`) in (20,61)-(258,410) with one row per bitmap (row height
+the first bitmap's, at most 32 rows; the selection bar COLORREF 0x3e5167,
+row 0 selected), the scroll bar 0x3ea (track (0x115,0x56) 15x290, `thumb`,
+arrows `up_0/1` (0x10f,0x31) and `down_0/1` (0x110,0x186), range count -
+rows; its value is the list's top, `FUN_00420a80`), OK 1000 (`button_0/1`,
+`interfaceh:OK`, (0xd7,0x1ab) alone or (0x7e,0x1ab) with flag 2's Cancel
+1001 at (0xd7,0x1ab)). Handler `LAB_004207b0`: a press selects the row
+under the mouse (`FUN_00407ec0`), the list keys (`FUN_00407f60`: PgUp/PgDn,
+Home/End, Up/Down) move the selection and set the scroll bar to the top,
+Enter = OK, Escape and close = Cancel. Returns the selected row (and its
+id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
+0x100, rows rendered from strings by `FUN_00408720`, is not ported). Used
+by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), chess
+(`FUN_00461970`), the 3D viewer (`FUN_0047d880`) and `FUN_0041a080`.
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2465,7 +2603,9 @@ Cancel one second after the start; language.ini keys or plain text),
 `test_entry=1` (the menu's name entry one second after the start;
 `test_entry=<max>,<flags>[,<text>]` another one), `test_calendar=1`
 (the menu's birthday calendar; `test_calendar=<month>,<day>` with that
-date); both log their result. `profile_import=<path>` adds an original
+date); both log their result. At debug level 2 the jigsaw logs each piece
+("Jigsaw: piece <n> rot <r> at <x>,<y> ... place <x>,<y> ... grab <x>,<y>",
+an uncovered point on it) after each release, for scripted drags. `profile_import=<path>` adds an original
 .pfl file as a new profile and makes it the active one. Use
 `savepath=/tmp/...` in test configs so test profiles stay out of the
 real save directory. Without `start_scene` the game starts with the logo
@@ -2512,7 +2652,7 @@ Activities (`[activity]`, open ended):
 | x | bouquet | Ludvigs blomsterbinderi | desk | data |
 | | fence | Musikkgjerdet | pee | data |
 | | colorfill | Reodors tegnebord | desk | data2 |
-| | jigsaw | Puslespillet | yard | data |
+| x | jigsaw | Puslespillet | yard | data (high score open) |
 | | mahjong | Mah Jongg | outtent | data2 |
 | | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |

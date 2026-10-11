@@ -31,7 +31,9 @@ MODULE_OBJS = \
 	info.o \
 	intent.o \
 	intro.o \
+	jigsaw.o \
 	lettersort.o \
+	listdlg.o \
 	logo.o \
 	menu.o \
 	metaengine.o \
