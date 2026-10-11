@@ -438,8 +438,7 @@ void MahjongScene::newGame() {
 	_tileCount = 0;
 	const uint32 now = _vm->getGameMillis();
 	_watch.reset(now);
-	// FUN_0040cb20 shows common/bitmap/loading.bmp while the board is
-	// built; that takes no time here.
+	_vm->showLoading(); // FUN_0040cb20 (the scene has no music)
 	// FUN_0040c530(3): the layout, but the result is not used (always 0)
 	(void)_vm->getRandomNumber(2);
 	createBoard();

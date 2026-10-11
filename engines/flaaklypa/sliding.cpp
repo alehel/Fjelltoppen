@@ -25,6 +25,7 @@
 #include "flaaklypa/award.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/jigsaw.h"
+#include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sliding.h"
 
@@ -143,11 +144,11 @@ void SlidingScene::newGame() {
 		_state = kStateBegun;
 	_buttons.setState(kButtonPrint, 3);
 	_buttons.setState(kButtonScores, SceneButtons::kStateNormal);
-	// FUN_0040cb20 shows a "gamec:LOADING" box (pausing the music,
-	// FUN_0040b6f0 / FUN_0040b720) meanwhile; not ported.
+	_vm->showLoading(); // FUN_0040cb20
 	buildTiles();
 	shuffle();
 	_buttons.showBitmap("preview", "../../common/bitmap/medium/" + galleryItemBitmap(_item), false, 0, 688, 151, 0);
+	_vm->_music->pause(false); // FUN_0040b720
 	_startTime = _vm->getGameMillis();
 	setTimer(kTimerClock, kClockPeriod);
 	showClock(_startTime);

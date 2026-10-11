@@ -32,6 +32,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/mountain.h"
+#include "flaaklypa/music.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/tournament.h"
@@ -341,10 +342,11 @@ Common::String MountainScene::iniString(const char *key, const char *def) const 
 
 // FUN_00440d6e: the init handler.
 void MountainScene::onInit(int arg) {
-	// FUN_004442bf: 640x480; the loading box (FUN_0040cb20) is not shown.
+	// FUN_004442bf: 640x480 and the loading box (FUN_0040cb20).
 	// FUN_00401b30 limits the tile and pick-up blits to (0, 80)-(640, 480),
 	// below the interface bar (drawTile(), drawItem()).
 	_vm->setScreenSize(640, 480);
+	_vm->showLoading();
 
 	if (resources()->loadIni(_name, "maps.ini", _ini)) {
 		const Common::INIFile::SectionList sections = _ini.getSections();
@@ -705,10 +707,12 @@ void MountainScene::startRide() {
 	if (_loadedTrack == _track && _hasLevel) {
 		// FUN_004419d0: only the tile map of another difficulty
 		if (_loadedDifficulty != _difficulty) {
+			_vm->showLoading();
 			loadLayers(_levelNames[_difficulty], false);
 			_loadedDifficulty = _difficulty;
 			_camX = 0x140;
 			_camY = 0xf0;
+			_vm->_music->pause(false); // FUN_0040b720
 		}
 	} else {
 		freeLevel();
@@ -920,6 +924,7 @@ private:
 // FUN_00441f58: the tile map, the road and the pick-ups of the selected
 // track and difficulty.
 bool MountainScene::loadLevel() {
+	_vm->showLoading(); // FUN_0040cb20; the music resumes when all went well
 	if (!loadLayers(_levelNames[_difficulty], true))
 		return false;
 	_loadedDifficulty = _difficulty;
@@ -948,6 +953,7 @@ bool MountainScene::loadLevel() {
 	_camX = 0x140;
 	_camY = 0xf0;
 	_hasLevel = true;
+	_vm->_music->pause(false); // FUN_0040b720
 	debug(1, "Mountain: level %s %dx%d tiles, %d nodes, %d segments, %d items, start %d, finish %d",
 	      _levelNames[_difficulty].c_str(), _mapW, _mapH, (int)_nodes.size(), (int)_segs.size(), (int)_items.size(), _startX, _finishX);
 	return _startSeg >= 0;

@@ -289,6 +289,12 @@ public:
 	 */
 	int showHelp(const char *file = "help.ini");
 	/**
+	 * FUN_0040cb20: the "loading" box (common/bitmap/loading.bmp with
+	 * gamec:LOADING) at the bottom right of the screen, shown at once. The
+	 * music pauses; Music::play() of the same track resumes it.
+	 */
+	void showLoading();
+	/**
 	 * The keys every scene shares (FUN_0040d300, an event handler that runs
 	 * after the scene's): Tab opens the scene index, Escape leaves the scene
 	 * (endGame()), P pauses with a message box, F1 opens the help, F8 shows

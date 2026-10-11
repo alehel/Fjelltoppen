@@ -25,6 +25,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
 #include "flaaklypa/entrydlg.h"
+#include "flaaklypa/font.h"
 #include "flaaklypa/globals.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/music.h"
@@ -142,6 +143,20 @@ void FlaaklypaEngine::showNavigator(const char *next, const char *prev, int next
 	debug(1, "Navigator: next '%s' (%d), prev '%s' (%d)", next ? next : "-", nextArg, prev ? prev : "-", prevArg);
 	NavigatorDialog dlg(this, next, prev, nextArg, prevArg);
 	dlg.run();
+}
+
+void FlaaklypaEngine::showLoading() {
+	_music->pause(true); // FUN_0040b6f0
+	Graphics::ManagedSurface *box = _resources->loadBitmap("common", "bitmap/loading.bmp", _screen->format);
+	if (!box)
+		return;
+	const uint32 key = box->getPixel(0, 0);
+	BitmapFont font;
+	if (font.load("Amerigo BT_10_"))
+		font.drawStringCentred(*box, Common::Rect(13, 9, 106, 27), getString("gamec:LOADING"));
+	_screen->transBlitFrom(*box, Common::Point(_screen->w - box->w - 5, _screen->h - box->h - 5), key);
+	_screen->update();
+	delete box;
 }
 
 int FlaaklypaEngine::showHelp(const char *file) {
@@ -554,6 +569,11 @@ void FlaaklypaEngine::switchScene() {
 	_nextSceneForced = false;
 	// Leaving always clears it in the original too (Yes in confirmLeave()).
 	_gameRunning = false;
+
+	// FUN_0040ccd0: a scene with flag bit 1 shows the loading box first
+	const SceneDef *def = findSceneDef(name.c_str());
+	if (def && (def->flags & 2))
+		showLoading();
 
 	if (_scene) {
 		_scene->onClose();

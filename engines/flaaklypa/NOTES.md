@@ -141,7 +141,17 @@ close handlers back with `FUN_004017f0(800, 600)` (engine:
 `FlaaklypaEngine::setScreenSize()`; dialogs centre on the current mode).
 Flag bit 1 (`FUN_0040ccd0` -> `FUN_0040cb20`) shows the `loading` box
 (`common/bitmap/loading.bmp` with `gamec:LOADING`) at the bottom right
-while the scene loads. The scene registry at 0x4a7f08 (58
+while the scene loads (mainscore, sceneindex, balloonhunt, bugzzz,
+mountain, activity, bouquet, colorfill). `FUN_0040cb20` pauses the music
+(`FUN_0040b6f0`), keys the bitmap with its pixel (0, 0), centres the text
+in `Amerigo BT_10_` in (13,9)-(106,27), blits it 5 pixels from the
+screen's bottom right corner and shows the screen at once. Nothing
+removes it: the next frame draws over it. Playing the same music track
+again resumes it (`FUN_0040b1f0`); the in-game loads (mountain's level,
+jigsaw's and sliding's new game) resume it themselves (`FUN_0040b720`),
+balloonhunt has no music and stays silent. Mahjong, jigsaw, sliding,
+balloonhunt and mountain also call it directly. Engine:
+`FlaaklypaEngine::showLoading()`. The scene registry at 0x4a7f08 (58
 pointers, count at 0x4a7ff0) lists them in story order.
 `tools/gen_scenedata.py` extracts these, all animation structures and all
 cursor tables into `scenedata.cpp`; `scenelists.txt` lists the animation
@@ -1560,8 +1570,7 @@ work. Engine: `mountain.cpp`.
   DirectSound percentages linear); clip audio relative to it.
   Clip frames advance at their rate (SmackWait). The playfield is cleared
   to black where layer 0 has no tile (the original leaves the back
-  buffer). Not done: the loading box, the cursor auto hide
-  (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
+  buffer). Not done: the cursor auto hide (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
   Development aid: `mountain_skip=<x>` / `mountain_skip=n<node>`.
 
 ## Sub game `balloonhunt` ("Solans ballongjakt", add-on set 2, from `outtent`, 640x480)
@@ -1735,8 +1744,8 @@ no awards besides the medals. Engine: `balloonhunt.cpp`.
   empty cursor table so clicks still work) stay elements. (Full screen
   keyed elements cost about 35 ms a frame in the engine.) Volumes:
   the engine's sound volume, DirectSound percentages linear.
-  The flight keys are held states (reset when a dialog closes). Not done:
-  the loading box. Development aid: `balloonhunt_warp=<n>` (below).
+  The flight keys are held states (reset when a dialog closes).
+  Development aid: `balloonhunt_warp=<n>` (below).
 * **Tournament mode** (`FUN_00419490`): init (0x42a357..0x42a377): after
   all loading (the loading box `FUN_0040cb20` and the `FUN_0042a3a0(3)`
   delay loop as usual) no start screen; `FUN_00419660` (PLAYERREADY),
@@ -3036,8 +3045,7 @@ layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
   `FUN_0047c5c0` time, `FUN_0047c5e0` step, `FUN_0047c610` stop); dt =
   step * 0.1 (10 ms units). A stopped watch keeps returning its last step,
   so after the end the animations run on with it.
-* Engine: `MahjongScene`. Deviations: the "loading" note
-  (`FUN_0040cb20`) is not shown; the mouse is polled every frame (the
+* Engine: `MahjongScene`. Deviations: the mouse is polled every frame (the
   engine reports moves only on hotspot changes); the message flag is
   cleared before the box; rasterisers in float with the same fill rules,
   not bit-exact; the backdrop under the board keeps 24 bits (tiles in
@@ -3570,8 +3578,8 @@ on the pieces lie turned in quarter turns (+0x38 of the motive).
   counts as joined); the pieces lie at random in (153 + rand(490 - s), 55
   + rand(490 - s)), z = index; the medium picture (688,151) z -1000; the
   clock runs (timer every 500 ms, `FUN_0046ae20`; the tick 0x112 keeps the
-  elapsed time, `FUN_0046abc0`). Not ported: the `gamec:LOADING` box
-  (`FUN_0040cb20`, pausing the music) while cutting.
+  elapsed time, `FUN_0046abc0`). The loading box (`FUN_0040cb20`) shows
+  while the pieces are cut, the music resumes afterwards.
 * **Pieces**: hotspot 1000 + index (pixel exact). Press (`FUN_0046a960`,
   not after the solution, not when solved) picks a piece and raises it and
   the pieces joined to it (`FUN_0046aa10` / `FUN_0046a810`: z = max + 1, or

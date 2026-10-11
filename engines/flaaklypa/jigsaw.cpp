@@ -27,6 +27,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/jigsaw.h"
 #include "flaaklypa/listdlg.h"
+#include "flaaklypa/music.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 
@@ -647,12 +648,12 @@ void JigsawScene::newGame() {
 	_autoSolved = false;
 	if (_state != kStateSolved)
 		_state = kStateBegun;
-	// FUN_0040cb20 shows a "gamec:LOADING" box (pausing the music,
-	// FUN_0040b6f0 / FUN_0040b720) while the pieces are cut; not ported.
+	_vm->showLoading(); // FUN_0040cb20, while the pieces are cut
 	buildPieces();
 	scatter();
 
 	_buttons.showBitmap("preview", "../../common/bitmap/medium/" + galleryItemBitmap(_item), false, 0, 688, 151, kZControls);
+	_vm->_music->pause(false); // FUN_0040b720
 	_stopped = false;
 	_startTime = _vm->getGameMillis();
 	setTimer(kTimerClock, kClockPeriod);

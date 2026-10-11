@@ -305,9 +305,11 @@ void BalloonhuntScene::onInit(int arg) {
 	} else {
 		warning("Balloonhunt: tracks.ini not found");
 	}
-	// FUN_004017f0: 640x480; FUN_0040cb20 shows the loading box (not
-	// ported); FUN_00401b30 limits the blits to the screen.
+	// FUN_004017f0: 640x480; FUN_0040cb20 shows the loading box (it pauses
+	// the music for good: the scene has none); FUN_00401b30 limits the
+	// blits to the screen.
 	_vm->setScreenSize(kScreenW, kScreenH);
+	_vm->showLoading();
 
 	// The engine's sound volume (FUN_0040b3f0: the options times sound.ini's sound=)
 	_master = _vm->channelVolume(FlaaklypaEngine::kVolumeSound);
