@@ -130,6 +130,7 @@ static const char *const kImplementedGames[] = {
 	"chess",
 	"activity",
 	"balloonhunt",
+	"synonym",
 	nullptr
 };
 
