@@ -1595,6 +1595,24 @@ ported). Buttons help 1, exit 2, prev 3 / next 4 (cycle). Exit and
 Escape (consumed) go back to `tvroom` if the profile has visited it,
 else to the scene index (`FUN_004690f0`). Space stops the presentation.
 
+## Activity `movieplayer` ("Filmfremviser", from `tvstation`)
+
+Handler `FUN_0046d480` (`movieplayer.cpp`); no music (`FUN_0040b2f0`).
+The film clips of the profile (award category 1, 18 items): the even
+items are films (`reel<n>`, n = item / 2), the odd ones sound clips
+(`sound<n>`), chosen with the tabs 6 `movieplayer:FILMCLIP` / 7
+`SOUNDCLIP` (labels in `Amerigo BT_10_`). `FUN_0046d700` lays out a reel
+button (tab group 0, id 100 + item, `reel<0..2>_0/_1` picked at random)
+for each item won, three by three at (0x208 + 0x44 col, 0x91 + 0x45 row),
+and selects the tab's chosen clip. Choosing (`FUN_0046d8e0`) shows the
+clip at (74,130) without playing it (sound clips loop: the clip
+element's +0x4c); play (2) restarts it with the running projector
+`film2`, stop (1) stops both, the projector spins up (`film1`) on every
+change. Tooltips name the reels (`FUN_0046dc10`, the award item name). A
+needle twitches every 20 s from 10 s. Car part: hotspot 5, value 0.
+Value 1 keeps the chosen clips (film in the low, sound in the high
+word). Exit goes to `tvstation` with arg 1.
+
 ## Activity `bouquet` ("Ludvigs blomsterbinderi", from `desk`)
 
 Handler `FUN_0045e0f0` (`bouquet.cpp`). The player arranges flowers in a
@@ -2359,7 +2377,7 @@ Activities (`[activity]`, open ended):
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
 | | sliding | Skyvepusslespillet | garage | data |
 | | chess | Sjakk | intent | data |
-| | movieplayer | Filmfremviser | tvstation | data |
+| x | movieplayer | Filmfremviser | tvstation | data |
 | | activity | Aktivitetssenteret | sceneindex | data |
 
 Add-on set 3 (CD 2, fourth index group):

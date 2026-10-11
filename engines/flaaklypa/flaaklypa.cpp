@@ -99,6 +99,7 @@ static const char *const kImplementedGames[] = {
 	"puzzle",
 	"bouquet",
 	"gallery",
+	"movieplayer",
 	"sockdrawer",
 	"textinvader",
 	"hopscotch",

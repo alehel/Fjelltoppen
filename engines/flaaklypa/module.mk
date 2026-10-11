@@ -34,6 +34,7 @@ MODULE_OBJS = \
 	menu.o \
 	metaengine.o \
 	morning.o \
+	movieplayer.o \
 	music.o \
 	outro.o \
 	outtent.o \

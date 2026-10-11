@@ -411,6 +411,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return nullptr;
 	if (!scumm_stricmp(name, "menu"))
 		return new MenuScene(vm, def);
+	if (!scumm_stricmp(name, "movieplayer"))
+		return new MovieplayerScene(vm, def);
 	if (!scumm_stricmp(name, "gallery"))
 		return new GalleryScene(vm, def);
 	if (!scumm_stricmp(name, "credits"))

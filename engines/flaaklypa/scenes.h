@@ -166,6 +166,35 @@ private:
 	Common::String _picture, _voice;
 };
 
+/** Activity "Filmfremviser": plays the film and sound clips the player has won. */
+class MovieplayerScene : public Scene {
+public:
+	MovieplayerScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onClose() override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	void onUpdate() override;
+	void onTimer(int id, int data) override;
+	void onAnimFinished(Anim *anim) override;
+
+private:
+	void onButton(int id);
+	void showTab(int tab);
+	void stopProjector();
+	void stopClip();
+	void choose(int item);
+	void play();
+
+	SceneButtons _buttons;
+	Tooltip _tooltip;
+	BitmapFont _font;
+	int _film, _sound;     ///< the clip chosen on each tab (DAT_006bfbe0 / e4)
+	Common::String _clip;  ///< the chosen clip's element
+};
+
 /** Story page 1: the yard (tunet). */
 class YardScene : public Scene {
 public:
