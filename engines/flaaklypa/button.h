@@ -154,6 +154,7 @@ private:
  */
 class Tooltip {
 public:
+	/** scene may be nullptr when only render() is used. */
 	explicit Tooltip(Scene *scene);
 	~Tooltip();
 
@@ -167,6 +168,12 @@ public:
 	int poll();
 	/** Shows the text next to the cursor at the given mouse position (FUN_00409c00). */
 	void show(const Common::String &text, int mouseX, int mouseY);
+	/**
+	 * The box show() puts on the screen and its position (colour key =
+	 * pixel (0,0)), for dialogs drawn above the scene; the caller owns it.
+	 * nullptr for an empty text.
+	 */
+	Graphics::ManagedSurface *render(const Common::String &text, int mouseX, int mouseY, Common::Point &pos) const;
 	/** FUN_00409bc0 (also on mouse clicks). */
 	void hide();
 

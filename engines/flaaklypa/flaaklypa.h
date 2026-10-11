@@ -47,6 +47,7 @@ namespace Flaaklypa {
 class Cursor;
 class Dialog;
 class Music;
+class Profile;
 class Resources;
 class Scene;
 
@@ -109,6 +110,7 @@ public:
 	Cursor *_cursor = nullptr;
 	Music *_music = nullptr;
 	Dialog *_dialog = nullptr;     ///< the modal dialog receiving the input, if any
+	Profile *_profile = nullptr;   ///< the active player profile (DAT_0054eaa0), if any
 
 public:
 	FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDesc);
@@ -173,6 +175,11 @@ public:
 	 * the key (Scene::handlesKey()).
 	 */
 	void globalKey(const Common::KeyState &key);
+
+	/** The active player profile, nullptr when there is none. */
+	Profile *profile() const { return _profile; }
+	/** Called after every change of the active profile (the main tree saves it). */
+	void profileChanged() {}
 
 	/**
 	 * A per scene value of the player profile (PROFILE module, record type

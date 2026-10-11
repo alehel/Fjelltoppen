@@ -55,7 +55,7 @@ public:
 	bool isDone() const { return _done; }
 
 	void handleEvent(const Common::Event &event);
-	void draw(Graphics::ManagedSurface &dst);
+	virtual void draw(Graphics::ManagedSurface &dst);
 
 protected:
 	enum ButtonState {

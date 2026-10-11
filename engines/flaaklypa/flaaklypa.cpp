@@ -19,11 +19,13 @@
  *
  */
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/award.h"
 #include "flaaklypa/console.h"
 #include "flaaklypa/cursor.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
 #include "flaaklypa/music.h"
+#include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scenes.h"
 
@@ -364,6 +366,14 @@ void FlaaklypaEngine::runFrame() {
 		uint bar = spec.findFirstOf('|');
 		int r = messageBox(spec.substr(0, bar), bar == Common::String::npos ? "" : spec.substr(bar + 1), MessageBox::kButtonOk | MessageBox::kButtonCancel);
 		debug(1, "Message box returned %d", r);
+	}
+
+	// Development aid: "test_award=<kind>[,<count>[,<flags>]]" shows the award
+	// dialog one second after the start (see testAward()).
+	if (!_dialog && _scene && ConfMan.hasKey("test_award") && g_system->getMillis() - _startTime > 1000) {
+		Common::String spec = ConfMan.get("test_award");
+		ConfMan.removeKey("test_award", ConfMan.getActiveDomainName());
+		testAward(this, spec);
 	}
 
 	// A scene change requested under a dialog waits until the dialog is gone

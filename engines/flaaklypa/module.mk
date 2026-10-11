@@ -4,6 +4,7 @@ MODULE_OBJS = \
 	anim.o \
 	archive.o \
 	audiopairs.o \
+	award.o \
 	beemaze.o \
 	bugzzz.o \
 	buildabike.o \
