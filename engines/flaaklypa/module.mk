@@ -32,7 +32,9 @@ MODULE_OBJS = \
 	info.o \
 	intent.o \
 	intro.o \
+	jigsaw.o \
 	lettersort.o \
+	listdlg.o \
 	logo.o \
 	mahjong.o \
 	mainscore.o \
@@ -52,6 +54,7 @@ MODULE_OBJS = \
 	scene.o \
 	scenedata.o \
 	sceneindex.o \
+	sliding.o \
 	sockdrawer.o \
 	sound.o \
 	subtitles.o \

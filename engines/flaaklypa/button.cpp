@@ -122,16 +122,7 @@ bool SceneButtons::add(int id, int x, int y, const char *normal, const char *pre
 	Button &nb = _buttons.back();
 	refresh(nb);
 
-	// The label (FUN_00406950): a text element one level above the button,
-	// centred on its rectangle.
-	if (!label.empty() && _font) {
-		Common::Rect r = rect(nb);
-		const uint32 green = g_engine->_screen->format.RGBToColor(0, 255, 0);
-		Anim *t = _scene->defineSurfaceAnim(labelName(nb).c_str(), MAX<int>(1, r.width()), MAX<int>(1, r.height()), green);
-		_font->drawStringCentred(*t->surface(), Common::Rect(0, 0, r.width(), r.height()), label);
-		t->add(r.left, r.top, nb.z + 1);
-		nb.labelAnim = t;
-	}
+	showLabel(nb);
 
 	// FUN_00406dc0: a button created under the mouse starts hovered.
 	if (_hoverHotspot == id) {
@@ -139,6 +130,30 @@ bool SceneButtons::add(int id, int x, int y, const char *normal, const char *pre
 		refresh(nb);
 	}
 	return true;
+}
+
+// FUN_00406950: the label is a text element one level above the button,
+// centred on its rectangle.
+void SceneButtons::showLabel(Button &b) {
+	if (b.labelAnim)
+		b.labelAnim->remove();
+	if (b.label.empty() || !_font)
+		return;
+	Common::Rect r = rect(b);
+	const uint32 green = g_engine->_screen->format.RGBToColor(0, 255, 0);
+	Anim *t = _scene->defineSurfaceAnim(labelName(b).c_str(), MAX<int>(1, r.width()), MAX<int>(1, r.height()), green);
+	_font->drawStringCentred(*t->surface(), Common::Rect(0, 0, r.width(), r.height()), b.label);
+	t->add(r.left, r.top, b.z + 1);
+	b.labelAnim = t;
+}
+
+void SceneButtons::setLabel(int id, const Common::String &label) {
+	// FUN_00406910(id, 0xb, label)
+	Button *b = find(id);
+	if (!b)
+		return;
+	b->label = label;
+	showLabel(*b);
 }
 
 bool SceneButtons::addTab(int group, int id, int x, int y, const char *normal, const char *selected,

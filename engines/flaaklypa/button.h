@@ -88,6 +88,9 @@ public:
 	bool remove(int id);
 	void removeAll();
 
+	/** Replaces the label of a button (FUN_00406910 with 0xb); "" removes it. */
+	void setLabel(int id, const Common::String &label);
+
 	/** FUN_00406720 / FUN_00406700 (-1 when there is no such button). */
 	void setState(int id, int state);
 	int state(int id) const;
@@ -137,6 +140,8 @@ private:
 	/** The button's rectangle: its first bitmap at its position (FUN_004069b0). */
 	Common::Rect rect(const Button &b);
 	void setStateOf(Button &b, int state);
+	/** Creates or replaces the button's label element (FUN_00406950). */
+	void showLabel(Button &b);
 
 	typedef Common::HashMap<Common::String, Graphics::ManagedSurface *, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> BitmapMap;
 
