@@ -64,8 +64,9 @@ rm -rf "$appdir"
 (cd "$build/$arch/scummvm" && make install DESTDIR="$appdir")
 mv "$appdir/usr/bin/scummvm" "$appdir/usr/bin/flaaklypa"
 strip "$appdir/usr/bin/flaaklypa"
+# ScummVM's own desktop integration, and the CJK fonts the game does not need
 rm -rf "$appdir/usr/share/applications" "$appdir/usr/share/metainfo" "$appdir/usr/share/icons" \
-	"$appdir/usr/share/pixmaps" "$appdir/usr/share/man"
+	"$appdir/usr/share/pixmaps" "$appdir/usr/share/man" "$appdir/usr/share/scummvm/fonts-cjk.dat"
 mv "$appdir/usr/share/doc/scummvm" "$appdir/usr/share/doc/flaaklypa"
 cp "$src/dists/flaaklypa/LESMEG.txt" "$appdir/usr/share/doc/flaaklypa/"
 cp "$src/dists/flaaklypa/linux/flaaklypa.desktop" "$src/dists/flaaklypa/flaaklypa.png" "$appdir/"
