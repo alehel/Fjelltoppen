@@ -319,10 +319,9 @@ void Tooltip::hide() {
 		_anim->remove();
 }
 
-void Tooltip::show(const Common::String &text, int mouseX, int mouseY) {
+Graphics::ManagedSurface *Tooltip::render(const Common::String &text, int mouseX, int mouseY, Common::Point &pos) const {
 	if (text.empty() || !_box)
-		return;
-	hide();
+		return nullptr;
 
 	// FUN_00409d00: the box is tooltip.bmp stretched around the text
 	// (Small Fonts_07_, centred) with 6 + 6 pixels horizontally and 9 + 9
@@ -350,12 +349,21 @@ void Tooltip::show(const Common::String &text, int mouseX, int mouseY) {
 		int dy = cursor.top < y ? y : MIN<int>(cursor.top, y + h - _dot->h);
 		box->transBlitFrom(*_dot, Common::Point(dx - x, dy - y), _dot->getPixel(0, 0));
 	}
+	pos = Common::Point(x, y);
+	return box;
+}
 
+void Tooltip::show(const Common::String &text, int mouseX, int mouseY) {
+	Common::Point pos;
+	Graphics::ManagedSurface *box = render(text, mouseX, mouseY, pos);
+	if (!box)
+		return;
+	hide();
 	uint32 key = box->getPixel(0, 0);
-	_anim = _scene->defineSurfaceAnim("tooltip", w, h, key);
+	_anim = _scene->defineSurfaceAnim("tooltip", box->w, box->h, key);
 	_anim->surface()->blitFrom(*box);
 	delete box;
-	_anim->add(x, y, 1500);
+	_anim->add(pos.x, pos.y, 1500);
 }
 
 } // End of namespace Flaaklypa

@@ -1437,6 +1437,132 @@ while a dialog is open waits until it closes.
   or a `\n`, then ends at the first blank after the last word that fit;
   exactly one blank after it is skipped (so the second of two spaces
   starts the next line), and a word wider than the line ends the text.
+## Awards (`award.cpp`, AWARD module)
+
+The items a player wins (`FUN_0041b3d0`..`FUN_0041c460`), kept in the
+profile's award chunk 0x301 (8 int32, `FUN_00411b70` reads, `FUN_00411c40`
+writes; both do nothing without an active profile, so the counters read
+as 0 and changes are lost). Engine: free functions in `award.h` on
+`FlaaklypaEngine::profile()`; every change calls `profileChanged()`.
+
+* **Categories** (`AwardType` in `profile.h`; the old enum had 5 and 7
+  named 5 butterflies and 7 3D images): 0 car parts (62, a count), 1 film
+  clips (18), 2 cars (10), 3 tracks (8), 4 images (31), 5 characters (6),
+  6 bonus points (100, a count), 7 butterflies (15); bit masks except 0 and
+  6. Not counters: 8 = scenes of the 3D viewer (bit n of the "anaglyph"
+  scene's 0x402 value 100, `FUN_0041b8c0` found?, `FUN_0041bab0` award
+  once), 9 = the 15 3D images of the gallery (always available). Item
+  counts 0x49ca88 {62,18,10,8,31,6,100,15,15,15}; items every player has
+  0x49ca60 {0, 1, 1, 1, 0xff, 0, 0, 0, 0, 0xf} (a count for 0/6, a mask
+  for the others: film clip 1, car 1, track 1, images 1..8).
+* `FUN_0041b5d0(type, counter, n)` won: counters `n < free || n <
+  counter`, masks by bit; `FUN_0041b690` counts; `FUN_0041b6e0` adds item
+  n (counter = n + 1 / set bit); `FUN_0041b830` picks the first count items
+  not won, in item order; `FUN_0041b740(type, count, flags, items)` awards
+  them (flag 0x10: the item `count` itself, always reports 1) and for cars
+  also sets image bit car + 0x12. Engine: `awardIsWon`, `awardWonCount`,
+  `awardAddItem`, `awardGive`, `awardCounter`, `awardHasItem`.
+* Names (`FUN_0041b580`, tables 0x4ad89c): `awarddlg:PART_n`, `FILM_n`,
+  `CAR_n`, `TRACK_n`, `IMAGE_n`, `CHARACTER_n`, (bonus: none, a null
+  pointer), `BUTTERFLY_n` through the butterfly order 0x49cab0
+  (`FUN_0041b3d0`, also used by the info page), 3D scenes from the table
+  0x4ad7fc (`intro:SCENENAME`, `anaglyph:SCENE_YARD`, ...), `3DIMAGE_n`;
+  out of range `awarddlg:NONE`. Engine: `awardItemName`.
+* Bonus points (`FUN_0041b9d0` / `FUN_0041ba50`, 25 records {point,
+  category, count, flags} at 0x4ad8c8): car parts that cannot be given
+  any more (all 62 won) become bonus points; points 2, 8, 12, 18, ... give
+  an image, 4, 10, 14, ... a film clip, 6, 16, 26, 36, 46 a car (every 2nd
+  point up to 50).
+* Gallery (`FUN_0041b3f0` available, `FUN_0041b460` name, `FUN_0041b4a0`
+  bitmap, `FUN_0041b4e0` 79 items, `FUN_0041b4f0` range; tables
+  0x4adc04..0x4adc40): images 0..30 `image_%02d`, cars 31..40 `car_%02d`,
+  tracks 41..48 `track_%02d`, butterflies 49..63 `butterfly_%02d`, 3D
+  images 64..78 `3dimage_%02d` (always available). Used by the activity
+  centre, jigsaw and sliding. Engine: `gallery*()`.
+* **Dialog** `FUN_0041bb20(type, title, desc, count, flags)` (engine
+  `showAward()`): `FUN_0041b900` awards first and decides: type 8 awards
+  scene `count` once (no dialog when found before, even with a medal);
+  count 0 shows only a medal (flags & 7: 1 bronze .. 4 platinum); else
+  `FUN_0041b740`, and car parts beyond 62 go to the bonus points, whose
+  last award replaces type, count and items when no part was left. Nothing
+  won and no medal: no dialog. Then, with the scene frozen
+  (`FUN_0040d270`): `awarddlg/backdrop.bmp` (317x345, dimmed background,
+  `hotspot.bmp`) centred ((800 - 317) / 2, (600 - 345) / 2) at z 500;
+  CLOSE button 500 (`button_0/1`, at 0xd8,0x129, `interfaceh:CLOSE` in
+  Amerigo BT_10_); title (`FUN_0041be20`) in Amerigo BT_14_ centred
+  (0x101) in (13,8)-(297,39); text `"%s\n\n%s"` with
+  `awarddlg:AWARDBELOW`, word wrapped in Amerigo BT_10_ from (16,55),
+  278 wide (`FUN_00402750`, not clipped). A missing title is
+  `TITLE_DEFAULT`, then `TITLE_FILMCLIP/CAR/TRACK/IMAGE` by type, then
+  `TITLE_BRONZE..PLATINUM` by medal; a missing text `DESC_CARPART/
+  FILMCLIP/CAR/TRACK/IMAGE` by type (none for 5..9), then the medal's
+  `DESC_*`. Items (`FUN_0041bc00` / `FUN_0041bce0`): five slots in
+  (10,236)-(297,286) at x + round(i * 287 * 0.2) = 0, 57, 115, 172, 230,
+  transparent bitmaps `common/bitmap/award/` `part_%02d` (car parts) or
+  `filmclip`, `car`, `track`, `image`, `character`, `3dscene` (data3; no
+  `butterfly`/`3dimage` bitmaps exist), z 501, hit test mode 2
+  (rectangle), hotspots 0x226..0x22a; a medal (`bronze`..`platinum`) takes
+  slot 4, so at most 4 items with a medal, else 5.
+* Handler `LAB_0041c1e0` (priority 0x32, byte table 0x41c2e4, jump table
+  0x41c2bc): 0x104 closes with 2 and passes on, 0x105/0x107 button press +
+  hide the tooltip (`FUN_0041c300`), 0x106 button release, 0x10c Enter
+  closes with 1, Escape with 2 (`FUN_0041c430`), 0x112 tooltip tick
+  (`FUN_00409ed0`), 0x113/0x114 hover, 0x116 button 500 closes with 1,
+  0x11a tooltip: the item's name or the medal's `awarddlg:BRONZE..` for
+  hotspots 0x226..0x22a (`FUN_0041c400`), everything else swallowed. The
+  tooltip timer runs on `timeGetTime` with the module's delay (1500 ms
+  unless a scene changed it), so it works under the frozen scene. The
+  result (0x5939c0) is not used. Engine: `AwardDialog` (private), the
+  tooltip box drawn above the dialog with `Tooltip::render()`.
+* Wrappers: `FUN_0041c0b0(level, count)` `TITLE/DESC_EASY|MEDIUM|HARD`,
+  car parts (`awardDifficulty`); `FUN_0041c120` `TITLE/DESC_FACT`, 1 part
+  (`awardFactsFound`); `FUN_0041c150` `TITLE/DESC_HIDDEN`, 1 part
+  (`awardHiddenCarPart`); `FUN_0041c180` `TITLE/DESC_JIGSAW`, 1 part
+  (`awardJigsaw`); `FUN_0041c1b0(scene)` type 8 `TITLE/DESC_3DSCENE`
+  (lang3 only), flags 0x10 (`award3DScene`); `FUN_0040d4c0` (global
+  handler `LAB_0040d2c0`, tick 0x112) gives `gamec:TIME_TITLE/TIME_DESC`, 1
+  part, once per profile ("timeaward" 0) when no sub game round runs and
+  more than 10799 s passed since the profile was selected
+  (`FUN_0040d860`) (`awardPlayTime`, the timing is up to the caller).
+* Callers (for wiring up): hidden car part (`FUN_0041c150`; the page sets
+  its key 0 to 1 first, then removes `carpart`, which its init adds while
+  key 0 is 0): desk `FUN_004249b0` hotspot 55, garage `FUN_00424f50` 27,
+  house `FUN_004253b0` 20, intent `FUN_00425960` 9, outtent
+  `FUN_00426380` 10, pee `FUN_00426970` 31, tvroom `FUN_00427440` 12,
+  tvstation `FUN_00427e00` 100, yard `FUN_004286d0` 255, bouquet
+  `FUN_0045eb00` 4, fence `FUN_00467790` (case -1), movieplayer
+  `FUN_0046da60` 5, race end `FUN_004770c0` (flag `DAT_006c7568`). 3D
+  glasses (`FUN_0041c1b0(n)`, then remove `3dglasses`, which the init adds
+  while `FUN_0041b8c0(n)` is 0): house hotspot 22 / scene 4 (init
+  `FUN_00425240`), intent 11 / 9 (`FUN_004257a0`), outtent 13 / 8
+  (`FUN_004260d0`), pee 32 / 3 (`FUN_00426730`), tvroom 15 / 5
+  (`FUN_004271e0`), yard 254 / 1 (`FUN_00428080`), outro 10 / 14
+  (`FUN_00418940`, init `FUN_004183d0`); the anaglyph activity lists the
+  found scenes (`FUN_0047d800`, `FUN_0047d880`). Facts: `FUN_0041dcb0`.
+  Jigsaw `FUN_0046abc0` (every 6th motive solved: jigsaw keys 0..78 == 3)
+  and sliding `FUN_0046edb0` (every 5th). Chess `FUN_00460d00`
+  (`FUN_0041c0b0(level - 2, level - 1 - key0)`, key 0 := level - 1 when
+  higher) and draughts `FUN_004650c0` (`l = (DAT_00508628 - 3) / 2`,
+  `FUN_0041c0b0(l, l + 1 - key0)`, key 0 := l + 1). Direct
+  `FUN_0041bb20`: high score `FUN_0041eed0` (a better medal: type 0,
+  count = medal gain, 0 in tournament mode, flags = medal; then the rise
+  of the lowest medal over all sub games, `FUN_0040d9b0`, as car parts),
+  birthday `FUN_004154a0` (`birthday:AWARD_TITLE`, `AWARD_DESC` with the
+  name, 1 part), outro credits `FUN_00418770` (`outro:AWARD_TITLE/DESC`, 1
+  part, once: outro key 0), buildacar `FUN_00424420` (table 0x4b0d80
+  {parts, type, count, flags}: 4 image, 9 film clip, 13 race game message,
+  17 image, 20 car, ...), mountain `FUN_00447e43` (two flags: film clip /
+  car part, mountain key 0, 8 bytes), race `FUN_00477390` (type 3, the
+  track won, 0x10, when not won yet). Silent: butterfly `FUN_0043b990`
+  (`FUN_0041b740(7, species, 0x10, 0)` per species caught, not in
+  tournament mode), racemenu `FUN_0047b330`.
+* Deviations: the original shows items from uninitialised memory when a
+  medal comes with car parts but all 62 are won and no bonus award
+  follows, and when a bonus award's category is full; the port shows no
+  item then. Medal values 5..7 (garbage pointers in the original) show no
+  medal bitmap. More than five car parts overflow the original's item
+  buffers; the port awards them all and shows five.
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2128,6 +2254,12 @@ date); both log their result. `profile_import=<path>` adds an original
 `savepath=/tmp/...` in test configs so test profiles stay out of the
 real save directory. Without `start_scene` the game starts with the logo
 like the original.
+`test_award=<kind>[,<count>[,<flags>]]` (the award dialog one second after
+the start: kind = a category number with count items and flags = medal |
+0x10, or `fact`, `hidden`, `jigsaw`, `time`, `3dscene` with count = the
+scene, `easy`/`medium`/`hard` with count car parts; without an active
+profile a temporary one, preset by `test_award_counters=<8 numbers>` and
+`test_award_anaglyph=<mask>`; the counters are logged before and after).
 
 ## Mini game checklist
 

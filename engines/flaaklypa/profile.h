@@ -30,7 +30,7 @@ namespace Flaaklypa {
 /**
  * The award categories of a profile (AWARD module): the eight counters of
  * the profile's award chunk. Car parts and bonus points count up, the other
- * categories are bit masks of the items won.
+ * categories are bit masks of the items won. See award.h.
  */
 enum AwardType {
 	kAwardCarPart = 0,   ///< count of car parts (62)
@@ -38,9 +38,9 @@ enum AwardType {
 	kAwardCar = 2,       ///< race cars (10)
 	kAwardTrack = 3,     ///< race tracks (8)
 	kAwardImage = 4,     ///< gallery images (31)
-	kAwardButterfly = 5, ///< butterflies (6)
+	kAwardCharacter = 5, ///< characters (6)
 	kAwardBonus = 6,     ///< bonus count (100), each one may unlock another award
-	kAwardAnaglyph = 7,  ///< 3D images (15)
+	kAwardButterfly = 7, ///< butterflies caught in the butterfly game (15)
 	kAwardTypes = 8
 };
 

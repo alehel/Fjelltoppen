@@ -19,6 +19,7 @@
  *
  */
 #include "flaaklypa/flaaklypa.h"
+#include "flaaklypa/award.h"
 #include "flaaklypa/console.h"
 #include "flaaklypa/cursor.h"
 #include "flaaklypa/dialog.h"
@@ -563,6 +564,14 @@ void FlaaklypaEngine::runFrame() {
 			day = 1;
 		}
 		runCalendar(this, 0xfa, 0x9d, month, day);
+	}
+
+	// Development aid: "test_award=<kind>[,<count>[,<flags>]]" shows the award
+	// dialog one second after the start (see testAward()).
+	if (!_dialog && _scene && ConfMan.hasKey("test_award") && g_system->getMillis() - _startTime > 1000) {
+		Common::String spec = ConfMan.get("test_award");
+		ConfMan.removeKey("test_award", ConfMan.getActiveDomainName());
+		testAward(this, spec);
 	}
 
 	// A scene change requested under a dialog waits until the dialog is gone
