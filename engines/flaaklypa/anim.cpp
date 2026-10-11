@@ -33,7 +33,7 @@ namespace Flaaklypa {
 Anim::Anim(Scene *scene, const AnimDef *def) : _scene(scene), _def(def),
 	_video(nullptr), _frame(nullptr), _hasKey(false), _keyColor(0),
 	_x(def->x), _y(def->y), _z(def->zOrder), _hotspot(def->hotspot), _hitMask(nullptr), _hitRadius(0), _group(def->group),
-	_added(false), _playing(false), _removeWhenDone(false), _ownSurface(false), _lastFrameTime(0), _lastFrameShown(false) {
+	_added(false), _playing(false), _removeWhenDone(false), _ownSurface(false), _lastFrameTime(0), _lastFrameShown(false), _hasPalette(false) {
 }
 
 Anim::~Anim() {
@@ -46,6 +46,7 @@ void Anim::load() {
 	Resources *res = _scene->resources();
 	const Common::String &sceneName = _scene->name();
 	if (_def->smacker) {
+		_hasPalette = false;
 		_video = res->openSmacker(sceneName, Common::String::format("animation/%s.smk", _def->name));
 		if (_video && _def->visible) {
 			// Decode the first frame so the element can be drawn (and hit
@@ -117,6 +118,12 @@ void Anim::setFrameRate(int fps) {
 
 void Anim::convertFrame(const Graphics::Surface *frame) {
 	const byte *palette = _video->getPalette();
+	if (palette) {
+		memcpy(_palette, palette, sizeof(_palette));
+		_hasPalette = true;
+	} else if (_hasPalette) {
+		palette = _palette;
+	}
 	// Audio only clips (4x4 pixels, no palette chunk) have nothing to show.
 	if (!palette && frame->format.bytesPerPixel == 1)
 		return;
@@ -181,6 +188,17 @@ void Anim::stop() {
 	if (_video && _playing)
 		_video->stop();
 	_playing = false;
+}
+
+void Anim::resume() {
+	if (!_added || _playing || !_def->smacker)
+		return;
+	// VideoDecoder::stop() kept the position; start() goes on from there
+	if (_video)
+		_video->start();
+	_playing = true;
+	_lastFrameShown = false;
+	debug(2, "Anim %s resumed t=%u", _def->name, g_engine->getGameMillis());
 }
 
 void Anim::pause(bool pause) {

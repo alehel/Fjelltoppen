@@ -41,7 +41,7 @@ static const byte kListHighlight[3] = { 0x67, 0x51, 0x3e };
 
 class ListDialog : public Dialog {
 public:
-	ListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items, int flags);
+	ListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items, int flags, int x, int y);
 	~ListDialog() override;
 
 	bool isValid() const { return _valid; }
@@ -80,14 +80,19 @@ private:
 	ScrollBar _scroll;  ///< coordinates relative to the dialog
 };
 
-ListDialog::ListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items, int flags) :
+ListDialog::ListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items, int flags, int x, int y) :
 	Dialog(vm, true), _items(items), _valid(false), _selected(0), _top(0), _rows(0), _rowHeight(0), _thumb(nullptr) {
-	// FUN_00420750: a 320x483 box centred on the screen (FUN_00407070)
+	// FUN_00420750: a 320x483 box centred on the screen (FUN_00407070),
+	// unless the caller places it (FUN_00420430)
 	Graphics::ManagedSurface *backdrop = loadBitmap("listdlg", "backdrop");
 	if (!backdrop)
 		return;
 	_valid = true;
-	setSurface(backdrop, (_vm->screenWidth() - 0x140) / 2, (_vm->screenHeight() - 0x1e3) / 2);
+	if (x < 0 || y < 0) {
+		x = (_vm->screenWidth() - 0x140) / 2;
+		y = (_vm->screenHeight() - 0x1e3) / 2;
+	}
+	setSurface(backdrop, x, y);
 	setHitMask(_vm->_resources->loadMask("common", "dialogue/listdlg/hotspot.bmp"));
 
 	// The title in Amerigo BT_14_, centred (FUN_00407650, 0x101)
@@ -276,11 +281,11 @@ void ListDialog::drawContents(Graphics::ManagedSurface &dst) {
 }
 
 int runListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items,
-                  const Common::Array<int> &ids, int flags, int *id) {
+                  const Common::Array<int> &ids, int flags, int *id, int x, int y) {
 	// FUN_00420430
 	if (id)
 		*id = 0;
-	ListDialog dlg(vm, title, items, flags);
+	ListDialog dlg(vm, title, items, flags, x, y);
 	if (!dlg.isValid())
 		return -1;
 	int result = dlg.run();

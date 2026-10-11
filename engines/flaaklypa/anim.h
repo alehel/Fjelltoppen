@@ -69,6 +69,11 @@ public:
 	/** SCENE_PlayAnim: adds the clip (default position and z order) if needed and starts it. */
 	void play();
 	void stop();
+	/**
+	 * Continues a stopped clip from its current frame (FUN_00412a20); unlike
+	 * play() it neither rewinds nor reports a start. Bitmaps are ignored.
+	 */
+	void resume();
 	/** Pauses the clip and its sound (scene freeze); a paused clip does not advance. */
 	void pause(bool pause);
 
@@ -151,6 +156,12 @@ private:
 	bool _ownSurface;        ///< _frame was made by createSurface() and survives unload()
 	uint32 _lastFrameTime;   ///< when the last frame was decoded (to hold it for its duration)
 	bool _lastFrameShown;
+	/**
+	 * The clip's last palette: VideoDecoder::stop() forgets it and a Smacker
+	 * clip only sends it again when it changes (resume(), showFrame()).
+	 */
+	byte _palette[256 * 3];
+	bool _hasPalette;
 };
 
 } // End of namespace Flaaklypa

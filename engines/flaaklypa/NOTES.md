@@ -176,6 +176,7 @@ z (`qsort`), then the cursor. Hotspot lookup walks the elements top down
 |----------|--------|
 | `SCENE_AddAnim(anim, x, y, z)` (-1,-1 = default pos) | `Anim::add` / `Scene::addAnim` |
 | `SCENE_RemoveAnim`, `SCENE_PlayAnim`, `IsAdded` (+0x7c), `IsPlaying` (+0x78) | `remove`, `play`, `isAnimAdded`, `isAnimPlaying` |
+| `FUN_00412a60` stop where it is, `FUN_00412a20` go on, `FUN_004129d0` start from frame 0 | `Anim::stop`, `Anim::resume`, `Anim::play` |
 | `FUN_0040a6f0(list)` play an anim list as a sequence; `FUN_0040a770(anim)` single | `playSequence`, `playSingle` (cursor hidden meanwhile) |
 | `FUN_0040a2b0(id, hotspot)` create character, `FUN_0040a4b0(id, z)`, `FUN_0040a470(id, idle, bored, reaction)` | `addCharacter`, `setCharacterZ`, `setCharacterAnims` |
 | `FUN_0040a880` reset characters to idle (space bar) | `resetCharacters` / `stopSequence` |
@@ -1504,8 +1505,8 @@ while a dialog is open waits until it closes.
   none. A click outside the buttons, a right click, Enter or Escape close
   it; the arrow keys press prev/help/next/exit. Exit leaves for the menu,
   help closes the navigator and opens the help dialog.
-* **Help dialog** (`FUN_0041e580` → `FUN_0041e180("help.ini")`; one
-  activity passes `rubberball.ini`): `help/backdrop.bmp` (485x413)
+* **Help dialog** (`FUN_0041e580` → `FUN_0041e180("help.ini")`; the 3D
+  viewer's ball game passes `rubberball.ini`): `help/backdrop.bmp` (485x413)
   centred at (158, 93), dimmed background, hit mask `hotspot.bmp`. The
   sections of `<scene>/help.ini` (the current scene's, merged containers)
   are the topics of a list box in (15,56)-(134,348); each topic shows
@@ -1727,7 +1728,7 @@ as 0 and changes are lost). Engine: free functions in `award.h` on
   (`FUN_004260d0`), pee 32 / 3 (`FUN_00426730`), tvroom 15 / 5
   (`FUN_004271e0`), yard 254 / 1 (`FUN_00428080`), outro 10 / 14
   (`FUN_00418940`, init `FUN_004183d0`); the anaglyph activity lists the
-  found scenes (`FUN_0047d800`, `FUN_0047d880`). Facts: `FUN_0041dcb0`.
+  found scenes (`FUN_0047d800`, `FUN_0047d880`; see Activity `anaglyph`). Facts: `FUN_0041dcb0`.
   Jigsaw `FUN_0046abc0` (every 6th motive solved: jigsaw keys 0..78 == 3)
   and sliding `FUN_0046edb0` (every 5th). Chess `FUN_00460d00`
   (`FUN_0041c0b0(level - 2, level - 1 - key0)`, key 0 := level - 1 when
@@ -2611,7 +2612,8 @@ rows; its value is the list's top, `FUN_00420a80`), OK 1000 (`button_0/1`,
 under the mouse (`FUN_00407ec0`), the list keys (`FUN_00407f60`: PgUp/PgDn,
 Home/End, Up/Down) move the selection and set the scroll bar to the top,
 Enter = OK, Escape and close = Cancel. Returns the selected row (and its
-id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
+id) for OK, else -1. `FUN_00420430(x, y, ...)` places the box (the 3D
+viewer at (240,10)). Engine: `runListDialog()` (bitmap rows only; flag
 0x100, rows rendered from strings by `FUN_00408720`, is not ported; the
 fence renders its string rows itself). Used
 by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), colorfill
@@ -3051,6 +3053,148 @@ values, no awards, no scores.
   cannot hold a dot, so it never clashes with the profile slots). Double
   clicks are detected by the scene (500 ms, 4x4 pixels, the Windows
   defaults). The z counter is a member, not a global.
+
+## Activity `anaglyph` ("3D-titter", add-on set 3, from the scene index)
+
+Handler `FUN_0047c630` (`anaglyph.cpp`, code 0x47c630..0x47e240, the
+qsort comparator `LAB_0047e220` last; `FUN_0047fcc0`, a list's length,
+lies in gametrivia's code): 0x103 `FUN_0047c710`, 0x104 `FUN_0047d950`,
+0x105 `FUN_0047d9e0`, 0x10f `FUN_0047da50`, 0x110 `FUN_0047da70`, 0x116
+`FUN_0047de90`, 0x117 `FUN_0047de70`; no keys (the global ones: Escape
+to the scene index, F1 `help.ini` even in the ball game). A viewer of
+red/cyan 3D pictures and clips (data3/lang3 `anaglyph`; `sound.ini`
+sound 0.83, speech 1.0, music 0.27). No awards; the hidden 3D glasses
+of the story pages unlock its scenes (award type 8, the "anaglyph" value
+100, see Awards).
+
+* **Controls** (`FUN_0047c740`): fonts Amerigo BT_10_ (labels, buttons,
+  the list), BT_12_ and BT_12_grey (the chooser). Labels (`FUN_00407930`,
+  z 0x14, centred): (244,514)-(705,535) never written, (717,566)-(788,583)
+  `anaglyph:FRAMERATE` "FART" or `HIT` "TREFF", (721,515)-(773,550) the
+  speed `"%3.0f %%"` of fps * 0.0666667f * 100 (100..200 %) or the hits
+  `"%d"`. Buttons z 0x1e, labels in BT_10_: help 1 (0,0) and exit 2
+  (728,0) transparent; LOAD 4 `buttonlong_0/1` (242,511) `anaglyph:LOAD`,
+  START 3 (244,553), STOP 5 (411,553), PRINT 7 (578,553) with
+  `button_0/1`, opaque (their flags are the zeros pushed for
+  `FUN_004844f0`); faster 8 (773,515) and slower 9 (773,534) with only
+  `sizeinc_1/2`, `sizedec_1/2` (the backdrop shows them, its hit mask
+  holds 8 and 9). `help_2` and `exit_2` (corners, default positions) z
+  0x1d. List box (`FUN_00408720`, rows rendered from strings: the text's
+  extent in BT_10_) in (12,512)-(215,587), 15 pixel rows, 5 shown, bar
+  COLORREF 0x23234b; scroll bar 0xc (`FUN_004090e0(0xc, 221, 540, 14, 15,
+  "scrolltab", 0x10)`: the thumb's centre moves over 15 pixels), arrows
+  2000 `hup_0/1` (221,510) and 2001 `hdown_0/1` (221,569). A press
+  (`FUN_0047d9e0`) on anything but START goes to the scroll bar
+  (`FUN_004093f0`) and the list (`FUN_00407ec0`): another row plays that
+  variant (`FUN_0047d090`).
+* **Activities** (table 0x50d3b0, 12 x {id, title, 3D scene, rows}, the
+  chooser's order): ping-pong 15 (`PINGPONG0..6`: circling, cameras
+  1..6), rubber ball 16 (`RUBBERBALL0` Solan plays, `1` the player),
+  gallery 18 (`GALLERY0..4`), cars 17 (`CARS0..2`), 3D jigsaw 19, then
+  the story pages' scenes yard 1, pee 3, house 4, tvroom 5, outtent 8,
+  intent 9, outro 14 (rows `PLAYALL` + 3 clips for yard, pee and tvroom,
+  else the title), the id being the scene's 3D number (`FUN_0041b8c0`).
+  The init stops the music, opens ping-pong (`FUN_0047c9e0`) and then
+  the chooser (`FUN_0047d800`); LOAD opens it again. **Chooser**
+  (`FUN_0047d880`): the list dialog at (240,10) (`FUN_00420430`, not
+  centred), title `anaglyph:LOADTITLE`, Cancel, a 238x23 row per activity
+  (`FUN_00408470`), its title at (0,0) in BT_12_ or, while the scene's 3D
+  glasses are not found, BT_12_grey. Choosing a locked one shows
+  `anaglyph:NOTAVAILABLE` / `NOTAVAILABLEDESC` (OK) and keeps the current
+  one; the 3D jigsaw is `FUN_0040cd70("jigsaw", 9)` (category 9, the 3D
+  images; it returns here).
+* **Opening an activity** (`FUN_0047c9e0`): the rows, the scroll range
+  (rows - shown; the value is not reset), all elements of the list
+  0x510a40 (every element but the corners and the music) and the music
+  0x510b6c removed, FRAMERATE, 15 fps, STOP, 8/9 enabled; then the still
+  (z -10) and what loops with it: yard `yard`, `yard_windmill` (-9),
+  `yard_birds`, `yard_music`; pee `pee`, `pee_birds`, `pee_music`; house
+  `house` (the bitmap), `house_windmill` (-9), `house_music`; tvroom
+  `tvroom_ludvig`, `tvroom_candles` (-9), `tvroom`, `tvroom_music`;
+  outtent `outtent`, `outtent_music`; intent `intent` (no music);
+  outro `outro`, `outro_windmill` (-9) (no music); rubber ball: HIT, hits
+  0, button 5 `anaglyph:HISCORE`, 8/9 disabled, `rubberball`, `rb_music`;
+  cars `cars`, `cars_music`; gallery `gallery_music`; ping-pong nothing.
+  The music's track 0 gets the music volume (`FUN_00403620(player,
+  FUN_0040b3a0(0), 0)`) and plays at once; the other clips wait for
+  START. Then row 0 (`FUN_0047d090`).
+* **Rows** (`FUN_0047d090`: the row, "ended" flag `DAT_006d6f80` off,
+  every clip stopped where it is (`FUN_0047d7d0` / `FUN_00412a60`) but in
+  the ball game): yard (`FUN_0047d180`) removes the list 0x510bc8
+  (`yard_shock`, `yard_solan`, `yard_drown`) and adds 0/1 `yard_shock`, 2
+  `yard_pump` and `yard_solan`, 3 `yard_drown`; pee (`FUN_0047d220`,
+  0x510bd8 `pee_ludvig`, `pee_magpie`, `pee_solan1`, `pee_solan2`) 0/1
+  `pee_ludvig`, 2 `pee_solan1`, 3 `pee_solan2`; tvroom (`FUN_0047d2c0`,
+  0x510bec `tvroom_laugh`, `twist`, `boxing`, `exercise`) 0/1 laugh, 2
+  twist, 3 boxing; house, outtent, intent the clip (z 0x19), outro `outro`
+  and `outro_shot` (`FUN_0047d2a0`, `FUN_0047d370`, `FUN_0047d390`,
+  `FUN_0047d3b0`); ping-pong (`FUN_0047d450`, everything removed)
+  `pingpong_0` or `pingpong_1/2/4/5/7/8` (z 0x19) over the bitmap of the
+  same name (-10); cars (`FUN_0047d3e0`) `cars_iltempo`, `boom`, `rolls`
+  (z 40, looping); gallery (`FUN_0047d6d0`, everything removed)
+  `gallery_1/2/4/5/6` (z 0x19) and the voice `character_01/02/04/05/06`.
+  Clips are added at their default position and z unless noted.
+* **START** (3, `FUN_0047e000`): every added clip of 0x510a40 that does
+  not play goes on from its frame (`FUN_00412a20`), or from its first one
+  (`FUN_004129d0`) once the clips have ended; for yard, pee and tvroom
+  "play all" (row 0) first starts with the list's first clip again
+  (`FUN_0047e060`). **STOP** (5) stops them where they are. An ended
+  clip (`FUN_0047da70`): yard, pee, tvroom (`FUN_0047ddb0`): row 0 goes
+  on with the list's next clip (`magpie` only plays there), the last or a
+  single one stops all and sets the flag; house, outtent, intent,
+  ping-pong, cars, gallery: any ended clip stops all; outro: likewise but
+  `outro_shot` (shorter than `outro`); `yard_pump` is removed when done,
+  and `yard_solan` starting (0x10f, `FUN_0047da50`) plays it. So the
+  windmills, birds and candles freeze with the scene's clip.
+* **Speed** (8/9, not in the ball game, `FUN_0047cf20`): 15..30 fps; the
+  original sets `SmackFrameRate` for the clips opened from then on
+  (`FUN_00402f40`, `DAT_004a3250` > 0 adds `SMACKFRAMERATE` to
+  `SmackOpen`) and opens the shown clips of 0x510a40 again at their frame
+  (the music stays at 15). Every activity starts at 15 (the clips are
+  15.0015 fps); the close resets it (`FUN_00402f40(-1)`).
+* **PRINT** (7, `FUN_0047e0a0`): `anaglyph:ACTIVITY_TITLE` /
+  `ACTIVITY_TEXT` yes/no; yes: the visible (+0x44) added elements of
+  0x510a40 sorted by z, drawn on black in the rectangle around them (the
+  clips' current frames, keyed when transparent), go to the activity
+  centre ({"anaglyph", 0, picture}).
+* **Rubber ball** (`FUN_0047db40`, on every ended clip): idle
+  (`rb_idle_1..3`, `FUN_0040a150` without repeats, counters kept across
+  visits) -> another idle, or when START was pressed meanwhile the serve
+  `rb_start_center` (target `FUN_0040c550(15, 50)`, hits 0) -> a hit of
+  the centre column (`rb_hit_center_*`, `rand() % 3`) -> hits
+  (`rb_hit_<center|left|right>_<center|down|up>`, `FUN_0040a150` of 9)
+  while `FUN_0047dc30` says so, the hit count shown -> `rb_not_hit_center`
+  -> `rb_pick_up` -> idle. A press on START (event 0x105, hotspot 3)
+  counts (`DAT_006d26ac`) and stamps the first one (`DAT_006d4880`, game
+  clock); choosing an idle or hit clip resets the count. `FUN_0047dc30`:
+  row 0 hits < target; row 1 now - first press <= (100 - hits) * 20 ms,
+  below 400 (from 81 hits) (160 - hits) * 5, at least 200: a press must
+  come at most that long before the clip (15 frames, 1 s) ends; a clip
+  without a press is judged by the last stamp, so early on one press can
+  carry two hits. When `rb_not_hit_center` ends and the player played
+  (row 1): `FUN_0041ee50(0, hits, 0, 0, entry, rows)` (`addScore()`, no
+  medals, no dialog). Button 5: `FUN_0041f640(anaglyph:SCENE_RUBBERBALL,
+  0, entry, rows, 0)` (`showScoreTables()`), the entry once a score was
+  entered this visit. Help (1) is `rubberball.ini` here (`FUN_0041e180`),
+  `help.ini` elsewhere. A new row removes the ball clips and plays an
+  idle one (`FUN_0047d580`); the hits stay shown.
+* Close (`FUN_0047d950`): the activity's index goes to the profile's
+  value 0 (written, never read).
+* Engine: `AnaglyphScene`. The scene table has five clip/bitmap pairs of
+  the same name (`house`, `outtent`, `intent`, `outro`, `pingpong_N`):
+  the scene builds an element per table entry (`Elem`), its own for the
+  second of a pair. `Anim::resume()` (new, `FUN_00412a20`) continues a
+  stopped clip; `Anim` keeps the clip's last palette, which
+  `VideoDecoder::stop()` forgets. `runListDialog()` takes a position.
+  Deviations: above 15 fps the clips play muted (Smacker keeps the sound
+  at its rate, the help says there is no or choppy sound; ScummVM would
+  raise the pitch); the music gets the music level of `sound.ini` only
+  (the other clips play at full volume as everywhere in the port); the
+  unoptimised build does not reach 30 fps with the large tvroom clips;
+  `add()` of an added element does nothing (the original adds it to the
+  draw list a second time, e.g. `yard_pump` kept over a row change);
+  print sorts stably and does nothing without a visible element (the
+  original's rectangle would be uninitialised).
 
 ## Story page `garage` ("Verkstedet")
 
@@ -3882,6 +4026,9 @@ the start: kind = a category number with count items and flags = medal |
 scene, `easy`/`medium`/`hard` with count car parts; without an active
 profile a temporary one, preset by `test_award_counters=<8 numbers>` and
 `test_award_anaglyph=<mask>`; the counters are logged before and after).
+`test_award_anaglyph=<mask>` also sets the active profile's 3D scenes
+found when the 3D viewer (`anaglyph`) starts, e.g. 0x433a for all seven
+(bits 1, 3, 4, 5, 8, 9, 14).
 `test_highscore=<scene>,<score>[,<flags>[,<key>]]` (the high score
 registration of a sub game one second after the start, with its medal
 table and title: awards, then the dialog; `test_highscore_medal=<n>`
@@ -3972,7 +4119,7 @@ Add-on set 3 (CD 2, fourth index group):
 | Done | Scene | Title | Data |
 |---|---|---|---|
 | | gametrivia | Kjentmannsprøven | data3 |
-| | anaglyph | 3D-titter | data3 |
+| x | anaglyph | 3D-titter | data3 |
 | | mathlab | Reodors Tallmaskin | data3 |
 | | synonym | Reodors Ordmaskin | data3 |
 

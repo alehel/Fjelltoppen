@@ -47,11 +47,14 @@ enum {
  * empty list; id receives the id of the item selected last (also on
  * Cancel, like the original). The scene is frozen meanwhile.
  *
+ * x, y: the dialog's top left corner (FUN_00420430); -1 centres it on the
+ * screen like FUN_00420750 (the 3D viewer passes 240, 10).
+ *
  * Not ported: the text list variant (flag 0x100, FUN_00408720: the items
  * are strings rendered by the list box).
  */
 int runListDialog(FlaaklypaEngine *vm, const Common::String &title, const Common::Array<Graphics::ManagedSurface *> &items,
-                  const Common::Array<int> &ids, int flags, int *id = nullptr);
+                  const Common::Array<int> &ids, int flags, int *id = nullptr, int x = -1, int y = -1);
 
 } // End of namespace Flaaklypa
 
