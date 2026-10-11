@@ -546,6 +546,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BuildacarScene(vm, def);
 	if (!scumm_stricmp(name, "racemenu"))
 		return new RacemenuScene(vm, def);
+	if (!scumm_stricmp(name, "racing"))
+		return new RacingScene(vm, def);
 	return new Scene(vm, def);
 }
 
