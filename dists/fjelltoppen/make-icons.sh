@@ -1,15 +1,15 @@
 #!/bin/sh
-# Builds the application icons from the Il Tempo Gigante render on CD 1 of
+# Builds Fjelltoppen's icons from the Il Tempo Gigante render on CD 1 of
 # the Gold edition (MEDIA/BITMAP/CARS/ILTEMPO03.BMP):
 #
 #   icon.png        1024x1024 master
-#   flaaklypa.icns  macOS bundle icon
-#   flaaklypa.ico   Windows executable icon
-#   flaaklypa.png   256x256 Linux desktop icon
-#   flaaklypa.xpm   SDL window icon (at most 90 colours, one char per pixel)
+#   fjelltoppen.icns  macOS bundle icon
+#   fjelltoppen.ico   Windows executable icon
+#   fjelltoppen.png   256x256 Linux desktop icon
+#   fjelltoppen.xpm   SDL window icon (at most 90 colours, one char per pixel)
 #
 # Usage: make-icons.sh <CD 1 folder>. Needs ImageMagick 7 and python3;
-# flaaklypa.icns also needs iconutil (macOS).
+# fjelltoppen.icns also needs iconutil (macOS).
 
 set -e
 
@@ -36,21 +36,21 @@ magick -size 824x824 xc:black -fill white -draw "roundrectangle 0,0 823,823 185,
 magick "$tmp/tile.png" "$tmp/mask.png" -alpha off -compose copyopacity -composite "$tmp/rounded.png"
 magick -size 1024x1024 xc:none "$tmp/rounded.png" -geometry +100+100 -compose over -composite "$out/icon.png"
 
-magick "$out/icon.png" -resize 256x256 "$out/flaaklypa.png"
-magick "$out/icon.png" -define icon:auto-resize=256,128,64,48,32,24,16 "$out/flaaklypa.ico"
+magick "$out/icon.png" -resize 256x256 "$out/fjelltoppen.png"
+magick "$out/icon.png" -define icon:auto-resize=256,128,64,48,32,24,16 "$out/fjelltoppen.ico"
 
 if command -v iconutil > /dev/null; then
-	mkdir "$tmp/flaaklypa.iconset"
+	mkdir "$tmp/fjelltoppen.iconset"
 	for size in 16 32 128 256 512; do
-		magick "$out/icon.png" -resize ${size}x${size} "$tmp/flaaklypa.iconset/icon_${size}x${size}.png"
-		magick "$out/icon.png" -resize $((size * 2))x$((size * 2)) "$tmp/flaaklypa.iconset/icon_${size}x${size}@2x.png"
+		magick "$out/icon.png" -resize ${size}x${size} "$tmp/fjelltoppen.iconset/icon_${size}x${size}.png"
+		magick "$out/icon.png" -resize $((size * 2))x$((size * 2)) "$tmp/fjelltoppen.iconset/icon_${size}x${size}@2x.png"
 	done
-	iconutil -c icns -o "$out/flaaklypa.icns" "$tmp/flaaklypa.iconset"
+	iconutil -c icns -o "$out/fjelltoppen.icns" "$tmp/fjelltoppen.iconset"
 fi
 
 magick "$out/icon.png" -resize 128x128 -channel A -threshold 50% +channel -colors 90 "$tmp/small.png"
 magick "$tmp/small.png" -depth 8 rgba:"$tmp/small.rgba"
-python3 - "$tmp/small.rgba" "$out/flaaklypa.xpm" <<'EOF'
+python3 - "$tmp/small.rgba" "$out/fjelltoppen.xpm" <<'EOF'
 import sys
 size = 128
 data = open(sys.argv[1], 'rb').read()

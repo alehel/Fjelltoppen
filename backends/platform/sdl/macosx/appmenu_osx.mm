@@ -296,10 +296,10 @@ void replaceApplicationMenuItems() {
 		[[NSApp mainMenu] removeItemAtIndex:0];
 	}
 
-#ifdef FLAAKLYPA_APP
-	const Common::U32String aboutApp("Om Flåklypa Grand Prix");
-	const Common::U32String hideApp("Skjul Flåklypa Grand Prix");
-	const Common::U32String quitApp("Avslutt Flåklypa Grand Prix");
+#ifdef FJELLTOPPEN
+	const Common::U32String aboutApp("Om Fjelltoppen");
+	const Common::U32String hideApp("Skjul Fjelltoppen");
+	const Common::U32String quitApp("Avslutt Fjelltoppen");
 #else
 	const Common::U32String aboutApp(_("About ScummVM"));
 	const Common::U32String hideApp(_("Hide ScummVM"));

@@ -106,8 +106,8 @@ bool getApplicationDataDirectory(TCHAR *applicationDataDirectory) {
 		return false;
 	}
 
-#ifdef FLAAKLYPA_APP
-	_tcscat(applicationDataDirectory, TEXT("\\Flaaklypa Grand Prix"));
+#ifdef FJELLTOPPEN
+	_tcscat(applicationDataDirectory, TEXT("\\Fjelltoppen"));
 #else
 	_tcscat(applicationDataDirectory, TEXT("\\ScummVM"));
 #endif

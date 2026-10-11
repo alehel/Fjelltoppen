@@ -13,7 +13,7 @@ BZIP2_URL=https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
 BZIP2_SHA256=ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269
 
 # What ScummVM is configured with besides the platform's own options
-SCUMMVM_CONFIGURE_FLAGS="--enable-flaaklypa-app --disable-all-engines --enable-engine=flaaklypa
+SCUMMVM_CONFIGURE_FLAGS="--enable-fjelltoppen --disable-all-engines --enable-engine=flaaklypa
 	--disable-detection-full --disable-debug --enable-optimizations
 	--disable-updates --disable-cloud --disable-libcurl --disable-sdlnet --disable-discord
 	--disable-fribidi --disable-ogg --disable-vorbis --disable-tremor --disable-flac --disable-mad

@@ -46,7 +46,7 @@ WindowsSaveFileManager::WindowsSaveFileManager(bool isPortable) {
 		}
 	}
 
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 	// The player profiles
 	_tcscat(defaultSavepath, TEXT("\\Profiler"));
 #else

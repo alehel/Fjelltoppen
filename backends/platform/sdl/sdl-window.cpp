@@ -28,8 +28,8 @@
 #include "common/util.h"
 #include "common/config-manager.h"
 
-#ifdef FLAAKLYPA_APP
-#include "dists/flaaklypa/flaaklypa.xpm"
+#ifdef FJELLTOPPEN
+#include "dists/fjelltoppen/fjelltoppen.xpm"
 #else
 #include "icons/scummvm.xpm"
 #endif

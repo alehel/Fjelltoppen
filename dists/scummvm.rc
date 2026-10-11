@@ -15,8 +15,8 @@
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "dists/win32/scummvm.exe.manifest"
 
 // Common resources
-#ifdef FLAAKLYPA_APP
-IDI_ICON               ICON    "dists/flaaklypa/flaaklypa.ico"
+#ifdef FJELLTOPPEN
+IDI_ICON               ICON    "dists/fjelltoppen/fjelltoppen.ico"
 #else
 IDI_ICON               ICON    "icons/scummvm.ico"
 #endif
@@ -41,7 +41,7 @@ Roland_SC-55.sf2       FILE    "dists/soundfonts/Roland_SC-55.sf2"
 #ifdef BUILTIN_RESOURCES
 
 #include "dists/scummvm_rc_engine_data.rh"
-#ifndef FLAAKLYPA_APP
+#ifndef FJELLTOPPEN
 #include "dists/scummvm_rc_engine_data_big.rh"
 #endif
 
@@ -249,15 +249,15 @@ BEGIN
     BEGIN
         BLOCK "040904b0" // US English, Unicode
         BEGIN
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
             VALUE "Comments", "Built on ScummVM (https://www.scummvm.org)\0"
             VALUE "CompanyName", "scummvm.org\0"
-            VALUE "FileDescription", "Fl\xE5klypa Grand Prix\0"
+            VALUE "FileDescription", "Fjelltoppen, for Fl\xE5klypa Grand Prix\0"
             VALUE "FileVersion", SCUMMVM_VERSION "\0"
-            VALUE "InternalName", "flaaklypa\0"
+            VALUE "InternalName", "fjelltoppen\0"
             VALUE "LegalCopyright", "Copyright \xA9 2001-2026 The ScummVM Team\0"
-            VALUE "OriginalFilename", "Flaaklypa.exe\0"
-            VALUE "ProductName", "Fl\xE5klypa Grand Prix\0"
+            VALUE "OriginalFilename", "Fjelltoppen.exe\0"
+            VALUE "ProductName", "Fjelltoppen\0"
             VALUE "ProductVersion", SCUMMVM_VERSION "\0"
 #else
             VALUE "Comments", "Look! A three headed monkey (TM)! .. Nice use of the TM!\0"

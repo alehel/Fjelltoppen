@@ -35,8 +35,8 @@
 #include "base/commandLine.h"
 #include "base/plugins.h"
 #include "base/version.h"
-#ifdef FLAAKLYPA_APP
-#include "base/flaaklypa_app.h"
+#ifdef FJELLTOPPEN
+#include "base/fjelltoppen.h"
 #endif
 
 #include "common/archive.h"
@@ -474,8 +474,8 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		}
 	}
 
-#ifdef FLAAKLYPA_APP
-	FlaaklypaApp::updateStartSettings(settings);
+#ifdef FJELLTOPPEN
+	Fjelltoppen::updateStartSettings(settings);
 #endif
 
 	// Load the config file (possibly overridden via command line):
@@ -494,8 +494,8 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 	// Update the config file
 	ConfMan.set("versioninfo", gScummVMVersion, Common::ConfigManager::kApplicationDomain);
 
-#ifdef FLAAKLYPA_APP
-	FlaaklypaApp::registerDefaults();
+#ifdef FJELLTOPPEN
+	Fjelltoppen::registerDefaults();
 #endif
 
 	// Immediately remove possible residue for Dump All Dialogs feature
@@ -768,8 +768,8 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 
 	// Unless a game was specified, show the launcher dialog
 	if (nullptr == ConfMan.getActiveDomain() && !ConfMan.hasKey("dump_all_dialogs"))
-#ifdef FLAAKLYPA_APP
-		FlaaklypaApp::selectGame();
+#ifdef FJELLTOPPEN
+		Fjelltoppen::selectGame();
 #else
 		launcherDialog();
 #endif
@@ -885,7 +885,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 				GUI::displayErrorDialog(result, _("Error running game:"));
 			}
 
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 			// There is no launcher to return to
 			if (result.getCode() == Common::kNoError || result.getCode() == Common::kUserCanceled)
 				break;
@@ -946,9 +946,9 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		// reset the graphics to default
 		setupGraphics(system);
 		if (nullptr == ConfMan.getActiveDomain()) {
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 			// After an error, ask for the game data again if it went missing
-			if (!FlaaklypaApp::selectGame(true))
+			if (!Fjelltoppen::selectGame(true))
 				break;
 			continue;
 #endif

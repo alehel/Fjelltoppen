@@ -1,11 +1,11 @@
 #!/bin/sh
-# Builds "Flåklypa Grand Prix.app" and a disk image for macOS 11 and later:
+# Builds "Fjelltoppen.app" and a disk image for macOS 11 and later:
 # a universal binary (arm64 and x86_64) with SDL2, FreeType, libpng and
 # bzip2 built from source and linked statically. Needs an Apple Silicon Mac
 # with Rosetta (the x86_64 half is built under it) and the Xcode command
 # line tools. Homebrew and the like are kept out of the build.
 #
-# Usage: dists/flaaklypa/macos/build.sh [build dir]
+# Usage: dists/fjelltoppen/macos/build.sh [build dir]
 #
 # Environment:
 #   CODESIGN_IDENTITY  signing identity, e.g. "Developer ID Application: ..."
@@ -16,13 +16,13 @@
 set -e
 
 src=$(cd "$(dirname "$0")/../../.." && pwd)
-mkdir -p "${1:-build-flaaklypa-macos}"
-build=$(cd "${1:-build-flaaklypa-macos}" && pwd)
+mkdir -p "${1:-build-fjelltoppen-macos}"
+build=$(cd "${1:-build-fjelltoppen-macos}" && pwd)
 download="$build/download"
-. "$src/dists/flaaklypa/deps.sh"
+. "$src/dists/fjelltoppen/deps.sh"
 # The release workflow passes the version of its tag
-version=${FLAAKLYPA_VERSION:-$(cat "$src/dists/flaaklypa/VERSION")}
-name="Flåklypa Grand Prix"
+version=${FJELLTOPPEN_VERSION:-$(cat "$src/dists/fjelltoppen/VERSION")}
+name="Fjelltoppen"
 jobs=$(sysctl -n hw.ncpu)
 
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
@@ -79,15 +79,15 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$res/licenses"
 
 lipo -create "$build/arm64/scummvm/scummvm-static" "$build/x86_64/scummvm/scummvm-static" \
-	-output "$app/Contents/MacOS/flaaklypa"
-strip "$app/Contents/MacOS/flaaklypa"
+	-output "$app/Contents/MacOS/fjelltoppen"
+strip "$app/Contents/MacOS/fjelltoppen"
 
 scummvm_version=$(sed -n 's/^#define SCUMMVM_VERSION "\(.*\)"$/\1/p' "$src/base/internal_version.h")
 sed -e "s/@VERSION@/$version/g" -e "s/@SCUMMVM_VERSION@/$scummvm_version/g" \
-	"$src/dists/flaaklypa/macos/Info.plist.in" > "$app/Contents/Info.plist"
+	"$src/dists/fjelltoppen/macos/Info.plist.in" > "$app/Contents/Info.plist"
 printf "APPL????" > "$app/Contents/PkgInfo"
 
-cp "$src/dists/flaaklypa/flaaklypa.icns" "$res/"
+cp "$src/dists/fjelltoppen/fjelltoppen.icns" "$res/"
 for file in scummremastered.zip scummmodern.zip scummclassic.zip gui-icons.dat shaders.dat translations.dat; do
 	cp "$src/gui/themes/$file" "$res/"
 done
@@ -108,12 +108,12 @@ else
 fi
 
 stage="$build/dmg"
-dmg="$build/Flaaklypa-Grand-Prix-$version-macos.dmg"
+dmg="$build/Fjelltoppen-$version-macos.dmg"
 rm -rf "$stage" "$dmg"
 mkdir -p "$stage"
 cp -R "$app" "$stage/"
 ln -s /Applications "$stage/Programmer"
-cp "$src/dists/flaaklypa/LESMEG.txt" "$stage/Les meg.txt"
+cp "$src/dists/fjelltoppen/LESMEG.txt" "$stage/Les meg.txt"
 # hdiutil fails now and then with "Resource busy"
 for attempt in 1 2 3; do
 	hdiutil create -volname "$name" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$dmg" && break

@@ -410,7 +410,7 @@ public:
 	void runFrame();
 
 	bool hasFeature(EngineFeature f) const override {
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 		// The stand-alone application has no launcher
 		return false;
 #else

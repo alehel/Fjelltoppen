@@ -1,24 +1,24 @@
 #!/bin/sh
-# Builds the Windows application, a single static Flaaklypa.exe with the
+# Builds the Windows application, a single static Fjelltoppen.exe with the
 # GUI themes and fonts built in, and a zip with it. Cross-compiled with
 # MinGW-w64 in the container from the Dockerfile next to this script:
 #
-#   podman build -t flaaklypa-windows dists/flaaklypa/windows
+#   podman build -t fjelltoppen-windows dists/fjelltoppen/windows
 #   podman run --rm -v "$PWD:/src:ro" -v "$PWD/build-windows:/build" \
-#       flaaklypa-windows /src/dists/flaaklypa/windows/build.sh /build
+#       fjelltoppen-windows /src/dists/fjelltoppen/windows/build.sh /build
 
 set -e
 
 src=$(cd "$(dirname "$0")/../../.." && pwd)
-mkdir -p "${1:-build-flaaklypa-windows}"
-out=$(cd "${1:-build-flaaklypa-windows}" && pwd)
+mkdir -p "${1:-build-fjelltoppen-windows}"
+out=$(cd "${1:-build-fjelltoppen-windows}" && pwd)
 # Builds in the container's own file system: faster than a shared folder,
 # and the SDL2 sources have symlinks some shared folders refuse.
-build=${WORK:-/tmp/flaaklypa-windows}
+build=${WORK:-/tmp/fjelltoppen-windows}
 download="$out/download"
-. "$src/dists/flaaklypa/deps.sh"
+. "$src/dists/fjelltoppen/deps.sh"
 # The release workflow passes the version of its tag
-version=${FLAAKLYPA_VERSION:-$(cat "$src/dists/flaaklypa/VERSION")}
+version=${FJELLTOPPEN_VERSION:-$(cat "$src/dists/fjelltoppen/VERSION")}
 jobs=$(nproc)
 
 host=x86_64-w64-mingw32
@@ -60,16 +60,16 @@ mkdir -p "$build/scummvm"
 	--with-png-prefix="$prefix" --with-zlib-prefix="$prefix" &&
 	make -j$jobs)
 
-stage="$build/stage/Flaaklypa Grand Prix"
-zip="$out/Flaaklypa-Grand-Prix-$version-windows.zip"
+stage="$build/stage/Fjelltoppen"
+zip="$out/Fjelltoppen-$version-windows.zip"
 rm -rf "$build/stage" "$zip"
 mkdir -p "$stage/licenses"
-cp "$build/scummvm/scummvm.exe" "$stage/Flaaklypa.exe"
-$STRIP "$stage/Flaaklypa.exe"
-sed 's/$/\r/' "$src/dists/flaaklypa/LESMEG.txt" > "$stage/Les meg.txt"
+cp "$build/scummvm/scummvm.exe" "$stage/Fjelltoppen.exe"
+$STRIP "$stage/Fjelltoppen.exe"
+sed 's/$/\r/' "$src/dists/fjelltoppen/LESMEG.txt" > "$stage/Les meg.txt"
 cp "$src/AUTHORS" "$src/COPYRIGHT" "$stage/licenses/"
 cp "$src/COPYING" "$src"/LICENSES/* "$stage/licenses/"
-(cd "$build/stage" && zip -qr -X "$zip" "Flaaklypa Grand Prix")
+(cd "$build/stage" && zip -qr -X "$zip" "Fjelltoppen")
 rm -rf "$build/stage"
 
 echo "Built $zip"

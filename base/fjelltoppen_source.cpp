@@ -19,14 +19,14 @@
  *
  */
 
-#include "base/flaaklypa_source.h"
+#include "base/fjelltoppen_source.h"
 
 #include "common/algorithm.h"
 #include "common/endian.h"
 #include "common/tokenizer.h"
 #include "common/ustr.h"
 
-namespace FlaaklypaApp {
+namespace Fjelltoppen {
 
 static Common::FSNode child(const Common::FSNode &dir, const Common::String &name) {
 	Common::FSList list;
@@ -284,4 +284,4 @@ Common::SeekableReadStream *DiscImage::open(const SourceFile &file) const {
 	return new ImageStream(*this, file.sector, file.size);
 }
 
-} // End of namespace FlaaklypaApp
+} // End of namespace Fjelltoppen

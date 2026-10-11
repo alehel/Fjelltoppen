@@ -4,22 +4,22 @@
 # and PipeWire at run time). Runs in the container from the Dockerfile next
 # to this script, for the container's architecture:
 #
-#   podman build -t flaaklypa-linux dists/flaaklypa/linux
+#   podman build -t fjelltoppen-linux dists/fjelltoppen/linux
 #   podman run --rm -v "$PWD:/src:ro" -v "$PWD/build-linux:/build" \
-#       flaaklypa-linux /src/dists/flaaklypa/linux/build.sh /build
+#       fjelltoppen-linux /src/dists/fjelltoppen/linux/build.sh /build
 
 set -e
 
 src=$(cd "$(dirname "$0")/../../.." && pwd)
-mkdir -p "${1:-build-flaaklypa-linux}"
-out=$(cd "${1:-build-flaaklypa-linux}" && pwd)
+mkdir -p "${1:-build-fjelltoppen-linux}"
+out=$(cd "${1:-build-fjelltoppen-linux}" && pwd)
 # Builds in the container's own file system: faster than a shared folder,
 # and the SDL2 sources have symlinks some shared folders refuse.
-build=${WORK:-/tmp/flaaklypa-linux}
+build=${WORK:-/tmp/fjelltoppen-linux}
 download="$out/download"
-. "$src/dists/flaaklypa/deps.sh"
+. "$src/dists/fjelltoppen/deps.sh"
 # The release workflow passes the version of its tag
-version=${FLAAKLYPA_VERSION:-$(cat "$src/dists/flaaklypa/VERSION")}
+version=${FJELLTOPPEN_VERSION:-$(cat "$src/dists/fjelltoppen/VERSION")}
 arch=$(uname -m)
 jobs=$(nproc)
 
@@ -63,18 +63,18 @@ mkdir -p "$build/$arch/scummvm"
 appdir="$build/$arch/AppDir"
 rm -rf "$appdir"
 (cd "$build/$arch/scummvm" && make install DESTDIR="$appdir")
-mv "$appdir/usr/bin/scummvm" "$appdir/usr/bin/flaaklypa"
-strip "$appdir/usr/bin/flaaklypa"
+mv "$appdir/usr/bin/scummvm" "$appdir/usr/bin/fjelltoppen"
+strip "$appdir/usr/bin/fjelltoppen"
 # ScummVM's own desktop integration, and the CJK fonts the game does not need
 rm -rf "$appdir/usr/share/applications" "$appdir/usr/share/metainfo" "$appdir/usr/share/icons" \
 	"$appdir/usr/share/pixmaps" "$appdir/usr/share/man" "$appdir/usr/share/scummvm/fonts-cjk.dat"
-mv "$appdir/usr/share/doc/scummvm" "$appdir/usr/share/doc/flaaklypa"
-cp "$src/dists/flaaklypa/LESMEG.txt" "$appdir/usr/share/doc/flaaklypa/"
-cp "$src/dists/flaaklypa/linux/flaaklypa.desktop" "$src/dists/flaaklypa/flaaklypa.png" "$appdir/"
-ln -s flaaklypa.png "$appdir/.DirIcon"
-ln -s usr/bin/flaaklypa "$appdir/AppRun"
+mv "$appdir/usr/share/doc/scummvm" "$appdir/usr/share/doc/fjelltoppen"
+cp "$src/dists/fjelltoppen/LESMEG.txt" "$appdir/usr/share/doc/fjelltoppen/"
+cp "$src/dists/fjelltoppen/linux/fjelltoppen.desktop" "$src/dists/fjelltoppen/fjelltoppen.png" "$appdir/"
+ln -s fjelltoppen.png "$appdir/.DirIcon"
+ln -s usr/bin/fjelltoppen "$appdir/AppRun"
 
-image="$out/Flaaklypa-Grand-Prix-$version-linux-$arch.AppImage"
+image="$out/Fjelltoppen-$version-linux-$arch.AppImage"
 ARCH=$arch /opt/appimagetool.AppDir/AppRun --no-appstream --runtime-file /opt/runtime "$appdir" "$image"
 
 echo "Built $image"

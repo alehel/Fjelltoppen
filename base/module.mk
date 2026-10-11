@@ -7,10 +7,10 @@ MODULE_OBJS := \
 	plugins.o \
 	version.o
 
-ifdef FLAAKLYPA_APP
+ifdef FJELLTOPPEN
 MODULE_OBJS += \
-	flaaklypa_app.o \
-	flaaklypa_source.o
+	fjelltoppen.o \
+	fjelltoppen_source.o
 endif
 
 # Include common rules

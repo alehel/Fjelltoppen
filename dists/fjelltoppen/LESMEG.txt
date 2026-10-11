@@ -1,20 +1,20 @@
-Flåklypa Grand Prix
-===================
+Fjelltoppen
+===========
 
-Dette er Flåklypa Grand Prix (Gullutgaven fra 2002) for moderne
-maskiner. Programmet inneholder ikke selve spillet: du trenger de
-originale CD-ene.
+Fjelltoppen er et uoffisielt program for å spille Flåklypa Grand Prix
+(Gullutgaven fra 2002) på moderne maskiner. Det inneholder ikke selve
+spillet: du trenger de originale CD-ene.
 
 
 Første gang du starter
 ----------------------
 
-Spillet ber deg velge CD 1, et diskbilde av den, eller en mappe der
+Fjelltoppen ber deg velge CD 1, et diskbilde av den, eller en mappe der
 spillet er installert eller kopiert (mappen som inneholder «data» og
 «lang»).
 
 Velger du CD-ene eller diskbildene, kopieres dataene til maskinen
-(omtrent 1 GB). Når CD 1 er kopiert, ber spillet om CD 2. Etterpå
+(omtrent 1 GB). Når CD 1 er kopiert, ber Fjelltoppen om CD 2. Etterpå
 trenger du ikke CD-ene.
 
 Diskbildene kan være .iso, .bin eller .mdf (fra Alcohol 120%; velg
@@ -26,9 +26,9 @@ Bare Gullutgaven (versjon 1.2) støttes foreløpig.
 Hvor ligger dataene og profilene?
 ---------------------------------
 
-macOS:   ~/Library/Application Support/Flaaklypa Grand Prix
-Windows: %APPDATA%\Flaaklypa Grand Prix
-Linux:   ~/.local/share/flaaklypa (innstillingene i ~/.config/flaaklypa)
+macOS:   ~/Library/Application Support/Fjelltoppen
+Windows: %APPDATA%\Fjelltoppen
+Linux:   ~/.local/share/fjelltoppen (innstillingene i ~/.config/fjelltoppen)
 
 «Spilldata» er dataene som er kopiert fra CD-ene, «Profiler» er
 spillerprofilene.
@@ -37,7 +37,7 @@ spillerprofilene.
 Første start på macOS
 ---------------------
 
-Programmet er ikke godkjent av Apple. Første gang: høyreklikk på
+Fjelltoppen er ikke godkjent av Apple. Første gang: høyreklikk på
 programmet og velg «Åpne». Får du bare valget «Flytt til papirkurven»,
 åpner du Systeminnstillinger > Personvern og sikkerhet og trykker
 «Åpne likevel».
@@ -58,13 +58,15 @@ med fn-tasten i tillegg hvis F5 styrer noe annet).
 Alt+Enter (Option+Retur på Mac) skifter mellom vindu og fullskjerm.
 
 
-Om programmet
--------------
+Om Fjelltoppen
+--------------
 
-Programmet bygger på ScummVM (https://www.scummvm.org) og er fri
+Fjelltoppen bygger på ScummVM (https://www.scummvm.org) og er fri
 programvare under GNU General Public License versjon 3 eller senere.
 Kildekoden finnes på https://github.com/alehel/scummvm (grenen
 «flaaklypa»).
 
 Flåklypa Grand Prix ble laget av Capricornus Computer Game Productions
-AS (Caprino Video Games). Dette er et uoffisielt fanprosjekt.
+AS (Caprino Video Games). Fjelltoppen er et uoffisielt fanprosjekt uten
+noen tilknytning til dem eller andre rettighetshavere til Flåklypa
+Grand Prix.

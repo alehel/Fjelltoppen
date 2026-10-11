@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>nb</string>
 	<key>CFBundleDisplayName</key>
-	<string>Flåklypa Grand Prix</string>
+	<string>Fjelltoppen</string>
 	<key>CFBundleExecutable</key>
-	<string>flaaklypa</string>
+	<string>fjelltoppen</string>
 	<key>CFBundleGetInfoString</key>
-	<string>@VERSION@, built on ScummVM @SCUMMVM_VERSION@</string>
+	<string>@VERSION@, for Flåklypa Grand Prix, built on ScummVM @SCUMMVM_VERSION@</string>
 	<key>CFBundleIconFile</key>
-	<string>flaaklypa.icns</string>
+	<string>fjelltoppen.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>io.github.alehel.flaaklypa</string>
+	<string>io.github.alehel.fjelltoppen</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLocalizations</key>
@@ -22,7 +22,7 @@
 		<string>en</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>Flåklypa Grand Prix</string>
+	<string>Fjelltoppen</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -36,7 +36,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Built on ScummVM, copyright 2001-2026 The ScummVM Team. Free software under the GNU GPL version 3 or later.</string>
+	<string>An unofficial runner for Flåklypa Grand Prix, not affiliated with its makers. Built on ScummVM, copyright 2001-2026 The ScummVM Team. Free software under the GNU GPL version 3 or later.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSRequiresAquaSystemAppearance</key>

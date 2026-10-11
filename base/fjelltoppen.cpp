@@ -27,8 +27,8 @@
 #define FORBIDDEN_SYMBOL_EXCEPTION_getenv
 #endif
 
-#include "base/flaaklypa_app.h"
-#include "base/flaaklypa_source.h"
+#include "base/fjelltoppen.h"
+#include "base/fjelltoppen_source.h"
 #include "base/plugins.h"
 
 #include "common/config-manager.h"
@@ -55,9 +55,12 @@
 #include "backends/platform/sdl/win32/win32_wrapper.h"
 #endif
 
-namespace FlaaklypaApp {
+namespace Fjelltoppen {
 
-static const char *const kAppName = "Flåklypa Grand Prix";
+static const char *const kAppName = "Fjelltoppen";
+static const char *const kGameName = "Flåklypa Grand Prix";
+// The window's title while the game runs
+static const char *const kGameCaption = "Flåklypa Grand Prix – Fjelltoppen";
 static const char *const kEngineId = "flaaklypa";
 
 // The game's directories; the first four are on CD 1, the rest on CD 2
@@ -88,14 +91,14 @@ static Common::Path appDataDir() {
 #elif defined(MACOSX)
 	const char *home = getenv("HOME");
 	if (home && *home)
-		return Common::Path(home, Common::Path::kNativeSeparator).join("Library/Application Support/Flaaklypa Grand Prix");
+		return Common::Path(home, Common::Path::kNativeSeparator).join("Library/Application Support/Fjelltoppen");
 #elif defined(POSIX)
 	const char *data = getenv("XDG_DATA_HOME");
 	if (data && *data)
-		return Common::Path(data, Common::Path::kNativeSeparator).appendComponent("flaaklypa");
+		return Common::Path(data, Common::Path::kNativeSeparator).appendComponent("fjelltoppen");
 	const char *home = getenv("HOME");
 	if (home && *home)
-		return Common::Path(home, Common::Path::kNativeSeparator).join(".local/share/flaaklypa");
+		return Common::Path(home, Common::Path::kNativeSeparator).join(".local/share/fjelltoppen");
 #endif
 	return Common::Path();
 }
@@ -104,10 +107,10 @@ static Common::Path appConfigDir() {
 #if defined(POSIX) && !defined(MACOSX)
 	const char *config = getenv("XDG_CONFIG_HOME");
 	if (config && *config)
-		return Common::Path(config, Common::Path::kNativeSeparator).appendComponent("flaaklypa");
+		return Common::Path(config, Common::Path::kNativeSeparator).appendComponent("fjelltoppen");
 	const char *home = getenv("HOME");
 	if (home && *home)
-		return Common::Path(home, Common::Path::kNativeSeparator).join(".config/flaaklypa");
+		return Common::Path(home, Common::Path::kNativeSeparator).join(".config/fjelltoppen");
 #endif
 	return appDataDir();
 }
@@ -211,10 +214,10 @@ void updateStartSettings(Common::StringMap &settings) {
 		return;
 	Common::Path dir = appConfigDir();
 	if (dir.empty() || !makeDirs(dir)) {
-		warning("FlaaklypaApp: cannot create %s, using the default config file", dir.toString(Common::Path::kNativeSeparator).c_str());
+		warning("Fjelltoppen: cannot create %s, using the default config file", dir.toString(Common::Path::kNativeSeparator).c_str());
 		return;
 	}
-	settings["config"] = dir.appendComponent("flaaklypa.ini").toString(Common::Path::kNativeSeparator);
+	settings["config"] = dir.appendComponent("fjelltoppen.ini").toString(Common::Path::kNativeSeparator);
 }
 
 void registerDefaults() {
@@ -476,7 +479,7 @@ static bool useGameDir(const Common::FSNode &dir, const Common::String &target) 
 	if (!detectGame(dir, game)) {
 		AppMessage error(Common::String::format(
 			"Denne utgaven av %s kan ikke spilles ennå.\n\nBare Gullutgaven (versjon 1.2) støttes.",
-			kAppName).decode());
+			kGameName).decode());
 		error.run("unknown");
 		return false;
 	}
@@ -485,7 +488,7 @@ static bool useGameDir(const Common::FSNode &dir, const Common::String &target) 
 	if (domain.empty())
 		domain = EngineMan.createTargetForGame(game);
 	ConfMan.setPath("path", dir.getPath(), domain);
-	ConfMan.set("description", kAppName, domain);
+	ConfMan.set("description", kGameCaption, domain);
 	ConfMan.setActiveDomain(domain);
 	ConfMan.flushToDisk();
 	return true;
@@ -503,13 +506,17 @@ static bool askForGameData(const Common::String &target) {
 	const Common::Path copyDir = appDataDir().appendComponent("Spilldata");
 
 	Common::String message(
-		"Spillet trenger dataene fra Flåklypa Grand Prix Gullutgave.\n"
 		"Velg CD 1 eller et diskbilde av den (.iso, .mdf), eller en mappe\n"
 		"der spillet er installert eller kopiert.\n\n"
 		"Fra CD-ene blir dataene kopiert til denne maskinen\n"
 		"(omtrent 1 GB), så du ikke trenger CD-ene senere.");
 	if (target.empty())
-		message = Common::String::format("Velkommen til %s!\n\n", kAppName) + message;
+		message = Common::String::format(
+			"Velkommen til %s!\n\n"
+			"%s er et uoffisielt program for å spille\n"
+			"%s Gullutgave på moderne maskiner.\n\n", kAppName, kAppName, kGameName) + message;
+	else
+		message = Common::String::format("%s trenger dataene fra %s Gullutgave.\n", kAppName, kGameName) + message;
 	const char *disc = "CD 1";
 	bool first = true;
 
@@ -555,7 +562,7 @@ static bool askForGameData(const Common::String &target) {
 		if (!parts) {
 			AppMessage error(Common::String::format(
 				"Fant ikke %s i\n%s\n\nVelg CD-en, et diskbilde av den, eller mappen\nsom inneholder mappene «data» og «lang».",
-				kAppName, nativePath(node).c_str()).decode());
+				kGameName, nativePath(node).c_str()).decode());
 			error.run("notfound");
 			continue;
 		}
@@ -587,6 +594,8 @@ bool selectGame(bool afterError) {
 		if (findParts(FolderSource(dir)) == kPartsAll) {
 			if (afterError)
 				return false;
+			// Targets of earlier versions carry another title
+			ConfMan.set("description", kGameCaption, target);
 			ConfMan.setActiveDomain(target);
 			return true;
 		}
@@ -608,4 +617,4 @@ bool selectGame(bool afterError) {
 	return askForGameData(target);
 }
 
-} // End of namespace FlaaklypaApp
+} // End of namespace Fjelltoppen

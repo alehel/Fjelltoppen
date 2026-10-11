@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Fjelltoppen
+Comment=Spill Flåklypa Grand Prix Gullutgave fra de originale CD-ene (uoffisielt)
+Exec=fjelltoppen
+Icon=fjelltoppen
+Categories=Game;
+Keywords=Flåklypa;Grand Prix;Reodor Felgen;Solan;Ludvig;
+Terminal=false

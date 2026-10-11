@@ -1,8 +1,9 @@
-name: Flaaklypa Grand Prix release
-# Builds the stand-alone application for every platform with the scripts in
-# dists/flaaklypa, and publishes a release with the packages for a tag on
-# the flaaklypa branch. The tag is the version: v0.2.0, or v0.2.0-beta1 for
-# a pre-release. Run by hand, it only builds.
+name: Fjelltoppen release
+# Builds Fjelltoppen, the stand-alone Flaaklypa Grand Prix runner, for every
+# platform with the scripts in dists/fjelltoppen, and publishes a release
+# with the packages for a tag on the flaaklypa branch. The tag is the
+# version: v0.2.0, or v0.2.0-beta1 for a pre-release. Run by hand, it only
+# builds.
 on:
   push:
     tags:
@@ -38,13 +39,13 @@ jobs:
     needs: check
     runs-on: macos-15
     env:
-      FLAAKLYPA_VERSION: ${{ needs.check.outputs.version }}
+      FJELLTOPPEN_VERSION: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Rosetta
         run: sudo softwareupdate --install-rosetta --agree-to-license
       - name: Build
-        run: dists/flaaklypa/macos/build.sh build
+        run: dists/fjelltoppen/macos/build.sh build
       - uses: actions/upload-artifact@v4
         with:
           name: macos
@@ -55,14 +56,14 @@ jobs:
     needs: check
     runs-on: ubuntu-24.04
     env:
-      FLAAKLYPA_VERSION: ${{ needs.check.outputs.version }}
+      FJELLTOPPEN_VERSION: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - name: Build
         run: |
-          docker build -t flaaklypa-windows dists/flaaklypa/windows
-          docker run --rm -e FLAAKLYPA_VERSION -v "$PWD:/src:ro" -v "$PWD/build:/build" \
-            flaaklypa-windows /src/dists/flaaklypa/windows/build.sh /build
+          docker build -t fjelltoppen-windows dists/fjelltoppen/windows
+          docker run --rm -e FJELLTOPPEN_VERSION -v "$PWD:/src:ro" -v "$PWD/build:/build" \
+            fjelltoppen-windows /src/dists/fjelltoppen/windows/build.sh /build
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -80,14 +81,14 @@ jobs:
           - arch: aarch64
             runner: ubuntu-24.04-arm
     env:
-      FLAAKLYPA_VERSION: ${{ needs.check.outputs.version }}
+      FJELLTOPPEN_VERSION: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - name: Build
         run: |
-          docker build -t flaaklypa-linux dists/flaaklypa/linux
-          docker run --rm -e FLAAKLYPA_VERSION -v "$PWD:/src:ro" -v "$PWD/build:/build" \
-            flaaklypa-linux /src/dists/flaaklypa/linux/build.sh /build
+          docker build -t fjelltoppen-linux dists/fjelltoppen/linux
+          docker run --rm -e FJELLTOPPEN_VERSION -v "$PWD:/src:ro" -v "$PWD/build:/build" \
+            fjelltoppen-linux /src/dists/fjelltoppen/linux/build.sh /build
       - uses: actions/upload-artifact@v4
         with:
           name: linux-${{ matrix.arch }}
@@ -103,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: dists/flaaklypa
+          sparse-checkout: dists/fjelltoppen
       - uses: actions/download-artifact@v4
         with:
           path: packages
@@ -116,4 +117,4 @@ jobs:
           prerelease=
           case "$VERSION" in *-*) prerelease=--prerelease ;; esac
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag $prerelease \
-            --title "Flåklypa Grand Prix $VERSION" --notes-file dists/flaaklypa/release-notes.md packages/*
+            --title "Fjelltoppen $VERSION" --notes-file dists/fjelltoppen/release-notes.md packages/*

@@ -1,13 +1,15 @@
-# Flåklypa Grand Prix as a stand-alone application
+# Fjelltoppen
 
-ScummVM built with only the `flaaklypa` engine and `--enable-flaaklypa-app`
-(`FLAAKLYPA_APP`), packaged under the game's name with its own icon:
+Fjelltoppen is an unofficial runner for Flåklypa Grand Prix: ScummVM built
+with only the `flaaklypa` engine and `--enable-fjelltoppen` (`FJELLTOPPEN`),
+packaged under its own name (so it does not pass for an official release)
+with its own icon:
 
-* No launcher: `base/flaaklypa_app.cpp` starts the game, and asks for the
+* No launcher: `base/fjelltoppen.cpp` starts the game, and asks for the
   game data on the first launch. A folder with all of it (an installed
   copy) is used where it is; the two CDs, or their images, are copied one
   after the other to the application's folder (`Spilldata`). Images are
-  read directly (`base/flaaklypa_source.cpp`: ISO 9660 with Joliet names
+  read directly (`base/fjelltoppen_source.cpp`: ISO 9660 with Joliet names
   in .iso, raw .bin and Alcohol .mdf/.mds). If the data goes missing later
   (a disconnected disk), it asks again.
 * Its own config file and saves (the player profiles, `Profiler`),
@@ -15,14 +17,15 @@ ScummVM built with only the `flaaklypa` engine and `--enable-flaaklypa-app`
 
   | | Config | Profiles and copied data |
   |-|--------|--------------------------|
-  | macOS | `~/Library/Application Support/Flaaklypa Grand Prix/flaaklypa.ini` | same folder |
-  | Windows | `%APPDATA%\Flaaklypa Grand Prix\flaaklypa.ini` | same folder |
-  | Linux | `~/.config/flaaklypa/flaaklypa.ini` | `~/.local/share/flaaklypa` |
+  | macOS | `~/Library/Application Support/Fjelltoppen/fjelltoppen.ini` | same folder |
+  | Windows | `%APPDATA%\Fjelltoppen\fjelltoppen.ini` | same folder |
+  | Linux | `~/.config/fjelltoppen/fjelltoppen.ini` | `~/.local/share/fjelltoppen` |
 
 * No "Return to Launcher" in the global menu; quitting the game quits the
   application. The unsupported game warning is off.
 * The macOS application menu, the Windows version resource and the window
-  icon carry the game's name.
+  icon carry the name Fjelltoppen; while the game runs, the window's
+  title is "Flåklypa Grand Prix – Fjelltoppen".
 
 `LESMEG.txt` is the read-me shipped with the packages (in Norwegian).
 
@@ -34,9 +37,9 @@ zlib, bzip2), built from source and linked statically.
 * macOS (universal arm64/x86_64, macOS 11+), on an Apple Silicon Mac with
   Rosetta and the Xcode command line tools:
 
-      dists/flaaklypa/macos/build.sh build-macos
+      dists/fjelltoppen/macos/build.sh build-macos
 
-  Gives `Flåklypa Grand Prix.app` and `Flaaklypa-Grand-Prix-<version>-macos.dmg`.
+  Gives `Fjelltoppen.app` and `Fjelltoppen-<version>-macos.dmg`.
   Without `CODESIGN_IDENTITY` the application has an ad-hoc signature, so
   other Macs show the Gatekeeper warning described in `LESMEG.txt`. With a
   Developer ID, `CODESIGN_IDENTITY="Developer ID Application: ..."` and
@@ -44,22 +47,22 @@ zlib, bzip2), built from source and linked statically.
   it.
 
 * Windows (x86_64), cross-compiled with MinGW-w64 in a container: one
-  static `Flaaklypa.exe` with the themes and fonts built in, in
-  `Flaaklypa-Grand-Prix-<version>-windows.zip`:
+  static `Fjelltoppen.exe` with the themes and fonts built in, in
+  `Fjelltoppen-<version>-windows.zip`:
 
-      podman build -t flaaklypa-windows dists/flaaklypa/windows
+      podman build -t fjelltoppen-windows dists/fjelltoppen/windows
       podman run --rm -v "$PWD:/src:ro" -v "$PWD/build-windows:/build" \
-          flaaklypa-windows /src/dists/flaaklypa/windows/build.sh /build
+          fjelltoppen-windows /src/dists/fjelltoppen/windows/build.sh /build
 
 * Linux AppImage, for the container's architecture (Ubuntu 22.04, so
   glibc 2.35 or newer):
 
-      podman build -t flaaklypa-linux dists/flaaklypa/linux
+      podman build -t fjelltoppen-linux dists/fjelltoppen/linux
       podman run --rm -v "$PWD:/src:ro" -v "$PWD/build-linux:/build" \
-          flaaklypa-linux /src/dists/flaaklypa/linux/build.sh /build
+          fjelltoppen-linux /src/dists/fjelltoppen/linux/build.sh /build
 
 `VERSION` is the version of local builds; the release workflow passes
-the tag's version instead (`FLAAKLYPA_VERSION`).
+the tag's version instead (`FJELLTOPPEN_VERSION`).
 
 ## Releasing
 
@@ -70,7 +73,7 @@ makes a release:
     git tag v0.2.0
     git push origin flaaklypa v0.2.0
 
-The workflow `.github/workflows/flaaklypa-app.yml` then builds the four
+The workflow `.github/workflows/fjelltoppen.yml` then builds the four
 packages (macOS, Windows, Linux x86_64 and aarch64) with the scripts above
 and publishes a GitHub release with them and `release-notes.md`. A version
 with a dash (`v0.2.0-beta1`) is a pre-release; a tag that is not on

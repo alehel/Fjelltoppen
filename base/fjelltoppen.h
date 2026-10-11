@@ -19,18 +19,18 @@
  *
  */
 
-#ifndef BASE_FLAAKLYPA_APP_H
-#define BASE_FLAAKLYPA_APP_H
+#ifndef BASE_FJELLTOPPEN_H
+#define BASE_FJELLTOPPEN_H
 
 #include "common/hash-str.h"
 
 /**
- * The stand-alone Flåklypa Grand Prix application (configure
- * --enable-flaaklypa-app): it starts the game instead of the launcher,
+ * Fjelltoppen, the stand-alone Flåklypa Grand Prix runner (configure
+ * --enable-fjelltoppen): it starts the game instead of the launcher,
  * keeps its config and saves apart from ScummVM's, and asks for the game
  * data on the first launch, copying it from the two CDs if needed.
  */
-namespace FlaaklypaApp {
+namespace Fjelltoppen {
 
 /** Puts the config file in the application's folder, unless --config is given. */
 void updateStartSettings(Common::StringMap &settings);
@@ -45,6 +45,6 @@ void registerDefaults();
  */
 bool selectGame(bool afterError = false);
 
-} // End of namespace FlaaklypaApp
+} // End of namespace Fjelltoppen
 
 #endif

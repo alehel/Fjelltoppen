@@ -89,7 +89,7 @@ MainMenuDialog::MainMenuDialog(Engine *engine)
 	else
 		_returnToLauncherButton = new GUI::ButtonWidget(this, "GlobalMenu.ReturnToLauncher", _c("~R~eturn to Launcher", "lowres"), Common::U32String(), kLauncherCmd);
 	_returnToLauncherButton->setEnabled(_engine->hasFeature(Engine::kSupportsReturnToLauncher));
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 	// The stand-alone application has no launcher
 	_returnToLauncherButton->setVisible(false);
 #endif

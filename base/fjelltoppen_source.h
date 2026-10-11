@@ -19,15 +19,15 @@
  *
  */
 
-#ifndef BASE_FLAAKLYPA_SOURCE_H
-#define BASE_FLAAKLYPA_SOURCE_H
+#ifndef BASE_FJELLTOPPEN_SOURCE_H
+#define BASE_FJELLTOPPEN_SOURCE_H
 
 #include "common/array.h"
 #include "common/fs.h"
 #include "common/hash-str.h"
 #include "common/stream.h"
 
-namespace FlaaklypaApp {
+namespace Fjelltoppen {
 
 /** A file the game data can be copied from. */
 struct SourceFile {
@@ -103,6 +103,6 @@ private:
 	EntryMap _entries;
 };
 
-} // End of namespace FlaaklypaApp
+} // End of namespace Fjelltoppen
 
 #endif

@@ -91,9 +91,9 @@ POSIXSaveFileManager::POSIXSaveFileManager() {
 		}
 
 		// Our default save path is '$XDG_DATA_HOME/scummvm/saves'
-#ifdef FLAAKLYPA_APP
+#ifdef FJELLTOPPEN
 		// The player profiles
-		savePath.joinInPlace("flaaklypa/Profiler");
+		savePath.joinInPlace("fjelltoppen/Profiler");
 #else
 		savePath.joinInPlace("scummvm/saves");
 #endif
