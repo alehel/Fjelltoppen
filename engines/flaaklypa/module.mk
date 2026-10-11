@@ -27,6 +27,7 @@ MODULE_OBJS = \
 	hopscotch.o \
 	house.o \
 	hustle.o \
+	info.o \
 	intent.o \
 	intro.o \
 	lettersort.o \

@@ -786,9 +786,13 @@ void ButtercolScene::onMouseDown(int hotspot, int x, int y) {
 		return;
 	}
 	if (hotspot >= kHotspotFirst && hotspot < kHotspotFirst + ButterflyScene::kSpeciesCount) {
-		// TODO: the "info" fact page about species hotspot - 20 (FUN_0040cd70("info")
-		// with the descriptor at 0x666c48: title "butterfly", list 0x4d8c50).
-		debug(1, "Buttercol: info page for species %d not implemented", hotspot - kHotspotFirst);
+		// FUN_0043a3b0: the info page about the species (request 0x666c48)
+		InfoRequest r;
+		r.kind = "butterfly";
+		r.returnScene = "buttercol";
+		r.category = kAwardButterfly;
+		r.index = hotspot - kHotspotFirst;
+		_vm->showInfo(r);
 	}
 }
 

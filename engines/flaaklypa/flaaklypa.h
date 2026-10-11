@@ -59,6 +59,20 @@ enum {
 	kScreenHeight = 600
 };
 
+/**
+ * What the "info" scene shows (the caller's struct, e.g. 0x666c48): the
+ * kind (<kind>.ini, common/bitmap/large/<kind>_NN), where to return, the
+ * award category whose won items it pages through (-1: all), and the
+ * item; the scene leaves the item it showed last in index.
+ */
+struct InfoRequest {
+	Common::String kind;
+	Common::String returnScene;
+	int returnArg = 0;
+	int category = -1;
+	int index = 0;
+};
+
 class FlaaklypaEngine : public Engine {
 private:
 	const ADGameDescription *_gameDescription;
@@ -90,7 +104,8 @@ private:
 	uint32 _frozenTotal = 0;
 	Common::Point _mousePos;
 	int _profileSlot = -1;         ///< save slot of _profile
-	int64 _playTimeStart = -1;     ///< DAT_004a6c9c: when the profile was selected (ms), -1 once checked
+	int64 _playTimeStart = -1;
+	InfoRequest _infoRequest;     ///< DAT_004a6c9c: when the profile was selected (ms), -1 once checked
 	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
@@ -152,6 +167,13 @@ public:
 	 */
 	void setGameRunning(bool running) { _gameRunning = running; }
 	bool isGameRunning() const { return _gameRunning; }
+
+	/** Opens the info scene with a request (FUN_0040cd70("info", &request)). */
+	void showInfo(const InfoRequest &request) {
+		_infoRequest = request;
+		changeScene("info", 1);
+	}
+	InfoRequest &infoRequest() { return _infoRequest; }
 
 	/** Looks up "section:KEY" in lang/common/language.ini (Windows-1252), like the original's LANG_Get. */
 	Common::String getString(const Common::String &key);

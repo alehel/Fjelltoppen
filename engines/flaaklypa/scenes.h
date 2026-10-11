@@ -195,6 +195,40 @@ private:
 	Common::String _clip;  ///< the chosen clip's element
 };
 
+/** "Infosenter": a page about one butterfly, car or track (FlaaklypaEngine::showInfo()). */
+class InfoScene : public Scene {
+public:
+	InfoScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onClose() override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	bool handlesKey(const Common::KeyState &key) override;
+	void onKey(const Common::KeyState &key) override;
+
+private:
+	struct Paragraph {
+		Common::String text;
+		int font;
+	};
+	struct Page {
+		Common::String name;
+		Common::Array<Paragraph> paragraphs;
+	};
+
+	void show(int index);
+	void step(int delta);
+	void leave();
+
+	SceneButtons _buttons;
+	BitmapFont _fonts[3];
+	InfoRequest _request;
+	Common::Array<Page> _sections;
+	int _index;
+};
+
 /** Story page 1: the yard (tunet). */
 class YardScene : public Scene {
 public:

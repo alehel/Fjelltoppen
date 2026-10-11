@@ -1595,6 +1595,25 @@ ported). Buttons help 1, exit 2, prev 3 / next 4 (cycle). Exit and
 Escape (consumed) go back to `tvroom` if the profile has visited it,
 else to the scene index (`FUN_004690f0`). Space stops the presentation.
 
+## Info pages (`info`, "Infosenter")
+
+Handler `FUN_004691f0` (`info.cpp`). Started with a request struct as the
+scene argument (`FUN_0040cd70("info", &req)`): {?, kind, return scene,
+return arg, award category, item}; the butterfly album passes
+{"butterfly", "buttercol", 0, 7, species} (0x666c48, `FUN_0043a3b0`, the
+species' hotspot - 20), the race menu cars and tracks. Engine:
+`FlaaklypaEngine::showInfo(InfoRequest)`. The page shows
+`common/bitmap/large/<kind>_NN` (item + 1) centred in (18,85)-(512,579)
+and, in the text box (548,85)-(778,494), the section of `<kind>.ini`
+numbered by the item (butterflies through `FUN_0041b3d0`): `text<n>`
+paragraphs word wrapped in `font<n>` (0..2: Amerigo BT 10/14/18), an
+empty one a line high, `<NAME>` replaced by the award item's name. The
+title is the scene name in `Amerigo BT_18_` centred in (205,12)-(589,60).
+Prev/next (3/4, opaque, bitmaps only while pressed) step through the
+sections, skipping items of the award category not won
+(`FUN_00469860`). Exit and Escape (consumed) return to the caller, which
+gets the last item back in the request (`FUN_00469760`).
+
 ## Activity `movieplayer` ("Filmfremviser", from `tvstation`)
 
 Handler `FUN_0046d480` (`movieplayer.cpp`); no music (`FUN_0040b2f0`).
