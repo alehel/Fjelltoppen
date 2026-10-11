@@ -29,6 +29,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -298,8 +299,14 @@ void BeemazeScene::onInit(int arg) {
 	_highlighted = 0;
 
 	playMusic("subgame4");
-	// TODO: tournament mode (FUN_00419490) starts at once with one life
-	addAnim("start_icon", Anim::kDefaultPos, Anim::kDefaultPos, kZLives);
+	// In tournament mode (FUN_00419490) there is no start icon: the "player
+	// ready" box (FUN_00419660), then the game starts at once (FUN_00432c90).
+	if (!_vm->tournament()->isActive()) {
+		addAnim("start_icon", Anim::kDefaultPos, Anim::kDefaultPos, kZLives);
+	} else {
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 void BeemazeScene::drawTitle() {
@@ -401,7 +408,14 @@ void BeemazeScene::startGame() {
 	_running = true;
 	_lives = kMaxLives;
 	_level = 0;
-	// TODO: tournament mode: one life, level from the tournament round
+	// Tournament mode (FUN_00419490): one life, and the player's level
+	// (FUN_004194a0: 0 easy, 1 medium, 2 hard) x 5 as the start level.
+	int level = 0;
+	if (_vm->tournament()->player(nullptr, &level) >= 0) {
+		_lives = 1;
+		_level = level * 5;
+		debug(1, "Beemaze: tournament round, one life, level %d", _level + 1);
+	}
 	startLevel();
 	_score = 0;
 	drawScore();
@@ -501,10 +515,13 @@ void BeemazeScene::gameOver() {
 	clearItems();
 	clearBees();
 	// FUN_0041f9a0(0, score, 0x49db00, 0x4329c0); the callback puts the
-	// start icon back.
+	// start icon back. In tournament mode the score goes to the tournament
+	// (the next player's round or the results screen) and the callback is
+	// not run.
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _score, kMedals);
-	addAnim("start_icon", Anim::kDefaultPos, Anim::kDefaultPos, kZLives);
+	if (!_vm->tournament()->isActive())
+		addAnim("start_icon", Anim::kDefaultPos, Anim::kDefaultPos, kZLives);
 }
 
 // ---- level building ------------------------------------------------------

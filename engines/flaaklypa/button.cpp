@@ -484,16 +484,74 @@ void ListBox::clear() {
 	for (auto *item : _items)
 		delete item;
 	_items.clear();
+	_data.clear();
 	_selected = _top = _rows = _rowHeight = 0;
 }
 
 void ListBox::addItem(Graphics::ManagedSurface *item) {
 	_items.push_back(item);
+	_data.push_back(0);
 	// FUN_00408160: the row height is the first row's, at most 32 rows
 	if (_items[0] && _items[0]->h > 0) {
 		_rowHeight = _items[0]->h;
 		_rows = MIN<int>(_rect.height() / _rowHeight, 32);
 	}
+}
+
+void ListBox::insertItem(Graphics::ManagedSurface *item, int data) {
+	// FUN_00408010 / FUN_00408060: after the selected row; the row height
+	// is taken when the first row comes (FUN_00408160)
+	int index = _items.empty() ? 0 : CLIP<int>(_selected + 1, 0, _items.size());
+	_items.insert_at(index, item);
+	_data.insert_at(index, data);
+	if (_items.size() == 1 && item && item->h > 0) {
+		_rowHeight = item->h;
+		_rows = MIN<int>(_rect.height() / _rowHeight, 32);
+	}
+	select(index);
+}
+
+void ListBox::setItem(int index, Graphics::ManagedSurface *item, int data) {
+	if (index < 0 || index >= (int)_items.size()) {
+		delete item;
+		return;
+	}
+	if (_items[index] != item)
+		delete _items[index];
+	_items[index] = item;
+	_data[index] = data;
+}
+
+int ListBox::itemData(int index) const {
+	return index >= 0 && index < (int)_data.size() ? _data[index] : 0;
+}
+
+bool ListBox::removeSelected() {
+	if (_selected < 0 || _selected >= (int)_items.size())
+		return false;
+	delete _items[_selected];
+	_items.remove_at(_selected);
+	_data.remove_at(_selected);
+	if (_selected >= (int)_items.size())
+		select(_items.size() - 1);
+	return true;
+}
+
+void ListBox::moveSelected(int delta) {
+	// FUN_00408330
+	int n = _items.size();
+	if (n <= 0)
+		return;
+	int index = CLIP(_selected + delta, 0, n - 1);
+	if (index == _selected)
+		return;
+	Graphics::ManagedSurface *item = _items[_selected];
+	int data = _data[_selected];
+	_items.remove_at(_selected);
+	_data.remove_at(_selected);
+	_items.insert_at(index, item);
+	_data.insert_at(index, data);
+	select(index);
 }
 
 void ListBox::setTop(int top) {

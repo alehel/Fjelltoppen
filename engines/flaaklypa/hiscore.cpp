@@ -32,6 +32,7 @@
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scene.h"
 #include "flaaklypa/scenedata.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -537,9 +538,14 @@ void HighscoreDialog::draw(Graphics::ManagedSurface &dst) {
 // FUN_0041f8c0 / FUN_0041f910 for a scene.
 static int registerScoreIn(FlaaklypaEngine *vm, const Common::String &scene, const Common::String &title,
                            uint32 key, int32 score, const int *medals, int flags, bool noCarParts) {
-	// TODO: tournament mode (FUN_00419490, not ported) sends the score to
-	// the tournament (FUN_004196c0) and goes on to its next game
-	// (FUN_00419740) instead, without dialog or callback.
+	// FUN_0041f8c0: in tournament mode (FUN_00419490) the score goes to the
+	// tournament (FUN_004196c0), which goes on to its next player
+	// (FUN_00419740): no tables, awards, dialog or callback
+	if (vm->tournament() && vm->tournament()->isActive()) {
+		debug(1, "Highscore: %s score %d goes to the tournament", scene.c_str(), score);
+		vm->tournament()->registerScore(score);
+		return -1;
+	}
 
 	// FUN_0041f910: the scene is frozen from before the awards until the
 	// dialog closes

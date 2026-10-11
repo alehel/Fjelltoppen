@@ -27,6 +27,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -262,10 +263,16 @@ void BuildabikeScene::onInit(int arg) {
 	addAnim("wheel");
 	addAnim("lever");
 
-	// TODO: with a player profile the original skips the start button, shows
-	// "tournament:PLAYERREADY" and starts at the profile's difficulty.
-	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
 	_running = false;
+	// In tournament mode (FUN_00419490) there is no start button: the
+	// "player ready" box (FUN_00419660), then the game starts at once
+	// (FUN_00439620) at the player's difficulty.
+	if (!_vm->tournament()->isActive()) {
+		addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
+	} else {
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 void BuildabikeScene::onClose() {
@@ -518,8 +525,9 @@ float BuildabikeScene::bikeTime() const {
 void BuildabikeScene::startGame() {
 	_vm->setGameRunning(true);
 	_running = true;
-	// TODO: the difficulty comes from the player profile; 1 without one.
-	_level = 1;
+	// The difficulty: the tournament player's level (FUN_004194a0: 0 easy,
+	// 1 medium, 2 hard) in tournament mode (FUN_00419490), else 1.
+	_level = _vm->tournament()->playerLevel(1);
 	_bikesDone = kLevelTable[_level][0];
 	_lastTick = g_engine->getGameMillis();
 	_startTime = _lastTick;
@@ -561,7 +569,7 @@ void BuildabikeScene::startGame() {
 	for (int i = 0; i < kQueueSize; i++)
 		_queue[i].used = false;
 	_queueWrite = 0;
-	debug(1, "Buildabike: game started");
+	debug(1, "Buildabike: game started at difficulty %d (%d bikes done, health %d)", _level, _bikesDone, _health);
 }
 
 // FUN_00438c50
@@ -589,11 +597,15 @@ void BuildabikeScene::gameOver() {
 	// Modal: _running is already false, so the nested frames leave the game
 	// alone (onUpdate() and tickBike()'s caller check it).
 	_vm->messageBox("interfaceh:GAMEOVER", msg, MessageBox::kButtonOk);
-	// FUN_0041f9a0(0, score, 0x49e02c, 0)
+	// FUN_0041f9a0(0, score, 0x49e02c, 0); in tournament mode the score
+	// goes to the tournament (the next player's round or the results screen).
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _score, kMedals);
 
-	// Without a player profile the screen returns to the start button.
+	// Outside a tournament (FUN_00419490) the screen is cleared and the
+	// start button comes back.
+	if (_vm->tournament()->isActive())
+		return;
 	for (int i = 0; i < kBeltItems; i++)
 		deleteAnim(_belt[i].anim);
 	for (int i = 0; i < kQueueSize; i++)

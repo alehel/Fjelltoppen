@@ -31,6 +31,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -445,8 +446,18 @@ void BalloonhuntScene::onInit(int arg) {
 	// (in a practice flight in front of each of the next n new balloons).
 	_warp = ConfMan.hasKey("balloonhunt_warp") ? ConfMan.getInt("balloonhunt_warp") : 0;
 
-	// TODO: tournament mode (FUN_00419490): FUN_00419660, the round's track
-	// (FUN_004194a0) and FUN_0042ad60(2, track) at once.
+	// Tournament mode (FUN_00419490): no start screen; the "player ready"
+	// box (FUN_00419660), then at once a points round (FUN_0042ad60(2,
+	// level)) from the section of the player's level (FUN_004194a0: 0 easy,
+	// 1 medium, 2 hard, so [level01]..[level03] of tracks.ini, shown as
+	// level 1..3), going on through the following ones as usual.
+	if (_vm->tournament()->isActive()) {
+		_vm->tournament()->showPlayerReady();
+		int level = _vm->tournament()->playerLevel();
+		debug(1, "Balloonhunt: tournament round, points from level %d", level + 1);
+		startRound(kModeNormal, level);
+		return;
+	}
 	showStartScreen();
 }
 
@@ -1123,11 +1134,21 @@ void BalloonhuntScene::endRound(int reason) {
 			_vm->messageBox("interfaceh:GAMEOVER", "balloonhunt:OUTOFGAS", MessageBox::kButtonOk);
 		else if (reason == 2)
 			_vm->messageBox("interfaceh:GAMEOVER", "balloonhunt:OUTOFTIME", MessageBox::kButtonOk);
-		// TODO: tournament mode (FUN_00419490): FUN_0041f9a0 hands the
-		// points to the tournament, which goes on to its next game; the
-		// round is not cleaned up then.
-		// FUN_0041f9a0(0, points, 0x49d7e8, 0)
+		// FUN_0041f9a0(0, points, 0x49d7e8, 0). In tournament mode
+		// (FUN_00419490) it hands the points to the tournament (the next
+		// player's round or the results screen; no high score dialog, no
+		// medals) and FUN_0042c580 returns at once: no clean up, the start
+		// screen does not come back.
+		bool tournament = _vm->tournament()->isActive();
 		registerScore(_vm, "", _score, kMedals);
+		if (tournament) {
+			// The original's scene is gone by then (FUN_0040ccd0 inside
+			// FUN_0041f9a0; DAT_00608fe0 stays 2); here it stays to the end
+			// of the frame, so the mode only keeps afterDraw() from ending
+			// the round a second time.
+			_mode = kModeMenu;
+			return;
+		}
 	} else if (_mode == kModeSingle) {
 		// FUN_0041f8c0("%s %d" of balloonhunt:TRACK and the track, key =
 		// the track (1 based), the time in ms, no medals, 0x102)

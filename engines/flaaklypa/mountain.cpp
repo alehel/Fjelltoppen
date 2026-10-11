@@ -34,6 +34,7 @@
 #include "flaaklypa/mountain.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -401,9 +402,18 @@ void MountainScene::onInit(int arg) {
 
 	playMusic("subgame10");
 	_startScreen = true;
-	// TODO: tournament mode (FUN_00419490): no start screen, the track of
-	// the round (FUN_00419540) and one life, the ride starts at once.
-	showStartScreen();
+	if (!_vm->tournament()->isActive()) {
+		showStartScreen();
+		return;
+	}
+	// Tournament mode (FUN_00419490): no start screen; "Is <player> ready?"
+	// (FUN_00419660), the player's level (FUN_004194a0: 0 easy, 1 medium,
+	// 2 hard) as the difficulty, and the ride starts at once (FUN_0044108e
+	// picks the tournament game's track).
+	_vm->tournament()->showPlayerReady();
+	_vm->tournament()->player(nullptr, &_difficulty);
+	debug(1, "Mountain: tournament mode, difficulty %d", _difficulty);
+	startRide();
 }
 
 // FUN_0044430d
@@ -444,7 +454,8 @@ void MountainScene::showStartScreen() {
 // FUN_004415b5: selects the track's section of maps.ini, shows its title
 // and reads the names of its files.
 void MountainScene::selectTrack() {
-	if (_track >= 0 && _track < (int)_tracks.size())
+	// the title label of the start screen, not in tournament mode (FUN_00419490)
+	if (_track >= 0 && _track < (int)_tracks.size() && !_vm->tournament()->isActive())
 		drawLabel("title", _vm->getString(_tracks[_track]), false);
 	_levelNames[0] = iniString("easy", "dritenkelt2");
 	_levelNames[1] = iniString("medium", "middels2");
@@ -644,8 +655,11 @@ void MountainScene::onUpdate() {
 	// that nothing reads.
 	clampSpeed();
 	if (!physics()) {
-		// the last life was lost
-		showStartScreen();
+		// the last life was lost: the start screen again, not in tournament
+		// mode (FUN_00419490: the tournament has moved on to the next player
+		// or the results)
+		if (!_vm->tournament()->isActive())
+			showStartScreen();
 		return;
 	}
 	followCamera();
@@ -659,7 +673,9 @@ void MountainScene::onUpdate() {
 		_vm->setGameRunning(false);
 		_rideRunning = false;
 		endOfRide();
-		_vm->changeScene("town", 0);
+		// FUN_0040cd70("town", 0), not in tournament mode (FUN_00419490)
+		if (!_vm->tournament()->isActive())
+			_vm->changeScene("town", 0);
 	} else {
 		// FUN_00444881 frees the sound duplicates that have ended (the
 		// mixer does that here)
@@ -672,6 +688,20 @@ void MountainScene::onUpdate() {
 // sets up the ride.
 void MountainScene::startRide() {
 	_vm->setGameRunning(true);
+	const bool tournament = _vm->tournament()->isActive();
+	if (tournament) {
+		// Tournament mode (FUN_00419490): the track is the version of the
+		// tournament's current game (FUN_00419540; subgame.ini lists
+		// mountain twice, version 0 and 1), 0 when negative, at most the
+		// number of maps.ini sections (sic: one past the last), and it is
+		// always loaded anew (DAT_00678b04 = -1); FUN_004415b5 reads its
+		// section.
+		const Tournament::Game *game = _vm->tournament()->game(_vm->tournament()->currentGame());
+		int version = game ? game->version : 0;
+		_track = version < 0 ? 0 : MIN(version, (int)_tracks.size());
+		_loadedTrack = -1;
+		selectTrack();
+	}
 	if (_loadedTrack == _track && _hasLevel) {
 		// FUN_004419d0: only the tile map of another difficulty
 		if (_loadedDifficulty != _difficulty) {
@@ -722,7 +752,8 @@ void MountainScene::startRide() {
 		}
 	}
 	_p.started = false;
-	_p.lives = kStartLives;
+	// 3 lives, 1 in tournament mode (FUN_00419490)
+	_p.lives = tournament ? 1 : kStartLives;
 	_p.score = 0;
 	_p.bonus = 0;
 	for (int i = 0; i < 3; i++)
@@ -755,8 +786,9 @@ void MountainScene::startRide() {
 	_buttons.remove(kTabHard);
 	_buttons.remove(kButtonDown);
 	_buttons.remove(kButtonUp);
+	// (in tournament mode the start screen's labels were never created)
 	static const char *const kLabels[] = { "title", "easy", "medium", "hard", "start" };
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 5 && !tournament; i++)
 		if (isAnimAdded(kLabels[i]))
 			removeAnim(kLabels[i]);
 	if (isAnimAdded("Start interface"))

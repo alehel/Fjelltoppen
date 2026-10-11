@@ -103,6 +103,7 @@ private:
 
 	void showStartSign();
 	void showScoreSign();
+	void turnSign();
 	void highlightButton(int hotspot);
 	void startGame();
 	void gameOver();
@@ -138,7 +139,7 @@ private:
 	int _timerSeq;
 	int _highlighted;
 
-	int _difficulty;                      ///< 0..2 from the profile (always 0: no profiles yet)
+	int _difficulty;                      ///< DAT_00687500: 0..2, the tournament player's level (FUN_004194a0), else 0
 	int _slotCount;                       ///< words in the sky at once, 1..10
 	int _maxLen;                          ///< longest word picked, 1..32
 	int _score;

@@ -56,6 +56,7 @@
 #include "flaaklypa/sockdrawer.h"
 #include "flaaklypa/synonym.h"
 #include "flaaklypa/textinvader.h"
+#include "flaaklypa/tournament.h"
 #include "flaaklypa/whackamole.h"
 #include "flaaklypa/wheelbarrow.h"
 
@@ -384,9 +385,10 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 	case 3:
 		showOptions();
 		break;
-	case 7:  // tournament
+	case 7:
+		// FUN_00418040("tournament"): the setup screen
 		useProfile();
-		debug(1, "Menu: button %d not implemented", hotspot);
+		_vm->changeScene("tournament", 0);
 		break;
 	default:
 		break;
@@ -451,6 +453,10 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new MenuScene(vm, def);
 	if (!scumm_stricmp(name, "mainscore"))
 		return new MainscoreScene(vm, def);
+	if (!scumm_stricmp(name, "tournament"))
+		return new TournamentScene(vm, def);
+	if (!scumm_stricmp(name, "tourneyscore"))
+		return new TourneyscoreScene(vm, def);
 	if (!scumm_stricmp(name, "info"))
 		return new InfoScene(vm, def);
 	if (!scumm_stricmp(name, "activity"))

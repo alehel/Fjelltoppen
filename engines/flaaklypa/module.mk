@@ -71,6 +71,8 @@ MODULE_OBJS = \
 	subtitles.o \
 	synonym.o \
 	textinvader.o \
+	tournament.o \
+	tourneyscore.o \
 	town.o \
 	tvroom.o \
 	tvstation.o \

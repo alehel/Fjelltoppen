@@ -27,6 +27,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/pipeline.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -216,7 +217,15 @@ void PipelineScene::onInit(int arg) {
 	drawText("turbolabel", _vm->getString("pipeline:TURBO"));
 
 	showMap();
-	// TODO: tournament mode (FUN_00419490) starts the game at once.
+
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the game starts at once at level 1 (FUN_00448880, as the Start
+	// button does; the player's level is not used).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Pipeline: tournament mode, starting at once");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 void PipelineScene::onClose() {
@@ -601,6 +610,11 @@ void PipelineScene::gameOver() {
 	// FUN_0041f9a0(0, score, 0x49eea0, 0)
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _score, kMedals);
+	// In tournament mode the score went to the tournament, which has moved
+	// on (the next player or the results): the board is left as it is
+	// (FUN_00419490 guard at 0x44a808).
+	if (_vm->tournament()->isActive())
+		return;
 
 	for (int i = 0; i < kCells; i++)
 		_cells[i].anim->remove();

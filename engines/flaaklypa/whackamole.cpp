@@ -34,6 +34,7 @@
 #include "flaaklypa/music.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
+#include "flaaklypa/tournament.h"
 #include "flaaklypa/whackamole.h"
 
 namespace Flaaklypa {
@@ -270,8 +271,14 @@ void WhackamoleScene::onInit(int arg) {
 
 	addAnim("startbuttn", Anim::kDefaultPos, Anim::kDefaultPos, kZButtons);
 
-	// TODO: in tournament mode (FUN_00419490) the original shows the
-	// "player ready" box (FUN_00419660) and starts the game at once.
+	// In tournament mode (FUN_00419490) the "tournament:PLAYERREADY" box
+	// (FUN_00419660), then the game starts at once: FUN_0044da80(0x22, 0, 0),
+	// a click on the start sign (FUN_0044df40).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Whackamole: tournament round");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 // FUN_0044e300
@@ -388,11 +395,13 @@ void WhackamoleScene::endLevel() {
 	_vm->setGameRunning(false);
 	debug(1, "Whackamole: game over at level %d with %d %%, %d points", _level, (int)p, _points);
 	_vm->messageBox("interfaceh:GAMEOVER", "whackamole:GAMEOVER", MessageBox::kButtonOk);
-	// FUN_0041f9a0(0, points, 0x49f0f8, 0)
+	// FUN_0041f9a0(0, points, 0x49f0f8, 0); in tournament mode the score
+	// goes to the tournament, whose next round follows.
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _points, kMedals);
-	// In tournament mode (FUN_00419490) the start sign does not come back.
-	addAnim("startbuttn", Anim::kDefaultPos, Anim::kDefaultPos, kZButtons);
+	// Then (not in tournament mode, FUN_00419490) the start sign comes back.
+	if (!_vm->tournament()->isActive())
+		addAnim("startbuttn", Anim::kDefaultPos, Anim::kDefaultPos, kZButtons);
 }
 
 // FUN_0044e830: a bird (50 % mirrored) appears in a free hole.
