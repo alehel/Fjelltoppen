@@ -33,6 +33,7 @@
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/synonym.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -342,11 +343,16 @@ void SynonymScene::onInit(int arg) {
 	_testTime = ConfMan.hasKey("synonym_time") ? ConfMan.getInt("synonym_time") : 0;
 	_testSolve = ConfMan.hasKey("synonym_solve") ? ConfMan.getInt("synonym_solve") : 0;
 
-	// TODO: tournament mode (FUN_00419490, not ported): the original shows
-	// the "tournament:PLAYERREADY" box (FUN_00419660) and starts the game
-	// at once (FUN_00482380) instead of showing the start ball.
 	if (_words.empty() || _levels.empty())
 		return;
+	// Tournament mode (0x48234d): the "tournament:PLAYERREADY" box
+	// (FUN_00419660), then the game starts at once (FUN_00482380) instead
+	// of showing the start ball
+	if (_vm->tournament()->isActive()) {
+		_vm->tournament()->showPlayerReady();
+		startGame();
+		return;
+	}
 	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
 }
 
@@ -467,9 +473,13 @@ void SynonymScene::startGame() {
 	_levelHints = 0;
 	_score = 0;
 	showScore();
-	// TODO: tournament mode (FUN_00419490): the game starts at level
-	// difficulty * 2 (FUN_004194a0, the player's +0x24).
-	startLevel(_testLevel);
+	// The first level is 0 (the synonym_level aid's value), in a tournament
+	// the player's level x 2 (0x4823c4: FUN_004194a0, lea edx, [ecx + ecx])
+	int level = _testLevel;
+	if (_vm->tournament()->isActive())
+		level = _vm->tournament()->playerLevel() * 2;
+	debug(1, "Synonym: the game starts at level %d", level);
+	startLevel(level);
 	nextWord();
 }
 
@@ -548,9 +558,12 @@ void SynonymScene::gameOver() {
 		const Common::Point m = _vm->mousePos();
 		endDrag(m.x, m.y);
 	}
+	const bool tournament = _vm->tournament()->isActive();
+	// In a tournament the score goes to it, which moves on to its next player
 	registerScoreNoCarParts(_vm, "", _score, kMedals);
-	// In tournament mode the start ball does not come back.
-	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
+	// ... and the start ball does not come back (0x483ee4)
+	if (!tournament)
+		addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
 }
 
 // FUN_004843f0: the time gauge and the clock run down over the level's

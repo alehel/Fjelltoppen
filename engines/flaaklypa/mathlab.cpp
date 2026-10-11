@@ -36,6 +36,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/mathlab.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -261,9 +262,16 @@ void MathlabScene::onInit(int arg) {
 	initScreen();
 	_generation = 1;
 
-	// TODO: tournament mode (FUN_00419490): the "player ready" box
-	// (FUN_00419660) and the round starts at once at the level of the
-	// player's difficulty (FUN_004194a0: startRound(difficulty)).
+	// Tournament mode (0x47ffa3): the "player ready" box (FUN_00419660) and
+	// the round starts at once at the player's level, unscaled
+	// (FUN_004194a0: startRound(level))
+	if (_vm->tournament()->isActive()) {
+		int level = 0;
+		_vm->tournament()->player(nullptr, &level);
+		_vm->tournament()->showPlayerReady();
+		startRound(level);
+		return;
+	}
 
 	// Development aid: "test_mathlab=<level>" starts a round at that level
 	// at once (as tournament mode does with its difficulty: levels 0..2 get
@@ -307,8 +315,9 @@ void MathlabScene::initScreen() {
 	_buttons.setFont(&_red14);
 	_buttons.add(kHotspotHelp, 0, 0, "help_0", "help_1", nullptr, nullptr, "", true);
 	_buttons.add(kHotspotExit, 0x2d8, 0, "exit_0", "exit_1", nullptr, nullptr, "", true);
-	// Not in tournament mode
-	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
+	// Not in tournament mode (0x480b75)
+	if (!_vm->tournament()->isActive())
+		addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
 	addAnim("labels", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
 	addAnim("ballopener", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
 	addAnim("tap", Anim::kDefaultPos, Anim::kDefaultPos, kZStatic);
@@ -1020,8 +1029,10 @@ void MathlabScene::gameOver() {
 	_vm->messageBox("interfaceh:GAMEOVER", "whackamole:GAMEOVER", MessageBox::kButtonOk);
 	// FUN_0041f9d0(0, score, 0x4a03f8): medals without car parts
 	registerScoreNoCarParts(_vm, "", _shownScore, kMedals);
-	// TODO: tournament mode (FUN_00419490) returns here (the score went to
-	// the tournament and its next game starts).
+	// A tournament returns here (0x48214b): the score went to it, the
+	// state stays "over"
+	if (_vm->tournament()->isActive())
+		return;
 	clearTankLabels();
 	clearLabel("score");
 	clearLabel("level");

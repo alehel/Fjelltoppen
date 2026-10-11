@@ -1887,7 +1887,7 @@ module follows): 0x103 `FUN_00482320` init, 0x104 `FUN_004830b0` close,
   help lists gold 10000, silver 5000, bronze 2500), then the start ball
   again. Letters, word and score stay on screen until the next start.
   Engine: `registerScoreNoCarParts(vm, "", score, kMedals)`.
-* **Tournament** (`FUN_00419490`, not ported): init shows
+* **Tournament** (`FUN_00419490`, see Tournament): init shows
   `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once without the
   start ball; the game starts at level 2 * the player's difficulty
   (`FUN_004194a0`, profile +0x24), i.e. 0, 2 or 4; at the end
@@ -2020,7 +2020,7 @@ buttons. Engine: `gametrivia.cpp`.
   no reaction), `start` (lang3 bitmap, hotspot 3) at (652,173) z 400;
   mouse down on it starts (`FUN_0047e530`: game running, score/right
   answers/round base 0, selection, slide 0).
-* **Tournament mode** (`FUN_00419490`, not ported): the level is the
+* **Tournament mode** (`FUN_00419490`, see Tournament): the level is the
   player's tournament level (`FUN_004194a0`, +0x24 of the entry: 0 easy,
   1 medium, 2 hard, so `difficulty<r>_0`/`time<r>_0` 14/11/8/8 s at easy,
   `_2` 6/5/4/4 s at hard); init shows `tournament:PLAYERREADY` with the
@@ -2201,7 +2201,8 @@ event's element; no timer is ever set), 0x112 -> `FUN_00481930` tick,
   `random_seed`); the level 23 draw limit; the elements of the balls the
   last round left in the pipe (invisible) are freed at the next start
   (the original leaks them and would crash once its 30 structures are
-  used up); the game clock base (see Time). Not done: tournament mode.
+  used up); the game clock base (see Time). Tournament mode: see
+  Tournament.
 
 ## Dialogs (`dialog.cpp`)
 
@@ -2719,7 +2720,8 @@ lives as long as the engine (the original's globals), nothing is saved.
   unscaled, pipeline and whackamole ignore it; after the score they skip
   what would restart a round (start buttons, high score callbacks, board
   resets); butterfly gives no species awards and has no album button.
-* Add-on set 3 (ported elsewhere, to wire after merging):
+* Add-on set 3 (wired after merging, tested with `test_tournament` and
+  `test_tournament_autoscore`):
   * `gametrivia` tournament mode (`FUN_00419490`; calls
     0x47e390/0x47e3a0/0x47e407/0x47e410 in `FUN_0047e370`, 0x47faf1/0x47fb53
     in `FUN_0047fab0`): the level `DAT_006da3ac` is 1 (medium, always

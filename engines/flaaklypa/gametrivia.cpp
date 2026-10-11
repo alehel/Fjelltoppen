@@ -31,6 +31,7 @@
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sound.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -174,8 +175,9 @@ void GametriviaScene::onInit(int arg) {
 	playMusic("track5");
 	_state = kStateIdle;
 	_level = 1;
-	// TODO: tournament mode (FUN_00419490): the level is the tournament
-	// player's difficulty (FUN_004194a0(0, &DAT_006da3ac)).
+	// Tournament mode (FUN_00419490): the level is the tournament player's
+	// difficulty, before trivia.ini is read (FUN_004194a0(0, &DAT_006da3ac))
+	_vm->tournament()->player(nullptr, &_level);
 
 	// The slides' WAV files play at the engine's sound volume (FUN_00413a40,
 	// sound.ini included).
@@ -193,10 +195,6 @@ void GametriviaScene::onInit(int arg) {
 	resetCharacters();
 	playAnim("fan");
 
-	// TODO: tournament mode: FUN_00419660 shows "tournament:PLAYERREADY" and
-	// the game starts at once (FUN_0047e530) without the start button.
-	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
-
 	if (ConfMan.hasKey("test_gametrivia")) {
 		// Development aid "test_gametrivia=[<delay>:]<moves>": answers each
 		// question <delay> ms (1500) after it shows; move n is for question
@@ -209,6 +207,15 @@ void GametriviaScene::onInit(int arg) {
 			s = Common::String(colon + 1);
 		}
 		_testMoves = s;
+	}
+
+	// 0x47e407: a tournament shows "tournament:PLAYERREADY" (FUN_00419660)
+	// and starts at once (FUN_0047e530) without the start button
+	if (_vm->tournament()->isActive()) {
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	} else {
+		addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
 	}
 }
 
@@ -692,13 +699,17 @@ void GametriviaScene::gameOver() {
 	if (!_image.empty() && isAnimAdded(_image.c_str()))
 		removeAnim(_image.c_str());
 	debug(1, "Gametrivia: game over, %d of %d right, score %d", _correct, totalQuestions(), _score);
-	// TODO: tournament mode: no message box, the score goes to the
-	// tournament (inside FUN_0041f8c0) and its next game starts, no start button.
-	Common::String text = Common::String::format(_vm->getString("gametrivia:GAMEOVER").c_str(), _correct, totalQuestions());
-	_vm->messageBox("interfaceh:GAMEOVER", text, MessageBox::kButtonOk);
-	// FUN_0041f9d0(0, score, 0x4a03d8): medals without car parts
+	// The box only outside a tournament (0x47faf1)
+	const bool tournament = _vm->tournament()->isActive();
+	if (!tournament) {
+		Common::String text = Common::String::format(_vm->getString("gametrivia:GAMEOVER").c_str(), _correct, totalQuestions());
+		_vm->messageBox("interfaceh:GAMEOVER", text, MessageBox::kButtonOk);
+	}
+	// FUN_0041f9d0(0, score, 0x4a03d8): medals without car parts; in a
+	// tournament the score goes to it, which moves on to its next player
 	registerScoreNoCarParts(_vm, "", _score, kMedals);
-	addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
+	if (!tournament)  // 0x47fb53
+		addAnim("start", Anim::kDefaultPos, Anim::kDefaultPos, kZStart);
 }
 
 // ---- input ------------------------------------------------------------------------
