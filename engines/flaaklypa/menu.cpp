@@ -50,6 +50,7 @@
 #include "flaaklypa/options.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/puzzle.h"
+#include "flaaklypa/racemenu.h"
 #include "flaaklypa/sceneindex.h"
 #include "flaaklypa/scenes.h"
 #include "flaaklypa/sliding.h"
@@ -359,7 +360,7 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 		if (fitted < 8)
 			_vm->messageBox("menu:RACE_TITLE", "menu:RACE_LOCKED", MessageBox::kButtonOk);
 		else
-			debug(1, "Menu: the race menu is not implemented");
+			_vm->changeScene("racemenu", 0);
 		break;
 	}
 	case 9:
@@ -561,6 +562,10 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BuildacarScene(vm, def);
 	if (!scumm_stricmp(name, "gametrivia"))
 		return new GametriviaScene(vm, def);
+	if (!scumm_stricmp(name, "racemenu"))
+		return new RacemenuScene(vm, def);
+	if (!scumm_stricmp(name, "racing"))
+		return new RacingScene(vm, def);
 	return new Scene(vm, def);
 }
 

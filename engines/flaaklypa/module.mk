@@ -61,6 +61,11 @@ MODULE_OBJS = \
 	profile.o \
 	puzzle.o \
 	puzzledata.o \
+	raceai.o \
+	racecar.o \
+	racemenu.o \
+	racetrack.o \
+	racing.o \
 	resources.o \
 	scene.o \
 	scenedata.o \
