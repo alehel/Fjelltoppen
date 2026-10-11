@@ -1823,6 +1823,150 @@ layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
   565). Not done: `sound.ini` volumes.
 
 
+## Activity `colorfill` ("Reodors tegnebord", add-on set 2, from `desk`)
+
+Handler `FUN_00461600` (`colorfill.cpp`, code 0x461600..0x463f60): 0x103
+`FUN_00462fe0`, 0x104 `FUN_00463c10`, 0x105 `FUN_004625d0`, 0x108
+`FUN_004625a0` (cursor), 0x109 `FUN_00462dc0` (strokes), 0x10c
+`FUN_00463990`, 0x116 `FUN_00461740`, 0x117 `FUN_00461720`, 0x119
+`FUN_004639d0` (after the frame is drawn). A paint program on a 490x490
+sheet (`DAT_006a4270`). Music `track21` (data2), the title
+`colorfill:SCENENAME` in `Amerigo BT_18_` centred in (205,23)-(581,73)
+z 10 (`FUN_00407a30`, 0x101), no hidden car part, no awards, no scores.
+The desk page's hotspot 54 is in no mask (see `desk`); the scene index
+lists it.
+
+* **Pixel format.** The game runs in a 16 bit display mode
+  (`FUN_004017f0` -> `FUN_00403db0(800, 600, 16)`); bitmaps reach the 16
+  bit DirectDraw surfaces through GDI (`FUN_00405fa0`: StretchBlt from a
+  24 bit DIB). Colorfill works on those 16 bit pixels and handles 565 and
+  555 (it tests the green mask against 0x7e0): `FUN_00462500` 16 bit ->
+  0x00RRGGBB by shifting the channels up (no rounding), `FUN_0046bf80` back
+  by truncation, `FUN_00462560` scales each channel by f/256. The port
+  keeps the sheet in RGB565 (the profiles of the original show 565
+  displays) and assumes GDI truncates 24 -> 16 bit; the screen gets the 565
+  pixels with bit replication (31 -> 255).
+* **Pictures** (`canvas.ini`, 19 sections `colorfill:I1`..`I19`, the name
+  is the language.ini key): `preview` (64x64), `outline`, `mask`,
+  `normals`, `light_x`/`light_y` (default 245). `FUN_00461b50` loads the
+  outline twice: as a 16 bit surface, the sheet itself (`DAT_006a79ec`),
+  where `FUN_00462000` marks the pixels that are 0 (black: grey < 4 in 565)
+  as lines (`DAT_006a79f0`) and makes all others white, and as raw 8 bit
+  grey levels (`DAT_006a79f8`, UTILS loader `FUN_004149f0`: {w, h, bpp,
+  data} top down). The mask (raw, `DAT_006a79f4`): index 0 = shaded. The
+  normal map (24 bit, loaded with `FUN_00405d00(1)` = HALFTONE stretching)
+  becomes x, y, z = channel - 127 clamped to +-127 (`FUN_00461cc0`; the 16
+  bit pixel is expanded by `FUN_004620c0` with floats: r5 * (1/31) * 255
+  truncated, red kept on the FPU stack, green and blue stored as floats
+  first, so 31 -> 254 for red but 255 for blue). `I1` is the blank sheet
+  (outline/mask/normals `blank`, light (0,0)).
+* **Light** (`FUN_00461e20`, tool 5, also from the ini or the profile):
+  fx = (x - 245) / 245, fy = (y - 245) / 245 (float 0x49fcf0), inv = 1 /
+  sqrt(fx^2 + fy^2 + 0.36), L = (inv fx, inv fy, 0.6 inv) * 127 truncated;
+  per shaded pixel light = 2 * ((nz Lz >> 7) + (ny Ly >> 7) + (nx Lx >> 7))
+  clamped 0..255, unshaded 255 (`DAT_006a79fc`). Display (`FUN_004622d0`,
+  `DAT_006a7a00` always 1): shaded pixels = sheet colour * (outline grey *
+  light >> 8) / 256 per channel, others the sheet's pixel, into the
+  "canvas" element (bitmap `canvas`, hotspot 1, at (32,93) z 10).
+* **Tools** (tab group 1, opaque, z 1, at y 0x5b: pen 3 (0x233)
+  `pen_off/on`, bucket 4 (0x260) `buck_*`, eraser 5 (0x28d) `erase_*`,
+  picker 6 (0x2bb) `pick_*`, light 7 (0x2e8) `light_*`; tool = id - 2,
+  `DAT_005060fc`, the pen at the start). A press on the sheet
+  (`FUN_004625d0`, coordinates relative to (32,93)): pen/eraser copy the
+  sheet to the undo copy (`DAT_006a79e4`) and stamp the brush (eraser:
+  white); bucket copies it and floods; picker takes the sheet's (unshaded)
+  pixel as the colour and moves the cross to that colour's place in the
+  palette; light moves the light (no undo copy). Strokes (event 0x109, any
+  move with the button held): over hotspot 1 with pen/eraser the brush is
+  stamped every max(w / 8, 1) pixels along the line from the last point
+  (n = dist / step stamps at last + d * i / n, truncated, then the end
+  point); over any other hotspot the last point just follows the mouse, so
+  a stroke can start where the mouse entered the sheet (or where the last
+  one ended).
+* **Brush stamp** (`FUN_004628b0`): the brush's index 0 pixels centred on
+  the point (offset 1 - w/2, 1 - h/2), clipped to the sheet, not on lines.
+  The rows run over the width and the columns over the height (all brushes
+  are square).
+* **Flood fill** (`FUN_00462a10` / `FUN_00462bf0`): nothing on a line or
+  when the colour is already the seed's. Breadth first over the 16 bit
+  sheet with two point lists of 30000 (x, y) shorts (`DAT_006a4234` /
+  `DAT_006a4248`, 120000 bytes each, not bounds checked) taking turns: each
+  point tries left, right, up, down; a pixel joins when it is inside, has
+  exactly the seed's 16 bit value and is not a line, and is painted when it
+  joins. The bounding box (`DAT_006a4238`) is redrawn. As the outline
+  conversion leaves only black and white, anti-aliased edges exist only in
+  the shading (outline grey), so fills reach the lines exactly.
+* **Colours.** The palette is the backdrop: a press on hotspot 2 (the
+  colour chart and wheel of the mask) takes the backdrop's 16 bit pixel
+  (`FUN_00462870`) and puts "cross" (z 10, centred: -7) there. "color"
+  (bitmap `color`, (566,161) z 10) is filled with the colour
+  (`FUN_00462840`). `FUN_00463500` maps every 16 bit colour to its last
+  pixel with hotspot 2 in (564,200)-(716,484) (others: the cross's default
+  centre (570,317)) for the picker. The start colour is white (the cross
+  still at its default place).
+* **Buttons** (`Amerigo BT_14_` labels, opaque): canvas 0x14 (0x231,0x223)
+  `colorfill:CANVAS`, clear 0x15 (0x2a5,0x1fd), activity 0x16
+  (0x2a6,0x223), undo 0x17 (0x231,0x1fd); help 0x62 (0,0), exit 99
+  (0x2d8,0) (transparent). Canvas (`FUN_00461970`): the list dialog
+  (`colorfill:CANVAS_DIALOG`, Cancel) with a 238x68 row per picture: the
+  preview at (2,2), the name left aligned and centred vertically in
+  (72,2)-(238,66); the choice is loaded with its light, the sheet starts
+  over (the undo copy too). Clear (`FUN_004618b0`): `CLEAR_TITLE` /
+  `CLEAR_TEXT` yes/no, undo copy, lines black, the rest white. Undo
+  (`FUN_00461940`): the undo copy back (one step; twice changes nothing).
+* **Brush list** (`FUN_00463670`, `brush.ini`: 48 sections `preview`,
+  `brush`, `outline`): list box (729,160)-(765,484) z 0x20, bar COLORREF
+  0x23234b, 36x36 rows (preview transparent at (2,2)), 9 rows; scroll bar
+  0x1e (track (0x305,0xbf) 14x261, thumb `scrolltab` z 1, arrows 2000
+  `up_0/1` (0x305,0xa1) and 2001 `down_0/1` (0x305,0x1d3), range rows not
+  shown). At the start the scroll bar takes the selected row's index as
+  its value (event 0x117 moves the list's top there), so the brush is the
+  top row. A click on a row or a list key (`FUN_00463990`: the scroll bar
+  follows the top) chooses the brush (`FUN_00462ca0` / `FUN_00462cd0`).
+* **Tool outline** (event 0x119 after the frame is drawn, `FUN_004639d0` /
+  `FUN_00463a60`): the frame buffer's pixels under a bitmap's index 0
+  pixels, centred like a stamp and clipped to (32,93)-(522,583), are
+  inverted (16 bit NOT): with the light tool the `sun` at the light (unless
+  the mouse is exactly there), and over the sheet the tool: the brush's
+  outline (pen, eraser), `bucket`, `picker` or `sun`. There the system
+  cursor is hidden (`FUN_004625b0`: `FUN_0040ef90(3)` over hotspot 1, else
+  (4)). Engine: the inverted pixels go into an "overlay" element (z 100);
+  two bitmaps over a pixel cancel out like the XOR; the hidden cursor is a
+  cursor table entry {1, ""}.
+* **Tooltips** (table 0x506100, `FUN_00409b50` with a table: the module
+  answers event 0x11a itself): 3..7 `TIP_BRUSH`, `TIP_PAINT`,
+  `TIP_ERASER`, `TIP_PICKUP`, `TIP_LIGHT`, 0x14 `TIP_CANVAS`, 0x15
+  `TIP_CLEAR`, 0x16 `TIP_ACTIVITY`, 0x17 `TIP_UNDO`, 2 `TIP_COLOR`.
+* **Profile** (`FUN_00463cb0` on close, `FUN_00463380` at the start): value
+  0xdead, 0x218 bytes: light x, y, the cross's centre x, y (int32), the
+  canvas.ini section (char[256]), the brush.ini section (char[256]), the
+  size of value 0xbabe, 4 unused bytes (the original leaves stack garbage
+  after the strings). Value 0xbabe: the sheet as three 490x490 planes
+  (blue, green, red; `FUN_00462500` values) packed by `FUN_00463e90`: n <
+  0x80 + n literal bytes, n | 0x80 + one byte repeated, at most 127 each, a
+  literal ends where two equal bytes follow (unpacker `FUN_004638c0`). The
+  restore loads the picture without its light, the brush, the colour under
+  the saved cross, unpacks the sheet and sets the saved light; without the
+  value: `colorfill:I1` and `square4`. Ported exactly: capmar.pfl's
+  picture is written back byte for byte. Deviation: when 0xbabe cannot be
+  read the original unpacks an uninitialised buffer, the port keeps the
+  outline.
+* **Activity** (`FUN_00462220`): `ACTIVITY_TITLE` / `ACTIVITY_TEXT` yes/no,
+  then the shaded picture (the "canvas" element) is copied into a new
+  490x490 surface and the activity centre starts with the request
+  `DAT_006a4250` = {char *returnScene "colorfill", int returnArg 0,
+  surface *picture} (`FUN_0040cd70("activity", &req)`; `FUN_0045c050`
+  keeps the three fields: Escape returns to the scene with the argument,
+  a picture is placed on the page; bouquet passes {"bouquet", 0, picture}
+  the same way). Deviation: the activity centre is not ported; the port
+  hands the picture to ScummVM's print dialog (`g_gui.printImage`), the
+  help names the centre as the way to print. TODO: the request once
+  `activity` exists.
+* Engine: `ColorfillScene`. The scene table's "cross" has +0x44 = 0, which
+  `FUN_00412840` only reads for clips (bitmaps are always loaded) but
+  `Anim` treats as invisible, so the cross is shown as the element
+  "crossmark". Not done: `sound.ini` volumes.
+
 ## High scores (`hiscore.cpp`, HISCORE module)
 
 The tables every sub game updates at the end of a round and the
@@ -2102,7 +2246,7 @@ Home/End, Up/Down) move the selection and set the scroll bar to the top,
 Enter = OK, Escape and close = Cancel. Returns the selected row (and its
 id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
 0x100, rows rendered from strings by `FUN_00408720`, is not ported). Used
-by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), chess
+by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), colorfill
 (`FUN_00461970`), the 3D viewer (`FUN_0047d880`) and `FUN_0041a080`.
 
 ## Activity `sliding` ("Skyvepusslespillet", from `garage`)
@@ -2991,6 +3135,8 @@ all tiles but n are removed, leaving n/2 matching pairs that are all
 free; a negative n removes the hint's pair until none is left, usually
 a lost game); with `--debuglevel=2` mahjong logs where to click each
 free tile (the camera follows the mouse) and what each click picks.
+`test_colorfill_print=<png>` (colorfill: the activity button writes the
+picture to that file instead of opening ScummVM's print dialog).
 
 ## Mini game checklist
 
@@ -3026,7 +3172,7 @@ Activities (`[activity]`, open ended):
 | x | gallery | Karakter galleri | tvroom | data |
 | x | bouquet | Ludvigs blomsterbinderi | desk | data |
 | | fence | Musikkgjerdet | pee | data |
-| | colorfill | Reodors tegnebord | desk | data2 |
+| x | colorfill | Reodors tegnebord | desk | data2 |
 | | jigsaw | Puslespillet | yard | data |
 | x | mahjong | Mah Jongg | outtent | data2 |
 | | draughts | Damm | tvroom | data |
