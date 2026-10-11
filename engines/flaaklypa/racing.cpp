@@ -186,6 +186,7 @@ void RacingScene::openClip(ClipPlayer &c, const Common::String &name, bool loop)
 	c.video->setTrackVolumes(_vm->mixerVolume(FlaaklypaEngine::kVolumeSound), _vm->mixerVolume(FlaaklypaEngine::kVolumeSpeech));
 	c.video->start();
 	c.playing = true;
+	debug(2, "Racing: clip %s at %d,%d%s", name.c_str(), c.x, c.y, loop ? " (looping)" : "");
 	c.elem->createSurface(c.video->getWidth(), c.video->getHeight(), _labelKey);
 	if (!c.elem->isAdded())
 		c.elem->add(c.x, c.y, c.z);
@@ -671,9 +672,9 @@ void RacingScene::startRace() {
 	_carPartTaken = false;
 	_lapTimer = false;
 	_pickupTimer = false;
+	// FUN_004769d0 / FUN_00476920 (the nodes keep their "used" marks, as
+	// in the original)
 	memset((void *)_pickups, 0, sizeof(_pickups));
-	for (auto &p : _path)
-		p.used = 0;
 	memset((void *)_anims, 0, sizeof(_anims));
 	placeCarPart();
 	_player = &_drivers[0];

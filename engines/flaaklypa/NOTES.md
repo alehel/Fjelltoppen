@@ -4,13 +4,13 @@ Status: scene framework in place (see "Engine structure" below): backdrop,
 hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
-The menu, the scene index, every story page (the race aside), the
+The menu, the scene index, every story page, the
 message box, navigator, help and options dialogs, the 15 sub games and
 the activities of the base game and add-on sets 1 and 2 work (see the
 checklist at the end), with player profiles (save slots), the volumes,
 the award dialog, the high score tables with their medals and the high
-score overview (`mainscore`). Not done: the add-on set 3 scenes,
-tournament mode, racing.
+score overview (`mainscore`), the race menu and the race. Not done: the
+add-on set 3 scenes, tournament mode.
 
 ## The game
 
@@ -4089,7 +4089,8 @@ saving and loading are off, autosave too (slot -1).
   (`FUN_0040d860`). Start continues on the story page with the latest
   visit (`FUN_0040cac0(2)`, scene table order on a tie: the prologue for
   a new player). Race needs 8 car parts fitted (buildacar's value 0,
-  second int) else `menu:RACE_LOCKED`. Exit and Escape ask `menu:QUIT`.
+  second int) else `menu:RACE_LOCKED`, then the race menu. Exit and
+  Escape ask `menu:QUIT`.
 
 ## Race menu (`racemenu`, "Bilspillmeny", menu button 8)
 
@@ -4189,9 +4190,10 @@ button's text, `FUN_00406910(id, 10, key)`). Engine: `RacemenuScene`.
   with two cars; the rest are drawn (`FUN_004120e0`, `rand() % n`
   without repeats) from the resources 0..6 less the players' cars,
   compared with their list indices (the original's mix-up; an index not
-  among 0..6 makes `FUN_0040a0b0` remove at -1, a memmove that drops the
-  first entry). The menu notes the track and laps for its tables
-  (`DAT_006d05cc`, `DAT_006d05d0`, `DAT_006d05c8` = 0) and goes to
+  among 0..6 makes `FUN_0040a0b0` remove at -1: its memmove writes one int
+  before the array on the stack and drops the first entry; fixed in the
+  port: only the first entry is dropped). The menu notes the track and
+  laps for its tables (`DAT_006d05cc`, `DAT_006d05d0`, `DAT_006d05c8` = 0) and goes to
   `FUN_0040cd70("racing", &settings)`. Engine: `raceMenuSettings()`,
   `changeScene("racing", 1)`.
 * **Times** (`FUN_0047c2a0`): `FUN_0041f030("racing", title, key, entry,
@@ -4582,9 +4584,15 @@ drawing), `racecar.cpp` (driving, collisions, pickups, sounds),
   DirectSound hundredths of dB: f = p / 100, below 0.1 7.5 f, else (f -
   0.1) x 0.2778 + 0.75, (f - 1) x 10000. Engine: `RacingScene::Voice`
   (10^(dB / 20) as the mixer volume, the pan as ScummVM's balance).
-* **Development aids**: `racing_laps=<n>` (laps of the race),
-  `racing_autopilot=true` (the computer drives the players' cars, with
-  their car.ini [bias]), debug level 2 logs the cars every second.
+* **Bugs of the original**: the terrain lookup reads past the terrain
+  bitmap at the bottom and right edges; fixed in the port: terrain 0
+  there. A missing `finish` clip would leave nothing to end the race in
+  state 2; fixed in the port: the race ends at once then. (The race
+  menu's car draw, see there, writes before its array.)
+* **Development aids**: `racing_laps=<n>` (laps of the race; the times
+  still go into the menu's tables of its laps), `racing_autopilot=true`
+  (the computer drives the players' cars, with their car.ini [bias]),
+  debug level 2 logs the cars every second and the clips started.
 * Not ported: the progress bar while loading, the SARA screen effect,
   gamepads, the obfuscated registry value (`FUN_0040b940`..), the debug
   print of the story's catch-up.
@@ -4659,6 +4667,14 @@ knights a free pawn, the pieces left over count as captured; when the
 player to move is the computer it starts thinking; e.g.
 `6k1/5ppp/8/8/8/8/8/R5K1 w`: Ra1-a8 mates). Chess logs each move and the
 computer's search (moves tried, depth, time, score) at debug level 1.
+`racing_laps=<n>` (race: n laps, the times still go into the race menu's
+tables of its laps), `racing_autopilot=true` (race: the computer drives
+the players' cars too, with their car.ini [bias]); at debug level 2 the
+race logs each car every second (position, speed, path node, lap,
+damage, rank), each clip it starts, each pickup put down and each
+computer car moved on along the path when stuck out of sight. `start_scene=racemenu` opens the race
+menu; `start_scene=racing` starts the story race (track and cars of the
+story defaults).
 
 ## Mini game checklist
 
@@ -4714,4 +4730,6 @@ Add-on set 3 (CD 2, fourth index group):
 | | synonym | Reodors Ordmaskin | data3 |
 
 Not games: `buildacar` and `racing` are story pages, `buttercol`
-(Sommerfugl kolleksjon) is the collection screen of `butterfly`.
+(Sommerfugl kolleksjon) is the collection screen of `butterfly`. The race
+(`racing`, also started from the race menu `racemenu`, menu button 8) is
+ported (see "Race").
