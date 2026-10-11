@@ -27,6 +27,7 @@ MODULE_OBJS = \
 	flaaklypa.o \
 	font.o \
 	gallery.o \
+	gametrivia.o \
 	garage.o \
 	gem3d.o \
 	goodbye.o \
