@@ -27,6 +27,7 @@
 #include "common/fs.h"
 #include "common/hash-str.h"
 #include "common/keyboard.h"
+#include "common/ptr.h"
 #include "common/random.h"
 #include "common/serializer.h"
 #include "common/util.h"
@@ -73,6 +74,19 @@ struct InfoRequest {
 	int index = 0;
 };
 
+/**
+ * What a caller hands the activity centre (FUN_0040cd70("activity",
+ * &request) with {char *returnScene, int returnArg, surface *picture},
+ * e.g. DAT_006a4250 of colorfill): Escape and exit return to returnScene
+ * with returnArg, and the picture is on the page from the start. The scene
+ * index starts the centre without one.
+ */
+struct ActivityRequest {
+	Common::String returnScene;
+	int returnArg = 0;
+	Common::SharedPtr<Graphics::ManagedSurface> picture;
+};
+
 class FlaaklypaEngine : public Engine {
 private:
 	const ADGameDescription *_gameDescription;
@@ -106,6 +120,7 @@ private:
 	int _profileSlot = -1;         ///< save slot of _profile
 	int64 _playTimeStart = -1;
 	InfoRequest _infoRequest;     ///< DAT_004a6c9c: when the profile was selected (ms), -1 once checked
+	ActivityRequest _activityRequest;
 	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
@@ -174,6 +189,22 @@ public:
 		changeScene("info", 1);
 	}
 	InfoRequest &infoRequest() { return _infoRequest; }
+	/** Opens the activity centre with a request (FUN_0040cd70("activity", &request)). */
+	void showActivity(const ActivityRequest &request) {
+		_activityRequest = request;
+		if (!changeScene("activity", 1))
+			_activityRequest = ActivityRequest();
+	}
+	/** showActivity() with a copy of the picture. */
+	void showActivity(const Common::String &returnScene, int returnArg, const Graphics::ManagedSurface &picture) {
+		ActivityRequest request;
+		request.returnScene = returnScene;
+		request.returnArg = returnArg;
+		request.picture.reset(new Graphics::ManagedSurface());
+		request.picture->copyFrom(picture);
+		showActivity(request);
+	}
+	ActivityRequest &activityRequest() { return _activityRequest; }
 
 	/** ScummVM's subtitles option (the original's subtitle setting, DAT_0053dac4). */
 	bool subtitlesEnabled() const;

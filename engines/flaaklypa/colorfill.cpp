@@ -24,7 +24,6 @@
 #include "common/file.h"
 #include "common/util.h"
 #include "graphics/managed_surface.h"
-#include "gui/gui-manager.h"
 #include "image/png.h"
 
 #include "flaaklypa/colorfill.h"
@@ -934,26 +933,23 @@ void ColorfillScene::chooseCanvas() {
 		loadPicture(_canvases[row], true);
 }
 
-// FUN_00462220: the original copies the shaded picture (the "canvas"
-// element) into a new 490x490 surface and starts the activity centre with
-// the request {"colorfill", 0, surface} (DAT_006a4250: return scene, its
-// argument, picture). The activity centre is not ported: the picture goes
-// to ScummVM's print dialog instead (the help calls the centre the way to
-// print). Development aid: "test_colorfill_print=<png>" writes it there.
+// FUN_00462220: the shaded picture (the "canvas" element) is copied into a
+// new 490x490 surface and the activity centre starts with the request
+// {"colorfill", 0, surface} (DAT_006a4250: return scene, its argument,
+// picture). Development aid: "test_colorfill_print=<png>" also writes the
+// picture there.
 void ColorfillScene::openActivity() {
 	if (_vm->messageBox("colorfill:ACTIVITY_TITLE", "colorfill:ACTIVITY_TEXT", MessageBox::kButtonYes | MessageBox::kButtonNo) != MessageBox::kButtonYes)
 		return;
 	Graphics::ManagedSurface picture(kSize, kSize, _vm->_screen->format);
 	picture.blitFrom(*anim("canvas")->surface());
-	// TODO: _vm->changeScene("activity", ...) with the picture once the activity centre is ported
 	if (ConfMan.hasKey("test_colorfill_print")) {
 		Common::DumpFile out;
 		if (out.open(Common::Path(ConfMan.get("test_colorfill_print"), '/')))
 			Image::writePNG(out, *picture.surfacePtr());
 		debug(1, "Colorfill: picture written to %s", ConfMan.get("test_colorfill_print").c_str());
-		return;
 	}
-	g_gui.printImage(picture);
+	_vm->showActivity("colorfill", 0, picture);
 }
 
 // ---- the profile -------------------------------------------------------------------------------

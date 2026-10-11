@@ -166,6 +166,14 @@ bool SceneButtons::addTab(int group, int id, int x, int y, const char *normal, c
 	return true;
 }
 
+bool SceneButtons::addToggle(int id, int x, int y, const char *normal, const char *pressed,
+                             const Common::String &label, bool transparent) {
+	if (!add(id, x, y, normal, pressed, nullptr, nullptr, label, transparent))
+		return false;
+	find(id)->type = kTypeToggle;
+	return true;
+}
+
 bool SceneButtons::remove(int id) {
 	for (uint i = 0; i < _buttons.size(); i++) {
 		if (_buttons[i].id != id)
@@ -241,6 +249,11 @@ int SceneButtons::mouseDown(int hotspot, int x, int y) {
 	for (auto &b : _buttons) {
 		if (b.id != hotspot || !rect(b).contains(x, y))
 			continue;
+		if (b.type == kTypeToggle && b.state == kStatePressed) {
+			// FUN_00406be0
+			setStateOf(b, kStateNormal);
+			return b.id;
+		}
 		if (b.state != kStateNormal)
 			continue;
 		if (b.type == kTypePush) {
@@ -256,6 +269,10 @@ int SceneButtons::mouseDown(int hotspot, int x, int y) {
 					setStateOf(o, kStateNormal);
 			setState(id, kStatePressed);
 			return id;
+		}
+		if (b.type == kTypeToggle) {
+			setStateOf(b, kStatePressed);
+			return b.id;
 		}
 	}
 	return 0;

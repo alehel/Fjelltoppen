@@ -57,7 +57,8 @@ class SceneButtons {
 public:
 	enum Type {
 		kTypePush = 1,
-		kTypeTab = 2
+		kTypeTab = 2,
+		kTypeToggle = 3   ///< FUN_00407000: a press switches it between normal and pressed
 	};
 
 	enum State {
@@ -84,6 +85,9 @@ public:
 	/** Creates a tab of a group (FUN_00406fb0): bitmap 0 unselected, bitmap 1 selected. */
 	bool addTab(int group, int id, int x, int y, const char *normal, const char *selected,
 	            const Common::String &label, bool transparent);
+	/** Creates a toggle button (FUN_00407000): bitmap 0 off, bitmap 1 on. */
+	bool addToggle(int id, int x, int y, const char *normal, const char *pressed,
+	               const Common::String &label, bool transparent);
 	/** Destroys a button and its label (FUN_00406610). */
 	bool remove(int id);
 	void removeAll();
@@ -97,7 +101,8 @@ public:
 
 	/**
 	 * Left button pressed with the given hotspot under the mouse
-	 * (FUN_00406b50). Returns the id of a tab that was selected, else 0.
+	 * (FUN_00406b50). Returns the id of a tab that was selected or of a
+	 * toggle button that was switched (FUN_00406be0), else 0.
 	 */
 	int mouseDown(int hotspot, int x, int y);
 	/** Left button released (FUN_00406cf0). Returns the id of a push button clicked, else 0. */

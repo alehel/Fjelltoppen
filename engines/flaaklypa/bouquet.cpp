@@ -21,7 +21,6 @@
 #include "common/debug.h"
 #include "common/endian.h"
 #include "graphics/managed_surface.h"
-#include "gui/gui-manager.h"
 
 #include "flaaklypa/award.h"
 #include "flaaklypa/bouquet.h"
@@ -394,9 +393,9 @@ void BouquetScene::onTimer(int id, int data) {
 	_boat ^= 1;
 }
 
-// FUN_0045ed10: the original renders the bouquet (flowers by z, the vase
-// on top) on white and hands it to the activity centre's print page
-// ("activity", not ported); the port opens ScummVM's print dialog with it.
+// FUN_0045ec10 case 3 / FUN_0045ed10: the bouquet (flowers by z, the vase
+// on top) on white goes to the activity centre with the request
+// {"bouquet", 0, picture} (DAT_006a1970).
 void BouquetScene::print() {
 	Common::Array<Flower *> flowers = placedFlowers();
 	Anim *vase = anim("vase");
@@ -412,7 +411,7 @@ void BouquetScene::print() {
 	}
 	Graphics::ManagedSurface *s = vase->surface();
 	img.transBlitFrom(*s, Common::Point(vase->rect().left - bounds.left, vase->rect().top - bounds.top), s->getPixel(0, 0));
-	g_gui.printImage(img);
+	_vm->showActivity("bouquet", 0, img);
 }
 
 } // End of namespace Flaaklypa
