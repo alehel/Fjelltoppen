@@ -23,6 +23,7 @@
 
 #include "flaaklypa/audiopairs.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 
@@ -490,8 +491,9 @@ void AudiopairsScene::gameOver() {
 	setState(kStateIdle);
 	// Modal: the nested frames only see the idle state (no timer is armed).
 	_vm->messageBox("interfaceh:GAMEOVER", "audiopairs:ENDMESSAGE", MessageBox::kButtonOk);
-	// TODO: high score registration FUN_0041f9a0(0, score, kAwards, 0).
-	// Without a profile the start button comes back for another game.
+	// FUN_0041f9a0(0, score, 0x49d7d8, 0)
+	registerScore(_vm, "", _score, kAwards);
+	// Then (not in tournament mode) the start button comes back.
 	playAnim("start");
 }
 

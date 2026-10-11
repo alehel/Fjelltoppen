@@ -24,6 +24,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/hopscotch.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
@@ -631,9 +632,10 @@ void HopscotchScene::gameOver() {
 	setState(kStateIdle);
 	resetJumper(_lud);
 	resetJumper(_sol);
-	// TODO: high score registration FUN_0041f9a0(0, score, medal table
-	// 0x49e918 = 3000/5000/7000/10000, 0).
-	// Without a profile the score box shows the title again.
+	// FUN_0041f9a0(0, score, 0x49e918, 0)
+	static const int kMedals[4] = { 3000, 5000, 7000, 10000 };
+	registerScore(_vm, "", _score, kMedals);
+	// Then (not in tournament mode) the score box shows the title again.
 	drawBoxText(_font10, _vm->getString("hopscotch:SCENENAME"));
 }
 

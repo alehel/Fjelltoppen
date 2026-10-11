@@ -29,6 +29,7 @@
 
 #include "flaaklypa/bugzzz.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sound.h"
@@ -1836,8 +1837,10 @@ void BugzzzScene::gameOver() {
 	if (_gameOverDone)
 		return;
 	if (_playerCount == 1) {
-		// TODO: high score registration FUN_0041f9a0("bugzzz:HISCORE", score, medals 500/1000/1500/2000)
 		debug(1, "Bugzzz: game over, %d points", _worms[_lastSelected].score);
+		// FUN_0041f9a0("bugzzz:HISCORE", score, 0x4d7200, 0)
+		static const int kMedals[4] = { 500, 1000, 1500, 2000 };
+		registerScore(_vm, "bugzzz:HISCORE", _worms[_lastSelected].score, kMedals);
 	} else {
 		int order[kPlayers] = { 0, 1, 2, 3 };
 		for (int a = 0; a < kPlayers; a++)

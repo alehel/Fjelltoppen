@@ -21,6 +21,7 @@ MODULE_OBJS = \
 	garage.o \
 	gem3d.o \
 	goodbye.o \
+	hiscore.o \
 	hopscotch.o \
 	house.o \
 	hustle.o \

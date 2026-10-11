@@ -26,6 +26,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/textinvader.h"
 
 namespace Flaaklypa {
@@ -573,10 +574,10 @@ void TextinvaderScene::gameOver() {
 	// Modal: with _running false the nested frames neither move nor spawn
 	// words; onUpdate() returns once this comes back from its slot loop.
 	_vm->messageBox("interfaceh:GAMEOVER", "textinvader:GAMEOVER", MessageBox::kButtonOk);
-	// TODO: the high score registration FUN_0041f9a0(0, score, table
-	// 0x49f0a0, 0). With a profile the original then waits for the dialogs
-	// (button 4 -> FUN_0044c950 restarts); without one the start sign comes
-	// back.
+	// FUN_0041f9a0(0, score, 0x49f0a0, 0), then (not in tournament mode)
+	// the start sign comes back (FUN_0044c8b0).
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _score, kMedals);
 	showStartSign();
 }
 

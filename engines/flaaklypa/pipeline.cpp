@@ -24,6 +24,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/pipeline.h"
 #include "flaaklypa/resources.h"
 
@@ -597,8 +598,9 @@ void PipelineScene::gameOver() {
 	debug(1, "Pipeline: game over on level %d with %d points", _level + 1, _score);
 	// Modal; _playing is false, the board stays until the box is closed.
 	_vm->messageBox("interfaceh:GAMEOVER", "pipeline:ENDMESSAGE", MessageBox::kButtonOk);
-	// TODO: the high score registration FUN_0041f9a0(0, score, {2500, 5000,
-	// 10000, 20000}, 0).
+	// FUN_0041f9a0(0, score, 0x49eea0, 0)
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _score, kMedals);
 
 	for (int i = 0; i < kCells; i++)
 		_cells[i].anim->remove();

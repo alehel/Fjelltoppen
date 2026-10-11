@@ -25,6 +25,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/resources.h"
 
@@ -1067,8 +1068,9 @@ void LettersortScene::bellTick() {
 	// Modal: the game has stopped (_running) and the bell no longer plays,
 	// so the nested frames do not come back here.
 	_vm->messageBox("interfaceh:GAMEOVER", "lettersort:GAMEOVER", MessageBox::kButtonOk);
-	// TODO: the high score registration FUN_0041f9a0 (medals at 2500, 5000,
-	// 10000 and 20000 points), whose callback LAB_0043fd50 follows.
+	// FUN_0041f9a0(0, score, 0x49ead0, LAB_0043fd50); the callback follows.
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _score, kMedals);
 	gameOverDone();
 }
 

@@ -26,6 +26,7 @@
 #include "flaaklypa/award.h"
 #include "flaaklypa/butterfly.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 
@@ -350,14 +351,15 @@ void ButterflyScene::gameOver() {
 	for (int i = 0; i < kSpeciesCount; i++)
 		if (_caught[i] > 0)
 			awardGive(_vm, kAwardButterfly, i, kAwardSpecificItem);
-	// TODO: high score registration FUN_0041f9a0(0, score, medals {1500, 3000, 5000}).
+	// FUN_0041f9a0(0, score, 0x49e53c, 0x43bb90)
+	static const int kMedals[4] = { 1500, 3000, 5000, 7000 };
+	registerScore(_vm, "", _score, kMedals);
 	for (int i = 0; i < 4; i++) {
 		Common::String name = Common::String::format("level_%d", i);
 		if (isAnimAdded(name.c_str()))
 			removeAnim(name.c_str());
 	}
-	// Not in the original (its dialogs follow here): show the start clip
-	// again so another game can be played.
+	// The high score dialog's callback (0x43bb90): the start clip again.
 	removeAnim("timerend");
 	addAnim("timerstart", Anim::kDefaultPos, Anim::kDefaultPos, 0);
 	addAnim("startanim", Anim::kDefaultPos, Anim::kDefaultPos, kZButton);
