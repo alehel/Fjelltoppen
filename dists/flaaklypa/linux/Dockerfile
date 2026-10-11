@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		libgl1-mesa-dev libgles2-mesa-dev libdrm-dev libgbm-dev \
 		libasound2-dev libpulse-dev libpipewire-0.3-dev libdbus-1-dev libudev-dev \
 	&& rm -rf /var/lib/apt/lists/*
+# appimagetool, unpacked so it runs without FUSE (its AppImage magic is
+# cleared first, emulators refuse it), and the AppImage runtime
 RUN set -e; \
 	case $(uname -m) in \
 		x86_64) tool=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0; \
@@ -20,4 +22,8 @@ RUN set -e; \
 	curl -fsSL -o /opt/runtime https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-$(uname -m); \
 	echo "$tool  /opt/appimagetool" | sha256sum -c -; \
 	echo "$runtime  /opt/runtime" | sha256sum -c -; \
-	chmod +x /opt/appimagetool
+	chmod +x /opt/appimagetool; \
+	dd if=/dev/zero of=/opt/appimagetool bs=1 count=3 seek=8 conv=notrunc; \
+	cd /opt && ./appimagetool --appimage-extract > /dev/null; \
+	mv squashfs-root appimagetool.AppDir; \
+	rm appimagetool

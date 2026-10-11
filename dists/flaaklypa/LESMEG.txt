@@ -9,14 +9,16 @@ originale CD-ene.
 Første gang du starter
 ----------------------
 
-Spillet ber deg velge CD 1, eller en mappe der spillet er installert
-eller kopiert (mappen som inneholder «data» og «lang»).
+Spillet ber deg velge CD 1, et diskbilde av den, eller en mappe der
+spillet er installert eller kopiert (mappen som inneholder «data» og
+«lang»).
 
-Velger du CD-ene, kopieres dataene til maskinen (omtrent 1 GB). Når
-CD 1 er kopiert, ber spillet om CD 2. Etterpå trenger du ikke CD-ene.
+Velger du CD-ene eller diskbildene, kopieres dataene til maskinen
+(omtrent 1 GB). Når CD 1 er kopiert, ber spillet om CD 2. Etterpå
+trenger du ikke CD-ene.
 
-Har du CD-ene som diskbilder (.iso), kan du åpne dem og velge dem på
-samme måte.
+Diskbildene kan være .iso, .bin eller .mdf (fra Alcohol 120%; velg
+.mdf- eller .mds-filen).
 
 Bare Gullutgaven (versjon 1.2) støttes foreløpig.
 

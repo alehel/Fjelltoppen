@@ -28,11 +28,13 @@
 #endif
 
 #include "base/flaaklypa_app.h"
+#include "base/flaaklypa_source.h"
 #include "base/plugins.h"
 
 #include "common/config-manager.h"
 #include "common/file.h"
 #include "common/fs.h"
+#include "common/ptr.h"
 #include "common/stream.h"
 #include "common/system.h"
 #include "common/textconsole.h"
@@ -181,13 +183,13 @@ private:
 	int _tickles = 0;
 };
 
-static bool chooseFolder(const Common::U32String &title, Common::FSNode &result) {
+static bool chooseFile(const Common::U32String &title, bool folder, Common::FSNode &result) {
 	Common::String answer;
 	if (testAnswer(answer)) {
 		result = Common::FSNode(Common::Path(answer, Common::Path::kNativeSeparator));
 		return !answer.empty();
 	}
-	GUI::BrowserDialog browser(title, true);
+	GUI::BrowserDialog browser(title, folder);
 	if (browser.runModal() <= 0)
 		return false;
 	result = browser.getResult();
@@ -227,25 +229,12 @@ void registerDefaults() {
 	}
 }
 
-// Child lookup ignoring case: a CD may show its names in upper case.
-static Common::FSNode child(const Common::FSNode &dir, const char *name) {
-	Common::FSList list;
-	if (dir.getChildren(list, Common::FSNode::kListAll, true)) {
-		for (const Common::FSNode &node : list) {
-			if (node.getName().equalsIgnoreCase(name))
-				return node;
-		}
-	}
-	return Common::FSNode();
-}
-
-static uint findParts(const Common::FSNode &dir) {
+static uint findParts(const Source &source) {
 	uint parts = 0;
-	if (child(child(dir, "data"), "sceneindex.bin").exists() && child(child(dir, "lang"), "common.bin").exists() &&
-	    child(dir, "data1").isDirectory() && child(dir, "data2").isDirectory())
+	if (source.hasFile("data/sceneindex.bin") && source.hasFile("lang/common.bin") &&
+	    source.hasDir("data1") && source.hasDir("data2"))
 		parts |= kPartCD1;
-	if (child(dir, "data3").isDirectory() && child(dir, "lang1").isDirectory() &&
-	    child(dir, "lang2").isDirectory() && child(dir, "lang3").isDirectory())
+	if (source.hasDir("data3") && source.hasDir("lang1") && source.hasDir("lang2") && source.hasDir("lang3"))
 		parts |= kPartCD2;
 	return parts;
 }
@@ -273,45 +262,35 @@ static bool detectGame(const Common::FSNode &dir, DetectedGame &game) {
 }
 
 struct CopyJob {
-	Common::FSNode src;
+	const Source *source;
+	SourceFile file;
 	Common::Path dst;
-	Common::String name;
-	uint32 size;
 };
 
 // Files already copied (same size) are skipped, so a cancelled copy resumes.
-static void listCopyJobs(const Common::FSNode &src, const Common::Path &dst, const Common::String &name,
-                         Common::Array<CopyJob> &jobs, uint64 &total) {
-	Common::FSList list;
-	if (!src.getChildren(list, Common::FSNode::kListAll, true))
-		return;
-	for (const Common::FSNode &node : list) {
-		Common::Path to = dst.appendComponent(node.getName());
-		Common::String toName = name + "/" + node.getName();
-		if (node.isDirectory()) {
-			listCopyJobs(node, to, toName, jobs, total);
+static void listCopyJobs(const Source &source, const Common::Path &dst, Common::Array<CopyJob> &jobs, uint64 &total) {
+	for (const char *dir : kGameDirs) {
+		if (!source.hasDir(dir))
 			continue;
-		}
-		Common::SeekableReadStream *in = node.createReadStream();
-		if (!in)
-			continue;
-		CopyJob job;
-		job.src = node;
-		job.dst = to;
-		job.name = toName;
-		job.size = in->size();
-		delete in;
+		Common::Array<SourceFile> files;
+		source.listFiles(dir, files);
+		for (const SourceFile &file : files) {
+			CopyJob job;
+			job.source = &source;
+			job.file = file;
+			job.dst = dst.join(Common::Path(file.path, '/'));
 
-		Common::FSNode copy(to);
-		if (copy.exists()) {
-			Common::SeekableReadStream *old = copy.createReadStream();
-			bool copied = old && old->size() == job.size;
-			delete old;
-			if (copied)
-				continue;
+			Common::FSNode copy(job.dst);
+			if (copy.exists()) {
+				Common::SeekableReadStream *old = copy.createReadStream();
+				bool copied = old && old->size() == file.size;
+				delete old;
+				if (copied)
+					continue;
+			}
+			jobs.push_back(job);
+			total += file.size;
 		}
-		jobs.push_back(job);
-		total += job.size;
 	}
 }
 
@@ -420,12 +399,12 @@ void CopyDialog::handleTickle() {
 				return;
 			}
 			const CopyJob &job = _jobs[_next++];
-			_file->setLabel(Common::U32String(job.name));
-			_in = job.src.createReadStream();
+			_file->setLabel(Common::U32String(job.file.path));
+			_in = job.source->open(job.file);
 			if (makeDirs(job.dst.getParent()))
 				_out = Common::FSNode(job.dst).createWriteStream(false);
 			if (!_in || !_out) {
-				_failedFile = job.name;
+				_failedFile = job.file.path;
 				finish(kCopyFailed);
 				return;
 			}
@@ -433,7 +412,7 @@ void CopyDialog::handleTickle() {
 
 		uint32 n = _in->read(_buffer, kBufferSize);
 		if (_in->err() || (n && _out->write(_buffer, n) != n)) {
-			_failedFile = _jobs[_next - 1].name;
+			_failedFile = _jobs[_next - 1].file.path;
 			finish(kCopyFailed);
 			return;
 		}
@@ -447,7 +426,7 @@ void CopyDialog::handleTickle() {
 			_in = nullptr;
 			_out = nullptr;
 			if (failed) {
-				_failedFile = _jobs[_next - 1].name;
+				_failedFile = _jobs[_next - 1].file.path;
 				finish(kCopyFailed);
 				return;
 			}
@@ -475,14 +454,10 @@ void CopyDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 da
 	GUI::Dialog::handleCommand(sender, cmd, data);
 }
 
-static bool copyGameData(const Common::FSNode &src, const Common::Path &dst) {
+static bool copyGameData(const Source &source, const Common::Path &dst) {
 	Common::Array<CopyJob> jobs;
 	uint64 total = 0;
-	for (const char *name : kGameDirs) {
-		Common::FSNode dir = child(src, name);
-		if (dir.isDirectory())
-			listCopyJobs(dir, dst.appendComponent(name), name, jobs, total);
-	}
+	listCopyJobs(source, dst, jobs, total);
 	if (jobs.empty())
 		return true;
 
@@ -516,62 +491,90 @@ static bool useGameDir(const Common::FSNode &dir, const Common::String &target) 
 	return true;
 }
 
+enum {
+	kChooseFolder = GUI::kMessageOK,
+	kChooseImage = GUI::kMessageAlt
+};
+
 // Asks for the game data until the game can start: a folder with all of it
-// is used where it is, the CDs are copied to the application's folder.
+// is used where it is, the CDs (or their images) are copied one after the
+// other to the application's folder.
 static bool askForGameData(const Common::String &target) {
 	const Common::Path copyDir = appDataDir().appendComponent("Spilldata");
 
-	AppMessage welcome(Common::String::format(
-		"Velkommen til %s!\n\n"
+	Common::String message(
 		"Spillet trenger dataene fra Flåklypa Grand Prix Gullutgave.\n"
-		"Velg CD 1, eller en mappe der spillet er installert eller kopiert.\n\n"
+		"Velg CD 1 eller et diskbilde av den (.iso, .mdf), eller en mappe\n"
+		"der spillet er installert eller kopiert.\n\n"
 		"Fra CD-ene blir dataene kopiert til denne maskinen\n"
-		"(omtrent 1 GB), så du ikke trenger CD-ene senere.", kAppName).decode(),
-		text("Velg mappe"), text("Avslutt"), Graphics::kTextAlignLeft);
-	if (welcome.run("welcome") != GUI::kMessageOK)
-		return false;
+		"(omtrent 1 GB), så du ikke trenger CD-ene senere.");
+	if (target.empty())
+		message = Common::String::format("Velkommen til %s!\n\n", kAppName) + message;
+	const char *disc = "CD 1";
+	bool first = true;
 
-	Common::U32String title = text("Velg CD 1 eller spillmappen");
 	while (true) {
-		Common::FSNode dir;
-		if (!chooseFolder(title, dir)) {
-			AppMessage ask(text("Spillet kan ikke starte uten spilldataene."),
-			                       text("Velg mappe"), text("Avslutt"));
-			if (ask.run("nodata") != GUI::kMessageOK)
-				return false;
+		Common::U32StringArray buttons;
+		buttons.push_back(text("Velg diskbilde"));
+		buttons.push_back(text("Avslutt"));
+		AppMessage ask(message.decode(), text("Velg mappe"), buttons, Graphics::kTextAlignLeft);
+		int choice = ask.run(first ? "welcome" : "next");
+		if (choice != kChooseFolder && choice != kChooseImage)
+			return false;
+
+		bool folder = choice == kChooseFolder;
+		Common::String title;
+		if (folder)
+			title = first ? Common::String::format("Velg %s eller spillmappen", disc) : Common::String::format("Velg %s", disc);
+		else
+			title = Common::String::format("Velg diskbildet av %s", disc);
+		Common::FSNode node;
+		if (!chooseFile(title.decode(), folder, node))
 			continue;
+
+		Common::ScopedPtr<Source> source;
+		if (folder) {
+			source.reset(new FolderSource(node));
+		} else {
+			source.reset(DiscImage::open(node));
+			if (!source) {
+				AppMessage error(Common::String::format(
+					"Kan ikke lese diskbildet\n%s\n\nVelg et diskbilde av CD-en (.iso, .bin eller .mdf).",
+					nativePath(node).c_str()).decode());
+				error.run("badimage");
+				continue;
+			}
 		}
 
-		uint parts = findParts(dir);
-		if (parts == kPartsAll) {
-			if (useGameDir(dir, target))
+		uint parts = findParts(*source);
+		if (parts == kPartsAll && folder) {
+			if (useGameDir(node, target))
 				return true;
 			continue;
 		}
 		if (!parts) {
 			AppMessage error(Common::String::format(
-				"Fant ikke %s i\n%s\n\nVelg CD-en, eller mappen som inneholder\nmappene «data» og «lang».",
-				kAppName, nativePath(dir).c_str()).decode());
+				"Fant ikke %s i\n%s\n\nVelg CD-en, et diskbilde av den, eller mappen\nsom inneholder mappene «data» og «lang».",
+				kAppName, nativePath(node).c_str()).decode());
 			error.run("notfound");
 			continue;
 		}
 
-		if (!makeDirs(copyDir) || !copyGameData(dir, copyDir))
+		if (!makeDirs(copyDir) || !copyGameData(*source, copyDir))
 			continue;
 
 		Common::FSNode copied(copyDir);
-		uint have = findParts(copied);
+		uint have = findParts(FolderSource(copied));
 		if (have == kPartsAll) {
 			if (useGameDir(copied, target))
 				return true;
 			continue;
 		}
 
-		const char *next = (have & kPartCD1) ? "CD 2" : "CD 1";
-		AppMessage insert(Common::String::format(
-			"%s er kopiert. Sett inn %s og velg den.", (have & kPartCD1) ? "CD 1" : "CD 2", next).decode());
-		insert.run("insert");
-		title = Common::String::format("Velg %s", next).decode();
+		const char *done = (have & kPartCD1) ? "CD 1" : "CD 2";
+		disc = (have & kPartCD1) ? "CD 2" : "CD 1";
+		message = Common::String::format("%s er kopiert. Velg nå %s, eller diskbildet av den.", done, disc);
+		first = false;
 	}
 }
 
@@ -581,7 +584,7 @@ bool selectGame(bool afterError) {
 	Common::String target = findTarget();
 	while (!target.empty()) {
 		Common::FSNode dir(ConfMan.getPath("path", target));
-		if (findParts(dir) == kPartsAll) {
+		if (findParts(FolderSource(dir)) == kPartsAll) {
 			if (afterError)
 				return false;
 			ConfMan.setActiveDomain(target);
@@ -589,7 +592,7 @@ bool selectGame(bool afterError) {
 		}
 
 		Common::U32StringArray buttons;
-		buttons.push_back(text("Velg mappe"));
+		buttons.push_back(text("Velg på nytt"));
 		buttons.push_back(text("Avslutt"));
 		AppMessage missing(Common::String::format(
 			"Finner ikke spilldataene i\n%s\n\nEr CD-en satt inn, eller disken koblet til?",

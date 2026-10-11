@@ -5,9 +5,11 @@ ScummVM built with only the `flaaklypa` engine and `--enable-flaaklypa-app`
 
 * No launcher: `base/flaaklypa_app.cpp` starts the game, and asks for the
   game data on the first launch. A folder with all of it (an installed
-  copy) is used where it is; the two CDs are copied, one after the other,
-  to the application's folder (`Spilldata`). If the data goes missing
-  later (a disconnected disk), it asks again.
+  copy) is used where it is; the two CDs, or their images, are copied one
+  after the other to the application's folder (`Spilldata`). Images are
+  read directly (`base/flaaklypa_source.cpp`: ISO 9660 with Joliet names
+  in .iso, raw .bin and Alcohol .mdf/.mds). If the data goes missing later
+  (a disconnected disk), it asks again.
 * Its own config file and saves (the player profiles, `Profiler`),
   separate from an installed ScummVM:
 
@@ -72,9 +74,10 @@ two config keys (use `-c` with a copy of a test config, and `HOME` pointing
 elsewhere to keep the real folders untouched):
 
     [scummvm]
-    app_test_answers=0;/Volumes/FGPGULL1;0;/Volumes/FGPGULL2
+    app_test_answers=0;/Volumes/FGPGULL1;1;/path/to/FGPGULL2.mdf
     app_test_shots=/tmp/shots
 
-The answers go to the dialogs in turn: a button number (0 is the first),
-or the folder for the folder browser. When they run out, the application
-quits.
+The answers go to the dialogs in turn: a button number (0 is the first;
+in the dialogs asking for the data 0 is a folder, 1 an image), or the
+path for the folder or file browser (empty: cancelled). When they run
+out, the application quits.

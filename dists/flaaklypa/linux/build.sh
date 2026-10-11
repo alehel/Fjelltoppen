@@ -73,6 +73,6 @@ ln -s flaaklypa.png "$appdir/.DirIcon"
 ln -s usr/bin/flaaklypa "$appdir/AppRun"
 
 image="$out/Flaaklypa-Grand-Prix-$version-linux-$arch.AppImage"
-ARCH=$arch APPIMAGE_EXTRACT_AND_RUN=1 /opt/appimagetool --no-appstream --runtime-file /opt/runtime "$appdir" "$image"
+ARCH=$arch /opt/appimagetool.AppDir/AppRun --no-appstream --runtime-file /opt/runtime "$appdir" "$image"
 
 echo "Built $image"

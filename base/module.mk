@@ -9,7 +9,8 @@ MODULE_OBJS := \
 
 ifdef FLAAKLYPA_APP
 MODULE_OBJS += \
-	flaaklypa_app.o
+	flaaklypa_app.o \
+	flaaklypa_source.o
 endif
 
 # Include common rules
