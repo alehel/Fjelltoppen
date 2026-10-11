@@ -132,7 +132,7 @@ static const struct {
 
 DraughtsScene::DraughtsScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _buttons(this), _tooltip(this),
 	_player(1), _state(kStateHuman), _moves(0), _depth(5), _lock(-1), _animTick(0), _historyPos(0), _waitCursor(false),
-	_nodes(0), _ret(0.0f), _thinkPhase(kThinkStart), _thinkFilter(-1), _thinkTime(0), _top(-1), _drag(-1) {
+	_nodes(0), _top(-1), _ret(0.0f), _thinkPhase(kThinkStart), _thinkFilter(-1), _thinkTime(0), _drag(-1) {
 	_stack.resize(kMaxFrames);
 	_playerType[0] = kComputer;
 	_playerType[1] = kHuman;

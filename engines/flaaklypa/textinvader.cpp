@@ -132,14 +132,13 @@ void TextinvaderScene::loadWordList() {
 
 // FUN_0044d770: a random word of a random length up to maxLen (lengths
 // without words are skipped).
-const Common::String &TextinvaderScene::pickWord(int maxLen) {
-	static const Common::String empty;
+Common::String TextinvaderScene::pickWord(int maxLen) {
 	bool any = false;
 	for (int l = 1; l <= maxLen && l < kMaxWordLen; l++)
 		if (!_words[l].empty())
 			any = true;
 	if (!any)
-		return empty;
+		return Common::String();
 	// Length 32 has no words (the original's count for it is zero).
 	int len;
 	do {

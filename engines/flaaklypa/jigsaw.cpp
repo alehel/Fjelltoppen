@@ -750,8 +750,11 @@ void JigsawScene::buildPieces() {
 		_images[r].resize(count);
 		for (int i = 0; i < count; i++) {
 			Box b = boxes[i];
-			if (b.bottom == -1)
-				b.left = b.top = 0, b.right = b.bottom = 1;  // no pixels (the original would use the last box)
+			if (b.bottom == -1) {
+				// no pixels (the original would use the last box)
+				b.left = b.top = 0;
+				b.right = b.bottom = 1;
+			}
 			PieceImage &img = _images[r][i];
 			img.x0 = b.left;
 			img.y0 = b.top;
@@ -809,8 +812,10 @@ void JigsawScene::logPieces() {
 		int gx = -1, gy = -1;
 		for (int y = 2; y < img.surface->h && gx < 0; y += 3)
 			for (int x = 2; x < img.surface->w && gx < 0; x += 3)
-				if (hotspotAt(pc.x + x, pc.y + y) == kHotspotFirstPiece + p)
-					gx = pc.x + x, gy = pc.y + y;
+				if (hotspotAt(pc.x + x, pc.y + y) == kHotspotFirstPiece + p) {
+					gx = pc.x + x;
+					gy = pc.y + y;
+				}
 		debug(2, "Jigsaw: piece %d rot %d at %d,%d z %d size %dx%d place %d,%d flags %x grab %d,%d", p, pc.rot, pc.x, pc.y, pc.z,
 			img.surface->w, img.surface->h, img.x0 + kBoardX, img.y0 + kBoardY, pc.flags, gx, gy);
 	}

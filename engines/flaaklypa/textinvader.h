@@ -99,7 +99,7 @@ private:
 
 	int rnd(int n);
 	void loadWordList();
-	const Common::String &pickWord(int maxLen);
+	Common::String pickWord(int maxLen);
 
 	void showStartSign();
 	void showScoreSign();
