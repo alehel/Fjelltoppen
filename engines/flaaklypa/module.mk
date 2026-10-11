@@ -46,6 +46,7 @@ MODULE_OBJS = \
 	logo.o \
 	mahjong.o \
 	mainscore.o \
+	mathlab.o \
 	menu.o \
 	metaengine.o \
 	morning.o \

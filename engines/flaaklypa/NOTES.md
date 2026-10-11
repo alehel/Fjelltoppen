@@ -5,12 +5,11 @@ hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
 The menu, the scene index, every story page (the race aside), the
-message box, navigator, help and options dialogs, the 15 sub games and
-the activities of the base game and add-on sets 1 and 2 work (see the
+message box, navigator, help and options dialogs, and every sub game
+and activity of the base game and the three add-on sets work (see the
 checklist at the end), with player profiles (save slots), the volumes,
 the award dialog, the high score tables with their medals and the high
-score overview (`mainscore`). Not done: the add-on set 3 scenes,
-tournament mode, racing.
+score overview (`mainscore`). Not done: tournament mode, racing.
 
 ## The game
 
@@ -1930,6 +1929,176 @@ buttons. Engine: `gametrivia.cpp`.
   ScummVM's random source; the NaN key is 0. Development aid
   `test_gametrivia`.
 
+## Sub game `mathlab` ("Reodors Tallmaskin", add-on set 3)
+
+Reodor's number machine. Handler `0x47fe50` (`FUN_0047fe50`, code up to
+`0x482230` where synonym's handler starts): 0x103 -> `FUN_0047ff70`
+init, 0x104 -> `FUN_00480f80` (frees texts, fonts, meters), 0x105 ->
+`FUN_004814f0`, 0x109 -> `FUN_00432fd0` (empty), 0x10b -> `FUN_004817f0`
+drop, 0x110 -> `FUN_00481070`, 0x111 -> `FUN_00482220` (removes the
+event's element; no timer is ever set), 0x112 -> `FUN_00481930` tick,
+0x116 -> `FUN_00481350` buttons. No keys or tooltips of its own. Music
+`subgame20`. Engine: `mathlab.cpp`, `MathlabScene`.
+
+* **Screen** (`FUN_004809d0`): fonts `Amerigo BT_14_red`, `_16_red`,
+  `_16_black`, `_14_yellow`, `_14_green` (data3). PROGRESS meters
+  (`FUN_004089a0(x, y, 15, bmp, 0, 0x10)`: the bottom `round(h * v)` rows,
+  `FUN_00408b00`): `tank_fluidindicator` at (673, 108) for the level tank
+  (pumped / target), `fluid_0..4` at (217, 448) (301, 475) (394, 486)
+  (440, 481) (529, 436) for the tanks (contents / capacity). BUTTON module
+  (z 1, transparent): help 1 `help_0/1` (0, 0), exit 2 `exit_0/1`
+  (728, 0). Elements at z 1: `start` (307, 37, hotspot 3; not in
+  tournament mode), `labels` (161, 445, the "=" and "MAX" marks),
+  `ballopener` (frame 0 = closed hatch), `tap` (frame 11, `FUN_00480ee0`),
+  `fan` (still). Text areas (`FUN_00407930`, z 15, `"%d"` right aligned
+  unless noted): score (698, 212)-(765, 229) and level + 1
+  (723, 189)-(746, 204) red14, clock (318, 33)-(407, 65) red14 centred
+  `"%02d:%02d:%02d"` minutes, seconds, hundredths (`FUN_0041ecb0`, not
+  below 0); per tank the contents (`0x4a0438`: yellow14 below, green14 at,
+  red16 above the capacity) and the capacity (`0x4a0488`, red14); a
+  sixth area (699, 207)-(768, 229) is only ever cleared. Digit counters
+  (`FUN_00480dc0`, 0x1c bytes: running, digits, labels, value, from, to,
+  start) of 14 px wide areas: the containers 2 digits at x `0x4a04e8`
+  {212, 240 / 338, 365 / 486, 512}, y 215..232; the sum 4 digits at x
+  `0x4a0500` {323, 349, 375, 403}, y 321..338. A counter (`FUN_00480df0`)
+  runs to its value at 1 per 4 ms and draws all digits (leading zeros) in
+  black16, or red16 with `"-"` over the first one for negative values.
+* **Hotspots**: mask 20..24 tanks, 30..32 the green containers, 100..105
+  the operators (only once their tab buttons exist), 140 the red pump
+  button; elements 1/2 help/exit, 3 start, 200..229 the balls. The
+  branch for hotspots 50..54 in `FUN_004814f0` (dragging `0x512404 + n *
+  0xbc`) is dead code.
+* **Levels** (`0x5120b0`, 9 ints: base capacity of the five tanks, +
+  rand(r), balls 1..n, factor, seconds): 23 rows, from {12, 16, 14, 11,
+  15; 2; 4; 1; 80 s} to {1320, 2129, 479, 1559, 1257; 100; 20; 6; 5 s}
+  (all in `mathlab.cpp`). The level tank holds sum(base) * factor (68 on
+  level 1). `FUN_00480530` increments and clamps only above 23, so index
+  23 exists and reads `0x5123ec`: tanks 0, 50, 100, 30, 0, balls all 1,
+  level tank 0 (the next pump or button moves on to index 22), +0 s; with
+  only 1s `FUN_004803d0` rejects every draw once three are on the rail and
+  the original hangs (engine: gives up after 1000 draws).
+* **Round** (`FUN_0047ffd0(level)`): level 0 from the start ball (the
+  tournament difficulty otherwise); time base = now + 100 / 60 / 30 s for
+  levels 0 / 1 / 2 (else now), deadline = base, `FUN_00480530(1)`,
+  `disable2` (389, 170) covers the third container while it is off
+  (`DAT_00512860`, .data 1); score 0, `FUN_0040d8a0(1)`, state 1
+  (`DAT_006e1d88`); buttons: pump 0x8c with only the pressed bitmap
+  `ok_button` at (639, 507), tabs of group 1 with only a selected bitmap
+  (the backdrop shows the unselected ones): 100 `plus_1` (292, 191), 101
+  `minus_1` (292, 215), 102 `multiply_1` (292, 238), 100 selected; the 7
+  rail slots cleared and filled.
+* **Level setup** (`FUN_00480530(first)`): not first: level++, the hatch
+  opens (`FUN_00480730`), `lightbulb` + "light_bulb". First: hatch flag
+  (`DAT_005120a8`, .data 1) 0. Level index > 1 with the third container
+  off: tabs of group 2 103 `plus_2` (417, 192), 104 `minus_2` (416, 215),
+  105 `multiply_2` (415, 238), 103 selected, "3 shows up", `disable2`
+  goes. Then pending drum balls 0, pumping 0, deadline += seconds * 1000,
+  level meter 0, level text, capacity = rand(r) + base (`FUN_0040c530`)
+  and each tank emptied (`FUN_00480810`), target = sum(base) * factor,
+  pumped 0. A level only adds time; the round ends when the clock does.
+* **Balls**: 7 slots at `0x6e3e20` (0x24: number, active, frame, limit,
+  ?, step time, element, out generation, sound state), kept sorted
+  (`FUN_00480440`, qsort `LAB_00480460`: active first, furthest first).
+  30 element structures `0x6dbb28` copied from `0x512ef8`
+  (`ball%02d.smk` at (166, 55): 51 frames along the rail and down the
+  funnel, frame 0 empty; hotspots 200..229, z -1; `FUN_00480390` /
+  `FUN_00481700`). `FUN_00480180` (every tick in state 1, after a pick,
+  7 times at the start and when the hatch closes) fills the first free
+  slot. The drum: unless `startballs` plays or `endballs` is up, without
+  `balls` it starts (`startballs`, `fan` plays, `fan fade LONG` at 0.4 of
+  the effect volume, the `balls1` rattle loop) and a ball is pending
+  (`DAT_006dba4c`), with `balls` the new ball shows (`newball` +
+  "newball1", or pending while one shows); while starting / ending:
+  `newball` if `balls` is up, else pending. The ball starts at frame -42
+  (`endballs` up) / -36 (`startballs` playing) / -30 and below every other
+  ball's frame - 5 (negative frames: still in the pipe, the empty frame
+  0 shows), limit min(36, frames - 5); number = rand(n) + 1, drawn again
+  while `FUN_004803d0` rejects it (three balls of the number on the rail,
+  or with n > 10 a number above 10 while four balls of 10 and up are).
+  `FUN_00481aa0` (tick, only while slot 0 is active): limits: the first
+  ball 36 (50 while the hatch is open), the others at least the
+  previous one's limit - 5 and at most 36 unless falling out; a ball
+  advances one frame per 66 ms up to its limit (SmackGoto at frames >= 0),
+  frame 50 removes it (the slots re-sort under the loop: the ball moving
+  into its place skips that tick). Frame 6 plays "ball1/2/3" (rand 30:
+  < 10, < 20, else), frame 37 "balls out new1/2" (rand 20). Drum clips
+  (`FUN_00481070`): `startballs` -> `balls` (+ a pending `newball`);
+  `balls` -> again with `balls1` while balls are pending, else `endballs`
+  + `endball1` (0.65); `endballs` -> `startballs` if pending, else the fan
+  stops (`FUN_00412a60`) and its sounds go; `newball` -> the next pending
+  one; `fan fade LONG` -> the `new fan long1` loop (0.4).
+* **Hatch** (`FUN_00480730`, level up and time out): `ballopener` plays,
+  "openerP", every ball with frame >= 0 falls out (out = generation,
+  `DAT_006dba6c` from 1); balls still in the pipe wait. When no falling
+  ball is left (checked after the move loop): the waiting balls' step
+  times restart, `ballcloser` (then the closed `ballopener` again),
+  "closerP" and 7 new balls unless the round is over.
+* **Input** (`FUN_004814f0`; the BUTTON module after it). State 0: start
+  (3) -> round at level 0. State 1: a ball at frame < 37 is dragged
+  (`FUN_0040c1f0("ball_0", number)`: `bitmap/ball_<nn>.bmp` added at mouse
+  - (20, 20), z 0x70, moved by the mouse deltas), leaves the rail and a
+  new one comes. A tank: result > 0 with at least two non-empty
+  containers -> queued (`0x6e3c88`, {tank, amount}, count
+  `DAT_006e3c78`) and the containers reset (`FUN_00480940`: values 0, +
+  in both groups, "click2"); else "negative". Drop (`FUN_004817f0`): on
+  a container (the third only when uncovered: on the covered one the ball
+  is simply lost) "click2" and the number replaces its value; elsewhere
+  -2 s and `dumpball`. Buttons (`FUN_00481350`): 1 help, 2 exit (asks
+  while a round runs); in state 1: 100..102 / 103..105 the operators
+  (+ - x), 0x8c pump (`FUN_00481470`: if a tank holds something and no
+  pump is pending: pumping, "Flush in2P", `new_pump`, `flush`); then the
+  level check, for operators the sum and "operator_click".
+* **Arithmetic** (`FUN_00481790`): c0 op1 c1 op2 c2 left to right without
+  precedence, empty containers count 0 (x with an empty container gives
+  0); the sum counter follows every change.
+* **Tap** (`FUN_00481d10`): frames `0x513630` {20, 15, 11, 7, 0} for tanks
+  0..4. For the queue head: "pipe squeek1", one frame per 50 ms, then the
+  pour: pours[t]++, contents += amount; above the capacity the value
+  blinks for 3 s (`FUN_00481ed0`, 300 ms phases, red14), -10 s, all five
+  tanks are emptied, "Flush out1P", `overflow`; `water5..1` for tanks
+  0..4 and "ball in fluid"; the next pour waits for the water clip.
+* **Scoring** (`FUN_00481f70`, when a pump is pending, the tap idle and
+  the queue empty): full = tanks with contents == capacity; each tank with
+  0 < contents <= capacity scores contents + trunc(contents * {1, 1.5,
+  1.25, 1}[min(pours, 3)]) (`0x4a03e8`: one pour 1.5, two 1.25), adds to
+  pumped, and when exactly full +10 s and its capacity to the bonus; all
+  tanks reset; score += trunc(bonus * {1, 1, 1.2, 1.5, 2, 3}[full])
+  (`0x51279c`). `FUN_00480900` shows it (`DAT_006dba70`, the registered
+  score) and the level meter; `FUN_00481450`: pumped >= target -> next
+  level (also after every button event in state 1). Example: 12 of 12 in
+  one pour and 11 of 17 in three = 30 + 22 + bonus 12 = 64.
+* **Time** (`FUN_004818c0(s)`, ignored in state 2): deadline -= s * 1000:
+  2 per dropped ball, 10 per overflow, -10 per full tank, 20 every tick
+  while the clock is below 0; `deadline < now - base` ends the round
+  (state 2, hatch opens). That compares an absolute time with a relative
+  one: `FUN_0040c450` is timeGetTime() (system uptime) minus paused time,
+  so after the clock reached 0 the original goes on (playable) for about
+  (uptime + round start + extra time) / 20 s ticks. The engine counts the
+  game clock from the scene's start, which leaves about 6 ticks.
+* **End** (state 2: no new balls; `FUN_004820d0` once the tap is idle,
+  the queue empty and the hatch closed): tabs removed, `FUN_0040d8a0(0)`,
+  message box `interfaceh:GAMEOVER` / `whackamole:GAMEOVER`
+  (`mathlab:GAMEOVER` is unused), `FUN_0041f9d0(0, score, 0x4a03f8)` =
+  `registerScoreNoCarParts()`, medals {2500, 5000, 15000, 30000} without
+  car parts (help.ini says so; the rise of the lowest medal still gives
+  them). Then (not in tournament mode) the texts are cleared, containers
+  reset, meters 0, pump button removed, `start` back, state 0, tap reset;
+  the third container stays uncovered until the next round.
+* **Tournament mode** (not ported): init shows `tournament:PLAYERREADY`
+  (`FUN_00419660`) and starts the round at once at the level of the
+  player's difficulty (`FUN_004194a0`, +0x24 of the player record: 0 / 1
+  / 2 with 100 / 60 / 30 extra seconds, the third container from
+  difficulty 2 on), no start ball; at the end the score goes to the
+  tournament (`FUN_0041f8c0`) and `FUN_004820d0` returns before resetting
+  the screen.
+* Deviations: sounds play from a pool of 16 clones; the sound variants
+  (ball1..3, balls out new1/2) use their own random source, so numbers and
+  capacities depend only on the order of the moves (repeatable tests with
+  `random_seed`); the level 23 draw limit; the elements of the balls the
+  last round left in the pipe (invisible) are freed at the next start
+  (the original leaks them and would crash once its 30 structures are
+  used up); the game clock base (see Time). Not done: tournament mode.
+
 ## Dialogs (`dialog.cpp`)
 
 `Dialog` is the modal box of the DIALOG/BUTTON modules: a bitmap from
@@ -2944,7 +3113,7 @@ Engine: `hiscore.h`.
   {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
   (the callbacks are the code after the call; mountain passes its track as
   the key, balloonhunt's time trial the track); synonym calls
-  `registerScoreNoCarParts()`, so does gametrivia; mathlab is not ported.
+  `registerScoreNoCarParts()`, so do gametrivia and mathlab.
 * Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
   (title a language.ini key or text, "" = scene title; returns the player
   row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
@@ -4620,6 +4789,11 @@ repeating: `c` the right painting, `w` another one, `m` a drop beside the
 paintings, `t` nothing (time out); start the game with
 `autoclick=1500:708,227`). At debug level 1 gametrivia logs each slide
 with the centre of its right painting, each answer and the points.
+`test_mathlab=<level>` (mathlab: a round starts at once at that level
+index, 0..23, like tournament mode; 22 has 5 s) and
+`test_mathlab_score=<n>` (the score after that start, e.g. for the medal
+award); at debug level 2 mathlab logs each new ball and where each ball
+comes to rest ("rests at frame f, centre x,y"; the front one at 289,98).
 
 ## Mini game checklist
 
@@ -4670,10 +4844,8 @@ Add-on set 3 (CD 2, fourth index group):
 | Done | Scene | Title | Data |
 |---|---|---|---|
 | x | gametrivia | Kjentmannsprøven | data3 |
-| | anaglyph | 3D-titter | data3 |
-| | gametrivia | Kjentmannsprøven | data3 |
 | x | anaglyph | 3D-titter | data3 |
-| | mathlab | Reodors Tallmaskin | data3 |
+| x | mathlab | Reodors Tallmaskin | data3 |
 | x | synonym | Reodors Ordmaskin | data3 |
 
 Not games: `buildacar` and `racing` are story pages, `buttercol`

@@ -133,6 +133,7 @@ static const char *const kImplementedGames[] = {
 	"synonym",
 	"gametrivia",
 	"anaglyph",
+	"mathlab",
 	nullptr
 };
 
