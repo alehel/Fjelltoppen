@@ -37,8 +37,11 @@ public:
 	Music();
 	~Music();
 
+	/** Starts a track; the track already playing goes on (and resumes when paused). */
 	void play(const Common::String &name);
 	void stop();
+	/** Pauses or resumes the track (FUN_0040b6f0 / FUN_0040b720). */
+	void pause(bool pause);
 	void update();
 
 private:

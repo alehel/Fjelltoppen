@@ -471,6 +471,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new PeeScene(vm, def);
 	if (!scumm_stricmp(name, "sceneindex"))
 		return new SceneindexScene(vm, def);
+	if (!scumm_stricmp(name, "buildacar"))
+		return new BuildacarScene(vm, def);
 	return new Scene(vm, def);
 }
 

@@ -4,11 +4,11 @@ Status: scene framework in place (see "Engine structure" below): backdrop,
 hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
-The menu (partly), the scene index, every story page except `buildacar`,
-the message box, navigator and help dialogs and 15 sub games work (see the
+The menu (partly), the scene index, the story pages (the race aside), the
+message box, navigator and help dialogs and 15 sub games work (see the
 checklist at the end), with player profiles (save slots) and the award
-dialog. Not done: high scores and medals, `buildacar`, the remaining sub
-games and activities, racing.
+dialog. Not done: high scores and medals, the remaining sub games and
+activities, racing.
 
 ## The game
 
@@ -2082,6 +2082,128 @@ its own hotspot numbering, not the 55..99/251.. ranges of the other pages.
   centre); the engine defines the 24 clips with `defineAnim(.., loop)` and
   uses `Anim::setHitRadius()`.
 * TODO: activity `fence`.
+
+## Story page `buildacar` ("Bygg Il Tempo Gigante")
+
+Story page 11, Reodor's workshop where the player fits the car parts won
+in the game onto Il Tempo Gigante, 62 parts in five stages that show the
+car from different angles. Parent `menu`, music `track11`. Handler
+`FUN_00423210` (functions 0x423210..0x424640): 0x103 -> `FUN_00423350`
+init, 0x104 -> `FUN_00423dd0` close, 0x105 -> `FUN_004240a0` mouse down,
+0x107 -> `FUN_004245c0` right click, 0x10b -> `FUN_00424210` drag end,
+0x10c -> `FUN_00424630` key, 0x110 -> `FUN_004245f0` anim finished, 0x111
+-> `FUN_00424510` timer, 0x116 -> `FUN_00423e40` button, 0x11a ->
+`FUN_004244d0` tooltip. Engine: `buildacar.cpp` (`BuildacarScene`). No
+characters, fact pages, hidden items or sequences; the backdrop mask is
+all 0 and the parts are hit tested by rectangle tables.
+
+* **State**: the page's profile value 0, 20 bytes (`DAT_005b7d48`, read by
+  the init with `FUN_00411e70`, written back on close): {parts won, the
+  most parts ever fitted (`DAT_005b7d4c`), the stage shown (0..4,
+  `DAT_005b7d50`), the stage being built (0..5, `DAT_005b7d54`; the ones
+  below it are complete), the mask of fitted parts of that stage
+  (`DAT_005b7d58`)}. The init replaces the first int by the car parts won
+  (`FUN_0041b690(0, FUN_0041b540(0))`); the menu's race button needs the
+  second int >= 8. Value 1 (an int) counts the stage narrations heard.
+  Without a profile everything reads 0 and nothing is kept.
+* **Tables**: parts per stage 0x49cc70 {13, 13, 14, 12, 10}, first part
+  number 0x49cc84 {1, 14, 27, 41, 53}; per stage and part (pointer tables
+  0x4b0d30 / 0x4b0d44 / 0x4b0d58 / 0x4b0d6c): the tray rectangle
+  {left, top, right, bottom} (also where `menu_part_NN` is drawn and the
+  press hit test, `FUN_00412310`: right/bottom exclusive), the place on the
+  car (where `part_NN` is drawn and the rectangle the mouse must be
+  released in), the part that must be fitted first (-1 none) and the part
+  that covers it (only part 43, covered by 42: `part_43b` while 42 is
+  missing; `FUN_00423b00` / `FUN_00423b40`). `DAT_005b7d40`, an offset into
+  the place tables, is always 0. The parts are 28 element slots
+  (`DAT_005b7410` tray, hotspots 100..113 from `FUN_00423480`, hit test
+  mode 2 = rectangle; `DAT_005b7e08` car, z 5 + slot) renamed with the
+  stage; a part is "fitted" for the hints, dependencies and percentages
+  when its car slot is on screen (`FUN_004138f0`), for the stage logic by
+  the mask (`FUN_00423850`).
+* **Init**: cheat `SHOWMETHECAR` (`FUN_0040ad50`, callback `FUN_00423d50`,
+  no message), tooltips (`FUN_00409b50(0)`), font `Amerigo BT_10_`, four
+  labels at y 455..472 (`FUN_00407930`, rectangles 0x49d5b8, text centred
+  with `FUN_004079c0(.., 0x101)`): `"%s: %d / %d"` `STAGE` (stage + 1, 5)
+  at x 0..114, `"%s: %3d %%"` `STAGEPRCNT` at 115..332 and `TOTALPRCNT` at
+  333..617, `"%s: %2d"` `MISSING` (62 - won) at 618..799. Opaque push
+  buttons (BUTTON module, z 1): 5 hint (0,421) `hint_0/1/2`, 6 next
+  (747,421) `next_0/1/2`, 7 previous (704,428) `prev_0/1/2`, 8 demolish
+  (53,428) `demolish_0/1`. Then the stage.
+* **Stage** (`FUN_00423500`): the clips of the old stage go and those of the
+  new one start (`list_4b1eb0` etc. via 0x4b1ef8: `stage1snd` + `stage1b..e`,
+  none for stage 2, `stage3snd/3a`, `stage4snd/4a/4c/4d`, `stage5snd/5b/5c`;
+  all loop); the view `stage1..5` (800x455, opaque) at z -10; the tray
+  (`FUN_004238d0`): the first `won - first + 1` parts of the stage (clamped
+  to the stage's count) that are not fitted; the car (`FUN_004239f0`); the
+  labels; the percentages (`FUN_004236c0`: stage = fitted / count, total =
+  (first + fitted - 1) / 62, both * 100 + 0.5 truncated, so the total
+  assumes the stages before are complete); the narration `S10AN-NAR-00n`
+  when value 1 <= stage, then value 1 = stage + 1 (`FUN_004235e0`;
+  playing narrations are removed first, finished ones and all on space).
+  Button 6 gets the `car_0/1/2` bitmaps on the last stage (the original
+  "creates" it again: `FUN_00406540` refuses the existing id but
+  `FUN_00406ed0` still replaces its bitmaps); hint disabled when the stage
+  is complete, previous disabled on stage 0, next enabled only when the
+  stage is complete.
+* **Drag** (`FUN_004240a0`): a press first takes away the finished car if
+  shown; then, unless a hint blinks, a tray part under the mouse (by its
+  rectangle) is removed, `mouse_part_NN` is added at z 100 centred on the
+  mouse (`FUN_00412cf0`) and dragged (`FUN_0040c1f0`: it keeps its offset to
+  the mouse); it also becomes the part the hint button asks about. On
+  release (`FUN_00424210`, event 0x10b after the BUTTON module's 0x106):
+  outside its place -> back to the tray and the sound `wrong`; its
+  prerequisite missing -> back, `notyet` and the prerequisite blinks;
+  else `FUN_004243c0` fits it (mask bit, `part_NN`, covered parts
+  updated), `right`, percentages, and a complete stage raises the building
+  stage (mask 0, hint disabled, next enabled). The sounds are clones
+  (`FUN_00412c20` via `FUN_00424340`, which builds an audio only element);
+  the engine restarts one element instead.
+* **Awards** (`FUN_004243c0` -> `FUN_00424420`): when the parts fitted (the
+  stage's first part - 1 + parts on the car) exceed the stored most, each
+  new count is looked up in 0x4b0d80 ({count, type, items, flags}, 32
+  records): images at 4, 17, 28, 35, 42, 48, 53, 55, 58, 60; film clips at
+  9, 23, 31, 37, 44, 50, 54, 56, 59, 61; cars at 20, 25, 33, 39, 46, 51,
+  57 (all one item, `FUN_0041bb20(type, 0, 0, 1, 0)`, engine `showAward`);
+  type 20 at 13 shows `buildacar:AWARD` / `RACEGAME` and type 21 at 26,
+  40, 52, 62 `AWARD` / `CARUPGRADE` in a message box. Demolishing does not
+  lower the stored most, so each award comes once.
+* **Hint** (button 5, `FUN_00423ec0`): the part last picked up (or its
+  missing prerequisite) if it is not on the car, else (`FUN_00423fd0`) the
+  first won part of the stage not on the car or its missing prerequisite.
+  `FUN_00423f60` names its car slot and starts a timer
+  (`FUN_0040c480(now, 200, part)`: at once, then every 200 ms) that shows
+  and hides the part on the car until it was hidden three times
+  (`FUN_00424510`), with the hint button disabled and no drags meanwhile.
+  The original does not stop the timer when the stage changes, so the slot
+  of the new stage blinks (and a fitted part there ends hidden); the port
+  does the same.
+* **Buttons** (`FUN_00423e40`): 6 / 7 next / previous stage
+  (`FUN_00423e90`; past the last stage the finished car), 8 demolish
+  (`FUN_00424060`: `interfaceh:WARNING` / `buildacar:DEMOLISH`, Yes / No;
+  Yes sets the building stage and mask to 0 and shows stage 0).
+* **The finished car** (`FUN_00423d50`, also the cheat): narrations
+  stopped, the music paused (`FUN_0040b6f0`; `FUN_0040b720` resumes it and
+  `FUN_0040b1f0` resumes a paused track of the same name), the dimming mesh
+  at z 0x95 (`FUN_00407110`), `frame` z 0x96, `iltempo` z 0x97 (looping),
+  `fanfare2`; the next mouse press takes it away (`FUN_004241d0`). Engine:
+  `Music::pause()` (added for this page).
+* **Tooltips** (event 0x11a, `FUN_004244d0`): hotspots 100..113 (the tray
+  parts) show `awarddlg:PART_n` of part first + hotspot - 100
+  (`FUN_0041b580`), with the module's default delay of 1500 ms.
+* **Cheat codes** (`FUN_0040ae60`, fed by the global key handler
+  `FUN_0040d300` with the virtual key code): each registered code counts
+  matching keys, a wrong one starts over; when complete the `cheat` sound
+  plays (`FUN_0040ae50`), the callback runs and a message is shown if one
+  was given. Engine: the page matches `SHOWMETHECAR` in `onKey()` (letters
+  as upper case virtual keys). The close also unregisters `IAMLAZY`, which
+  nothing registers.
+* Right click: navigator (`FUN_00421560`), next `tvstation` once at least
+  13 parts were ever fitted (the stored most), else none; previous
+  `intent`.
+* Not ported: subtitles (`FUN_004094d0`, `data1/buildacar/subtitle`), the
+  obfuscated registry value written by `FUN_00423c50`, read by
+  `FUN_004234d0` and deleted on close (`FUN_0040b940/b8b0/ba00`).
 
 ## Scene index (`sceneindex`)
 

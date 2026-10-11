@@ -34,8 +34,11 @@ Music::~Music() {
 }
 
 void Music::play(const Common::String &name) {
-	if (name == _name && _video)
+	if (name == _name && _video) {
+		// FUN_0040b1f0: the same track resumes when it is paused
+		pause(false);
 		return;
+	}
 	stop();
 	_name = name;
 	_video = g_engine->_resources->openSmacker("common", "music/" + name + ".smk");
@@ -49,6 +52,11 @@ void Music::stop() {
 	delete _video;
 	_video = nullptr;
 	_name.clear();
+}
+
+void Music::pause(bool pause) {
+	if (_video && _video->isPaused() != pause)
+		_video->pauseVideo(pause);
 }
 
 void Music::update() {

@@ -9,6 +9,7 @@ MODULE_OBJS = \
 	birthday.o \
 	bugzzz.o \
 	buildabike.o \
+	buildacar.o \
 	butterfly.o \
 	button.o \
 	console.o \
