@@ -32,6 +32,7 @@
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/hustle.h"
 #include "flaaklypa/mahjong.h"
+#include "flaaklypa/mountain.h"
 #include "flaaklypa/jigsaw.h"
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
@@ -469,6 +470,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BeemazeScene(vm, def);
 	if (!scumm_stricmp(name, "bugzzz"))
 		return new BugzzzScene(vm, def);
+	if (!scumm_stricmp(name, "mountain"))
+		return new MountainScene(vm, def);
 	if (!scumm_stricmp(name, "intent"))
 		return new IntentScene(vm, def);
 	if (!scumm_stricmp(name, "desk"))

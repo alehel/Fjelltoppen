@@ -43,6 +43,7 @@ MODULE_OBJS = \
 	menu.o \
 	metaengine.o \
 	morning.o \
+	mountain.o \
 	movieplayer.o \
 	music.o \
 	outro.o \
