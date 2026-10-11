@@ -13,6 +13,7 @@ MODULE_OBJS = \
 	butterfly.o \
 	button.o \
 	console.o \
+	credits.o \
 	cursor.o \
 	desk.o \
 	dialog.o \

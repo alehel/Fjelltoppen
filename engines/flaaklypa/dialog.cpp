@@ -503,8 +503,7 @@ void NavigatorDialog::onKey(const Common::KeyState &key) {
 static const byte kHelpHighlight[3] = { 0x67, 0x51, 0x3e };
 
 HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const Common::String &file) :
-	Dialog(vm, true), _selected(0), _top(0), _rows(0), _rowHeight(0), _text(nullptr), _thumb(nullptr),
-	_thumbY(0), _scrollValue(0), _scrollMax(0), _dragging(false) {
+	Dialog(vm, true), _selected(0), _top(0), _rows(0), _rowHeight(0), _text(nullptr), _thumb(nullptr) {
 	// FUN_0041e2a0: one topic per section of the scene's help file
 	Common::INIFile ini;
 	if (!_vm->_resources->loadIni(scene, file, ini)) {
@@ -569,7 +568,7 @@ HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const C
 	addButton(kButtonDown, 0x1c2, 0x152, "help", "down_0", "down_1", nullptr, "", false);
 	_thumb = loadBitmap("help", "thumb");
 	_text = new Graphics::ManagedSurface(kHelpText.width(), kHelpText.height(), format);
-	setThumbPos(kHelpScroll.top);
+	_scroll.init(kHelpScroll, _thumb ? _thumb->w : 0, _thumb ? _thumb->h : 0);
 	resetText();
 }
 
@@ -619,8 +618,8 @@ int HelpDialog::listRowAt(int x, int y) const {
 
 void HelpDialog::resetText() {
 	// FUN_0041dfb0
-	setScrollValue(0);
-	_scrollMax = layoutText(0);
+	_scroll.setValue(0);
+	_scroll.setRange(layoutText(0));
 }
 
 int HelpDialog::layoutText(int scroll) {
@@ -641,41 +640,6 @@ int HelpDialog::layoutText(int scroll) {
 	return below > 0 ? (below + lineHeight - 1) / lineHeight : 0;
 }
 
-// ---- scroll bar
-
-void HelpDialog::setThumbPos(int y) {
-	// FUN_00408f30: the thumb centre follows y within the bar; the value is
-	// rounded to the nearest step
-	y = CLIP<int>(y, kHelpScroll.top, kHelpScroll.bottom);
-	_thumbY = y;
-	int value = (2 * (y - kHelpScroll.top) * _scrollMax + kHelpScroll.height()) / (2 * kHelpScroll.height());
-	if (value != _scrollValue) {
-		// event 0x117 -> FUN_0041e890
-		_scrollValue = value;
-		layoutText(value);
-	}
-}
-
-void HelpDialog::setScrollValue(int value) {
-	// FUN_00408eb0
-	value = CLIP(value, 0, _scrollMax);
-	if (_scrollMax > 0)
-		setThumbPos(kHelpScroll.height() * value / _scrollMax + kHelpScroll.top);
-	else
-		setThumbPos(0);
-}
-
-bool HelpDialog::hitScrollBar(int x, int y) const {
-	// FUN_004092d0: the bar widened by half the thumb width on each side, or the thumb
-	x -= this->x();
-	y -= this->y();
-	int tw = _thumb ? _thumb->w : 0, th = _thumb ? _thumb->h : 0;
-	Common::Rect bar(kHelpScroll.left - tw / 2, kHelpScroll.top, kHelpScroll.right + tw - tw / 2, kHelpScroll.bottom);
-	int cx = kHelpScroll.left + kHelpScroll.width() / 2;
-	Common::Rect thumb(cx - tw / 2, _thumbY - th / 2, cx - tw / 2 + tw, _thumbY - th / 2 + th);
-	return bar.contains(x, y) || thumb.contains(x, y);
-}
-
 // ---- events (LAB_0041e590)
 
 void HelpDialog::onButton(int id) {
@@ -691,11 +655,13 @@ void HelpDialog::onButton(int id) {
 		listSetTop(_top + 1);
 		break;
 	case kButtonUp:
-		// FUN_00409450: one step per click
-		setScrollValue(_scrollValue - 1);
+		// FUN_00409450: one step per click; event 0x117 -> FUN_0041e890
+		if (_scroll.setValue(_scroll.value() - 1))
+			layoutText(_scroll.value());
 		break;
 	case kButtonDown:
-		setScrollValue(_scrollValue + 1);
+		if (_scroll.setValue(_scroll.value() + 1))
+			layoutText(_scroll.value());
 		break;
 	default:
 		break;
@@ -705,11 +671,11 @@ void HelpDialog::onButton(int id) {
 void HelpDialog::onMouseDown(int x, int y, bool onDialog) {
 	// FUN_0041e7f0: the scroll bar jumps to the click and starts a drag; a
 	// click on a topic shows it from the top
-	if (hitScrollBar(x, y)) {
-		setThumbPos(y - this->y());
-		_dragging = true;
+	bool hit;
+	if (_scroll.mouseDown(x - this->x(), y - this->y(), hit))
+		layoutText(_scroll.value());
+	if (hit)
 		return;
-	}
 	int row = listRowAt(x, y);
 	if (row >= 0) {
 		if (row != _selected)
@@ -720,21 +686,20 @@ void HelpDialog::onMouseDown(int x, int y, bool onDialog) {
 
 void HelpDialog::onMouseMove(int x, int y, bool leftHeld) {
 	// event 0x10a -> FUN_00409270
-	if (_dragging && leftHeld)
-		setThumbPos(y - this->y());
+	if (leftHeld && _scroll.drag(y - this->y()))
+		layoutText(_scroll.value());
 }
 
 void HelpDialog::onMouseUp(int x, int y) {
 	// event 0x10b -> FUN_004092b0: the thumb snaps to its value
-	if (_dragging) {
-		_dragging = false;
-		setScrollValue(_scrollValue);
-	}
+	if (_scroll.release())
+		layoutText(_scroll.value());
 }
 
 void HelpDialog::onWheel(int delta) {
 	// Not in the original: the wheel scrolls the text like the arrows.
-	setScrollValue(_scrollValue + delta);
+	if (_scroll.setValue(_scroll.value() + delta))
+		layoutText(_scroll.value());
 }
 
 void HelpDialog::onKey(const Common::KeyState &key) {
@@ -787,8 +752,10 @@ void HelpDialog::drawContents(Graphics::ManagedSurface &dst) {
 	if (_text)
 		dst.transBlitFrom(*_text, Common::Point(dx + kHelpText.left, dy + kHelpText.top), key);
 	// The scroll bar's thumb is an opaque element centred on its position
-	if (_thumb)
-		dst.blitFrom(*_thumb, Common::Point(dx + kHelpScroll.left + kHelpScroll.width() / 2 - _thumb->w / 2, dy + _thumbY - _thumb->h / 2));
+	if (_thumb) {
+		Common::Rect r = _scroll.thumbRect();
+		dst.blitFrom(*_thumb, Common::Point(dx + r.left, dy + r.top));
+	}
 }
 
 } // End of namespace Flaaklypa

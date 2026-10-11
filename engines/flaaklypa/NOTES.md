@@ -1564,6 +1564,27 @@ as 0 and changes are lost). Engine: free functions in `award.h` on
   medal bitmap. More than five car parts overflow the original's item
   buffers; the port awards them all and shows five.
 
+## Credits (`credits`, menu button 13)
+
+Handler `FUN_00415710` (`credits.cpp`), music `track16`. `credits.ini`
+(the Gold edition reads lang3's) holds `text<n>` (lines split at `\n`),
+`font<n>` (0 `White Amerigo BT_10_`, else `White Amerigo BT_14_`),
+`pause<n>` (empty lines of the small font after the entry) and
+`image<n>` (the RAD logo `bitmap/smacker` under the entry). The text box
+is as wide as the widest line, centred in (350,5)-(775,479), z 0; each
+line is centred in it. `overlay` (the frame, z 1) lies above it and the
+help (2) / exit (3) buttons above that (button z 2). The scroll bar
+(track (781,107) 12x456, thumb z 1, arrows `up`/`down` at (780,77) /
+(780,577), SCROLL module = `ScrollBar` in `button.cpp`, also used by the
+help dialog) scrolls by 24 pixels; its range is (text height - 474) / 24
++ 1. A value change (event 0x117, `FUN_00415e10`) draws from the last
+entry starting at or above value * 24 (`FUN_00415e40`, `FUN_00415bb0`),
+until the box is full. `FUN_00415d20` moves the logo under every drawn
+entry that has an image and away (y 3000) for every other one, using the
+box relative y as the screen position. Keys (`FUN_00415ea0`): space
+leaves, PgUp/PgDn 18 steps, Home/End, Up/Down one step; the global keys
+follow.
+
 ## Activity `bouquet` ("Ludvigs blomsterbinderi", from `desk`)
 
 Handler `FUN_0045e0f0` (`bouquet.cpp`). The player arranges flowers in a

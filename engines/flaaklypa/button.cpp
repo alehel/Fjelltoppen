@@ -366,4 +366,66 @@ void Tooltip::show(const Common::String &text, int mouseX, int mouseY) {
 	_anim->add(pos.x, pos.y, 1500);
 }
 
+// ---- ScrollBar ---------------------------------------------------------------
+
+ScrollBar::ScrollBar() : _thumbW(0), _thumbH(0), _thumbY(0), _value(0), _max(0), _dragging(false) {
+}
+
+void ScrollBar::init(const Common::Rect &track, int thumbW, int thumbH) {
+	// FUN_004090e0: range 0..0, value 0
+	_track = track;
+	_thumbW = thumbW;
+	_thumbH = thumbH;
+	_value = _max = 0;
+	_dragging = false;
+	_thumbY = track.top;
+}
+
+void ScrollBar::setRange(int max) {
+	_max = MAX(max, 0);
+}
+
+bool ScrollBar::setThumbPos(int y) {
+	y = CLIP<int>(y, _track.top, _track.bottom);
+	_thumbY = y;
+	// value = round((y - top) * range / height), halves away from zero
+	int value = (2 * (y - _track.top) * _max + _track.height()) / (2 * MAX<int>(_track.height(), 1));
+	if (value == _value)
+		return false;
+	_value = value;
+	return true;
+}
+
+bool ScrollBar::setValue(int value) {
+	value = CLIP(value, 0, _max);
+	if (_max > 0)
+		return setThumbPos(_track.height() * value / _max + _track.top);
+	return setThumbPos(0);
+}
+
+bool ScrollBar::mouseDown(int x, int y, bool &hit) {
+	Common::Rect bar(_track.left - _thumbW / 2, _track.top, _track.right + _thumbW - _thumbW / 2, _track.bottom);
+	hit = bar.contains(x, y) || thumbRect().contains(x, y);
+	if (!hit)
+		return false;
+	_dragging = true;
+	return setThumbPos(y);
+}
+
+bool ScrollBar::drag(int y) {
+	return _dragging && setThumbPos(y);
+}
+
+bool ScrollBar::release() {
+	if (!_dragging)
+		return false;
+	_dragging = false;
+	return setValue(_value);
+}
+
+Common::Rect ScrollBar::thumbRect() const {
+	int cx = _track.left + _track.width() / 2;
+	return Common::Rect(cx - _thumbW / 2, _thumbY - _thumbH / 2, cx - _thumbW / 2 + _thumbW, _thumbY - _thumbH / 2 + _thumbH);
+}
+
 } // End of namespace Flaaklypa

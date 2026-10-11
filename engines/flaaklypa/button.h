@@ -188,6 +188,49 @@ private:
 	uint32 _changeTime;
 };
 
+/**
+ * A vertical scroll bar (the SCROLL module, FUN_00408e20..FUN_004094c0):
+ * the logic only; the owner draws the thumb at thumbRect() and handles the
+ * arrow buttons (one step each, FUN_00409450). Value changes are what the
+ * original posts as event 0x117; the methods that can change the value
+ * return true then.
+ */
+class ScrollBar {
+public:
+	ScrollBar();
+
+	/** The track (x, y, w, h of FUN_004090e0) and the thumb bitmap's size. */
+	void init(const Common::Rect &track, int thumbW, int thumbH);
+	/** FUN_00408e20: the values are 0..max. */
+	void setRange(int max);
+	int value() const { return _value; }
+	int maximum() const { return _max; }
+	/** FUN_00408eb0: moves the thumb to the value (clamped). */
+	bool setValue(int value);
+	/** FUN_00408f30: the thumb's centre follows y within the track; the value is rounded to the nearest step. */
+	bool setThumbPos(int y);
+	/**
+	 * FUN_004092d0: a press on the track (widened by half the thumb on each
+	 * side) or on the thumb moves the thumb there and starts a drag; hit
+	 * tells whether it hit.
+	 */
+	bool mouseDown(int x, int y, bool &hit);
+	/** Event 0x10a: the dragged thumb follows the mouse. */
+	bool drag(int y);
+	/** Event 0x10b (FUN_004092b0): the drag ends, the thumb snaps to its value. */
+	bool release();
+	bool isDragging() const { return _dragging; }
+	/** Where the thumb is drawn: centred on the track and on its position. */
+	Common::Rect thumbRect() const;
+
+private:
+	Common::Rect _track;
+	int _thumbW, _thumbH;
+	int _thumbY;      ///< the thumb's centre
+	int _value, _max;
+	bool _dragging;
+};
+
 } // End of namespace Flaaklypa
 
 #endif

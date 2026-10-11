@@ -107,6 +107,42 @@ private:
 	Common::Array<int> _slots;  ///< the profiles having their birthday
 };
 
+/** The credits of the menu: credits.ini in a scrollable box. */
+class CreditsScene : public Scene {
+public:
+	CreditsScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	void onKey(const Common::KeyState &key) override;
+	void onUpdate() override;
+
+private:
+	struct Item {
+		Common::String text;
+		int font;            ///< 0 small, 1 large
+		int pause;           ///< empty lines (small font) after it
+		Common::String image;
+		int top;             ///< y in the whole text
+	};
+
+	static Common::Array<Common::String> splitLines(const Common::String &text);
+	void draw(int first, int y);
+	void scrolled();
+	void showThumb();
+	void setValue(int value);
+
+	Common::Array<Item> _items;
+	BitmapFont _fonts[2];
+	Common::Rect _box;
+	Anim *_text;
+	SceneButtons _buttons;
+	ScrollBar _scroll;
+	bool _leftDown;
+};
+
 /** Story page 1: the yard (tunet). */
 class YardScene : public Scene {
 public:

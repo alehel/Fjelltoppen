@@ -27,6 +27,7 @@
 #include "common/str.h"
 #include "graphics/managed_surface.h"
 
+#include "flaaklypa/button.h"
 #include "flaaklypa/font.h"
 
 namespace Flaaklypa {
@@ -234,19 +235,13 @@ private:
 	/** Draws the selected topic scrolled by whole lines; returns the lines below the box (FUN_0041dfe0). */
 	int layoutText(int scroll);
 
-	// Scroll bar (FUN_00408e20 ff.)
-	void setThumbPos(int y);
-	void setScrollValue(int value);
-	bool hitScrollBar(int x, int y) const;
 
 	Common::Array<Topic> _topics;
 	BitmapFont _font;
 	int _selected, _top, _rows, _rowHeight;
 	Graphics::ManagedSurface *_text;
 	Graphics::ManagedSurface *_thumb;
-	int _thumbY;        ///< centre of the thumb, relative to the dialog
-	int _scrollValue, _scrollMax;
-	bool _dragging;
+	ScrollBar _scroll;  ///< coordinates relative to the dialog
 };
 
 /**
