@@ -612,6 +612,8 @@ private:
 	// development aids
 	int _devLaps;
 	uint32 _debugTime;
+	bool _autopilot;              ///< "racing_autopilot": the computer drives the players' cars
+	bool _finishNow;              ///< the finish clip is missing: the race ends at once
 };
 
 } // End of namespace Flaaklypa

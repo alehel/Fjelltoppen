@@ -921,7 +921,7 @@ void RacingScene::driverUpdate(Driver &d) {
 	Car *car = d.car;
 	if (_state < kStateFinishClip && !car->finished)
 		car->raceTime = _vm->getGameMillis() - _raceStart;
-	if (car->ai && (car->trickHeld == kPickupTurbo || 1 < _settings.carCount))
+	if ((car->ai || _autopilot) && (car->trickHeld == kPickupTurbo || 1 < _settings.carCount))
 		useTrick(car);
 	moveAndTrigger(d);
 	if (_state == kStateCountdown) {
@@ -952,7 +952,7 @@ void RacingScene::driverUpdate(Driver &d) {
 	}
 	if (_state <= kStateFinishClip) {
 		aiDrive(d);
-		if (!car->ai)
+		if (!car->ai && !_autopilot)
 			playerInput(d);
 	}
 	switch (car->steer) {
@@ -1079,6 +1079,9 @@ void RacingScene::lapDone(Driver &d) {
 			playClip(*v, "finish", false);
 			_state = kStateFinishClip;
 			_lapTimer = false;
+			// Not in the original: without the clip nothing would end the race
+			if (!clipIs(*v, "finish"))
+				_finishNow = true;
 		}
 	}
 }

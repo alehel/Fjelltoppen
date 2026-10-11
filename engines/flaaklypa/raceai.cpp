@@ -94,7 +94,7 @@ static void boxOf(const float *s, int *r) {
 void RacingScene::aiDrive(Driver &d) {
 	followPath(d);
 	Car *car = d.car;
-	if (!car->ai)
+	if (!car->ai && !_autopilot)
 		return;
 	if (!(car->damage < 1.0f)) {
 		coast(car);
@@ -145,7 +145,10 @@ void RacingScene::aiDrive(Driver &d) {
 	float b = sideSensors(d, 1, &idB);
 	float c = sideSensors(d, -1, &idC);
 	float s = idC == idB ? a : (b - c) + a;
-	if ((double)s > 0.0025)
+	// (the FPU's compares fail on a not-a-number: left)
+	if (s != s)
+		car->steer = 0;
+	else if ((double)s > 0.0025)
 		car->steer = 1;
 	else if ((double)s < -0.0025)
 		car->steer = 0;

@@ -316,7 +316,7 @@ RacingScene::Car *RacingScene::loadCar(const Common::String &dir, bool ai) {
 	car->gears = iniInt(ini, "car", "gears", 4);
 	car->difficulty = iniFloat(ini, "car", "difficulty", 1.0f);
 	car->id = iniInt(ini, "car", "id", 1);
-	if (!ai) {
+	if (!ai && !_autopilot) {
 		car->bias[0] = car->bias[1] = car->bias[2] = 1.0f;
 		car->bias[3] = 666.0f;
 	} else {
@@ -330,7 +330,8 @@ RacingScene::Car *RacingScene::loadCar(const Common::String &dir, bool ai) {
 		car->bias[8] = iniFloat(ini, "bias", "trick", 1.0f);
 		car->trackBias = iniFloat(ini, "bias", "track", 1.0f);
 		car->hornBias = iniFloat(ini, "bias", "horn", 0.75f);
-		car->grip = car->grip * 0.8f;
+		if (ai)
+			car->grip = car->grip * 0.8f;
 	}
 	if (car->id >= 1 && car->id <= 10)
 		car->name = _vm->getString(Common::String::format("race:DRIVER%d", car->id));

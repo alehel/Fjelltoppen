@@ -4215,6 +4215,364 @@ button's text, `FUN_00406910(id, 10, key)`). Engine: `RacemenuScene`.
   dialogue `ctrlcfg`: devices, the six inputs with CHANGE buttons, RESET);
   the default keys apply.
 
+## Race (`racing`, "Bilspill", 640x480)
+
+Handler `0x474780` (not a function in the Ghidra project; byte table
+0x474850, jump table 0x474828): 0x103 init `FUN_00474870`, 0x104 close
+`FUN_00476c50`, 0x10c key `FUN_0047a7f0` (returns 1 for Escape and Tab),
+0x110 clip finished `FUN_004770a0`, 0x111 timers `FUN_004775d0(time,
+id)`, 0x112 frame `FUN_004776e0`, 0x119 after drawing `FUN_0047a7d0`,
+0x11b / 0x11c a dialog opens / closes (`FUN_0047a8b0` stops the race and
+keeps a copy of the screen at z 4, `FUN_0047a940`). Code 0x46f0f0..
+0x47ad50: BITMAP (0x46f0f0, sprites and the textured quads), COL
+(0x4700a0, collision data and response), PATH (0x472000, the path and
+the computer's driving), CAR (0x473120..), RACE (0x474780..). Engine:
+`racing.cpp` (scene, rules, HUD, results), `racetrack.cpp` (loading,
+drawing), `racecar.cpp` (driving, collisions, pickups, sounds),
+`raceai.cpp` (the computer), `raceint.h`; `RacingScene`.
+
+* **Entry**: `FUN_0040cd70("racing", &settings)` from the race menu, or
+  `("racing", 0)` from the story (the scene index's chapter 12, the TV
+  station's navigator): then the settings at 0x50aaf0 are used (track
+  `flaaklypa`, cars `tempo`, `rapido`, `white`, `no5`, 3 laps, 4 cars, one
+  player, tricks on (1800000), the keyboard; `DAT_006c7488` = 1, "story").
+  The race's parent is `racemenu`. Engine: `changeScene("racing", 1)`
+  with `raceMenuSettings()`, 0 for the story.
+* **Init** (`FUN_00474870`): music stops; the race's volumes (profile value
+  0x29a of "racing", three floats, 0.75 by default: effects, commentator,
+  engine); 640x480 (`FUN_004017f0`); no cursor; `FUN_004749d0` loads;
+  `FUN_00474990` the wind: a vector of 75 in the direction `rand() x
+  2 pi / 32768` (`DAT_006c6440/4`, damage smoke and smoke drift by it,
+  `ftol(wind x dt)` pixels a frame); `FUN_004762b0` the start; cheats
+  (`FUN_0040ad50`): MONSTERTRUCK / MICROMACHINES `FUN_00473020(2.0 / 0)`:
+  the cars' scale (`DAT_0050a970`, 0.85, held to 0.45..1.45, `FUN_004730c0`
+  multiplies the sizes), SARA `FUN_00404b70(3, 2.0, &player screen
+  position)` (a screen effect of the DRAW module, not ported) and enables
+  ERIK (`wheelanim.bmp`, eight 100x100 frames of a steering wheel drawn by
+  `FUN_0047a500` at (clamp(x, 160, 480) - 50, clamp(y, 120, 360) + 20) of
+  the player's car: frames 0..5 turning at 15 a second, 6 / 7 steering
+  left / right) and TORUNN (no wheel); CHRIS ends them.
+* **Loading** (`FUN_004749d0`): the best lap: the player's lap table of
+  the track (`FUN_00411d10`, key +0x180) or 0x7fffffff; fonts `arial_12_`
+  (labels), `arial_16_b` (values), `arial_20_b` (position); `pickup1..6`,
+  `slot0..5`; the animations (`FUN_004761b0`, 0x50aa30, 8 ints each:
+  name, sprite, frames, layer, drops, interval, sensed, random): crashanim
+  10 frames layer 1; damageanim 13, layer 1, interval 0.1, random 0.25;
+  oilanim 4, layer 0, 1 drop; smokeanim 11, layer 1, 100 drops every 0.05
+  s, sensed by the computer, random 0.5; sparkanim 5, layer 1; spikeanim
+  5, layer 0, 4 drops every 0.1 s (layer 0 under the cars, 1 over them);
+  sounds (`sound/*.wav`): the cars' crashcar, pickup, spikehit, brake,
+  teleport (0x50a928, copied into each car's slots 1, 2, 4, 5, 6), crash1..3
+  (0x50a95c), loopskid1..2 (0x50a968), the tricks' `oil1`, `spike1`,
+  `smoke1` (0x50ac78: {name, count, loops, buffer}, "%s%d" with `rand() %
+  count + 1`; oil and smoke loop); the track; the cars (computer cars: all
+  in the demo, all but car 0 with one player, cars 2 and 3 with two; the
+  one player's car is named after the profile, `profile:NONAME` without
+  one); each car's four sides go into the collision data
+  (`FUN_00471660`); the views (below) with the map (`map.bmp`, z 1) and a
+  dot per car (`playerdot` for the view's own, else `cardot`, 3x3, z 2);
+  the difficulty (`FUN_004750f0`: f = track difficulty - the player's car's
+  (1.1 in the demo, the mean of both with two players), at least 0, plus
+  1; `FUN_00475170`: every computer car's acceleration, top speed,
+  braking, turning and mass times f, grip times f cubed); the track's
+  speed (`FUN_00475220`: acceleration and top speed of all cars); the
+  loading backdrop goes (`FUN_00412710(0)`); `split` (318,0) with two
+  players. A progress bar (`progress`, `FUN_00476210`, at (378,432) on the
+  loading backdrop) follows the loading; not ported (loading is instant).
+* **track.ini** (`FUN_00475270`, `<track>/track.ini`; data1's replace
+  data's, data2 adds `tjeitorp` and `skiltpil`): `[track]` `id` (-1),
+  `award` (-1: the track item awarded for winning, the next track; data
+  and data2 tracks have none), `difficulty` (1.0), `speed` (1.0; data2's
+  1.2 / 1.35), `track` (the bitmap, 8 bit RLE, 2000x1600, 1600x2000,
+  2600x1230, 1000x3200), `startx1..4` / `starty1..4` (int), `startAngle`
+  (degrees x 0.0174533; 0 = facing down, growing to the left), `terrain`,
+  `map`, `sounds` (optional), `collision`, `path`, `overlays` (count);
+  `[overlays]` `x<n>`, `y<n>`, `source<n>`, `ontop<n>` (0/1);
+  `[terrain<n>]` (n 0..15) `friction` (1), `pitch` (1, unused), `volume`
+  (1, unused), `repair` (0). Track +0x7c: 16 records of these four floats.
+* **terrain.bmp**: 8 bit, a quarter of the track; the index (0..15, more
+  is 0) of the pixel at (round(x / 4), round(y / 4)) held to 0..w/4 and
+  0..h/4 with the row length w/4 (`FUN_0047a0b0`) is the car's terrain
+  (+0x210). A repairing terrain (the pit lane) repairs dt x repair x 0.1 x
+  shield a frame and plays `pitstop` (looping) in the car's view;
+  leaving it removes the clip. Out of the map the original reads past the
+  bitmap; fixed in the port: terrain 0 there.
+* **collision.nod** (`FUN_004700a0`): int32 points, int32 lines; points
+  {int32 x, y, two unused int32}; lines {int32 from, to, type}. Line n gets
+  the id -1 - n. Types: -1 and -2 walls (damage factors 0.00025 /
+  0.000125), 1 the finish line, 2 / 3 the commentator's lap clip on / off
+  (before / after the line), 4 the story's `ending` clip; cars' sides are
+  type -3 with the car's id (car.ini "id", 1..10). The data (32 bytes a
+  line: x1, y1, x2, y2, type, id, 0, car) has room for 16 car sides after
+  the walls; `FUN_00470c10` restarts their count each frame and each
+  driver writes its car's four sides (`FUN_004716d0`).
+* **path.ai** (`FUN_00472000`): int32 count, int32 unused; nodes {int32 x,
+  y; u32 sequence << 16 | type; float speed}, sorted by sequence and type
+  (qsort `LAB_00472190`; one pair of skiltpil is equal, the C library's
+  qsort decides: engine `msvcQsort()`), the last node's sequence is the
+  lap's length (track +0x68). Types: 0 the road, 1 a shortcut ("sneak"),
+  2 the pit lane, 3 the hidden car part's place (speed 666.0, one per
+  base track; data2's tracks have none). Node speeds (a share of the top
+  speed for the computer, `FUN_004728d0`) are all 0. In memory 0x1c bytes:
+  x, y, index, sequence, type, speed, used (a pickup lies there).
+* **sounds.nod** (`FUN_00475ae0`): int32 count, int32 unused; {int32 x, y;
+  u32 radius? << 16 | type; int32}: type 0..4 speaker, crowd, pitstop,
+  police, water (0x50a948, `sound/<name>.wav`), each a copy playing in a
+  loop from the start (`FUN_00476940`), its volume by distance every
+  frame (`FUN_004788f0`, sound id type + 10).
+* **Cars** (`FUN_00475ce0`, `cars/<car>/car.ini`; Il Tempo `tempo`:
+  `stage<n>.ini` by the stage built, `FUN_004231e0`): `[car]` `accel`
+  (350), `topSpeed` (350), `braking` (700), `width`, `height` (the
+  collision rectangle), `turning` (180, degrees a second), `grip` (0.8),
+  `mass` (1), `shield` (1: damage factor), `gears` (4), `difficulty` (1),
+  `id` (1); computer cars `[bias]`: `normal` (1), `sneak` (2.5),
+  `damaged` (2): the weights of the path's node types, type 3 666;
+  `pickup` (-1), `car` (1), `wall` (1), `trick` (1): of what the rays find;
+  `track` (1, the steering's), `horn` (0.75); their grip times 0.8. The
+  driver's name `race:DRIVER<id>`. Bitmaps `<car>0..3.bmp` (58x58, the car
+  facing up, more damaged), `shadow.bmp`; `engine.wav`, `horn.wav`. The
+  car structure is 0x29c bytes (offsets in `racing.h`). The original
+  copies each car's frame into sheets 256 wide (`DAT_006cad58`, shadows
+  `DAT_006cad60`) for its quad filler; the port draws from the bitmaps.
+* **Start** (`FUN_004762b0`): game running (`FUN_0040d8a0(1)`), state 3
+  (countdown, `DAT_006c7484`), pickups and animations cleared, the car
+  part placed (`FUN_00476490`: the race's profile value of the track's id
+  is 0 -> a pickup 6 on the node of speed 666), the drivers' controls
+  (player n's `configs[selected]`), in the story `FUN_00476bb0`
+  (Blodstrupmoen, car 1: the player's top speed, acceleration, grip,
+  sneak bias 0.75; car 2: 85 % of the player's top speed and acceleration;
+  car 3: 95 % / 75 %); each car on its start point and angle, rank = its
+  number, reset (`FUN_00476620`: reverse acceleration and top speed -0.5 x
+  theirs, lap 1, best lap 0x7fffffff, damage 0 (sprite 0, performance 1),
+  turbo 1, catch-up 1, the default terrain, steering 2, the slot empty),
+  the engine sound (looping); each driver at the first node, its laps =
+  the car's lap, 2.5 s stuck time; the track's sounds; each view's `count`
+  clip (z 3, a silent picture with the countdown's beeps, 7 s) and the
+  commentator's `start`; dt 1.0.
+* **Frame** (`FUN_004776e0`, nothing while a dialog is open): dt
+  (`FUN_0047a490`: the game clock's milliseconds x 0.001, 0..0.1); the
+  story's catch-up (`FUN_0047a600`: f = 10 x (player's progress -
+  Blodstrupmoen's) - 0.053, x 1.5 when negative, held to -0.5..0.5, plus
+  1: his top speed, acceleration and grip f x the player's, the top speed
+  held to 80 %..101.1 %, the acceleration to 90 %..101.1 % of the
+  player's; his sneak bias 0.1 on the last lap; a debug print); the
+  collision response of every car (`FUN_00471740`); every driver
+  (`FUN_00478bf0`); while no player finished: the progress (`FUN_00477ae0`:
+  ((sequence - 0.04 x max(25, distance to the node)) / lap length + lap -
+  1) / laps, 0..1), the ranks (qsort `LAB_004771a0`: finished cars by
+  time, then wrecked ones last, then by progress, then the higher id
+  first), catch-up = 1 + min(0.5, 2.5 x (leader's progress - the car's));
+  the top speed = topSpeed x turbo x (1 - damage / 2) x catch-up, falling
+  at most 25 a second; the acceleration = accel x turbo x (1 - damage /
+  2); the animations (`FUN_00478840`); the drawing (`FUN_00477ba0`); the
+  track's sounds; in the countdown, when the player's `count` clip ended:
+  state 0, the race's start time, timer 1 (every 10 ms: the players'
+  current lap time), with tricks timer 2 (every 20 s from 20 s: a pickup
+  of type 1..5 on a free node after a random one, at most four,
+  `FUN_00477650`), each car's lap start, its wheelspin from the revs
+  (`FUN_00478740(car, 1)`) and `spinup` in the player's view if it spins;
+  a player's car fully damaged: state 4, `race:TITLE` / `race:CRASHED`
+  and the end.
+* **A driver** (`FUN_00478bf0`): the race time; a computer car with a
+  trick uses it (the turbo, or anything with more than one car); the move
+  (`FUN_00479d70`); in the countdown the computer revs towards a random
+  aim (0.75..0.99 or 0..0.24) and the player's accelerator revs; else
+  damage smoke above 25 % damage (every (1 - damage) x 0.1 s, at the car
+  +- half its width); the computer's driving (`FUN_004721f0`, the path is
+  followed for every car) or the player's keys (`FUN_00479c10`); the
+  steering (`FUN_00479420(car, +1 / -1 / 0)`); the car's sides; its camera
+  (`FUN_00478e70`, unused); the speed (`FUN_004792f0`); pickups
+  (`FUN_00479650`); tricks (`FUN_00479a80`); skid marks (`FUN_00478f70`).
+* **Keys** (`FUN_00479c10`, `FUN_0040e530`: the virtual key's
+  GetAsyncKeyState, or a gamepad's axis / button): accelerator / brake as
+  above; in the countdown only the revs; trick (`FUN_004798f0`); horn
+  (looping while held); left (steer 0) / right (1, wins) / neither (2);
+  accelerate (`FUN_00473410`) with the accelerator alone, brake / reverse
+  (`FUN_00473860`) with the brake alone, else roll (`FUN_00473920`).
+  Escape asks `interfaceh:WARNING` / `race:CONFIRM` (not in the demo) and
+  ends the race (state 5: no results); Page Up / Down choose the HUD
+  layout 0..4 (50 ms apart). Engine: the keys held by virtual key code.
+* **Driving** (`FUN_004734b0`): the velocity is split in a gripping part
+  (+0x184) and a sliding part (+0x264, from collisions and oil); both are
+  turned into (across, along) the car (`FUN_00473810`). along += dt x
+  acceleration; g = terrain friction x grip; skidding when g != 0 and the
+  wheels spin or |across + sliding across| > 125 g; across and the
+  sliding across fall to 0 by 1000 g dt, the sliding along by 500 g dt;
+  along is held to sqrt(top speed^2 - across^2) forwards, -sqrt(reverse top
+  speed^2 - across^2) backwards (0 when that is not a number). Accelerate:
+  braking when going backwards, else the acceleration, x min(g, 1); in the
+  finish clip everyone rolls. Brake: going forwards -braking (the
+  player's `brake` sound), else the reverse acceleration (reversing); a
+  finished player rolls. Roll: towards 0 by 500 g a second. Steering
+  (`FUN_00479420`): angle += (dir x turning + spin) x dt unless the car
+  would cross something (then `canTurn` 0); the spin falls by 4 pi g dt.
+  The speed (+0x18c) is the gripping velocity along the car. The move
+  (`FUN_0047a250`): position += (gripping + sliding) x dt, refused when a
+  side would cross a wall or a car (`FUN_00471f50`).
+* **Engine** (`FUN_00479330`, `FUN_00479080`, `FUN_004791d0`): revs in
+  gears (+0x138; one more with the turbo; one gear backwards): up or down
+  by (1 - floor(revs) / gears) x 0.5 a second, at most gears - 0.01, held
+  to |speed| x gears / top; the engine sound's pitch (x its rate,
+  `FUN_004141c0`) runs through 0.5 + the gear's share (at most 0.8), 1.5,
+  1.75, 1.5, 0.8 over the shares 0.4 + 0.6 s, ..., of the revs' fraction
+  (s = floor(revs) / gears), holding 1.75 past the second share unless
+  still rising. Wheelspin (`FUN_00478740`): at the start (revs / gears -
+  speed / top) x 1.5 when positive, falling 0.5 a second.
+* **Damage** (`FUN_00473a00`): damage += amount x shield, 0..1; the frame
+  shown floor(damage x 4) (at most 3), performance 1 - damage / 2. Walls
+  (`FUN_00471b10`): |speed| x mass x (1 - |cos| between the motion and the
+  wall) x factor when more than 0.0025; both velocities are projected on
+  the wall. Cars (`FUN_00471cb0`): the motion across the hit direction is
+  shared by the masses x 350 (5 % of the difference kept), along it a's
+  part is limited towards b's (min when positive, max when negative); the
+  new motions are split again into the heading's projection and sliding
+  (`FUN_00471ee0`); damage (across a - across b) x 0.000125 x the other's
+  mass / own mass (negative repairs). Pit lane: see terrain; the repair
+  pickup takes 10 % (x shield).
+* **Collisions** (`FUN_00471740`, up to four rounds): the motion of the
+  frame; each side of the car facing it (its normal x the motion's
+  direction > 0.001) sweeps a quad (`FUN_00471030`); the lines near their
+  box (`FUN_00471190` / `FUN_00471260`) are clipped against each quad in
+  its frame (`FUN_004712b0`, `FUN_00471360`, `FUN_004714e0`); the hit
+  nearest along the motion wins: a trigger line sets +0x290 / +0x294; a
+  wall or car moves the car 80 % of the way there (all the way below 25
+  pixels of motion; beyond the motion: none) and bounces it (above); the
+  first wall hit of the frame is kept (+0x284..+0x294) for sparks and
+  sounds. Then velocities below 1 (spin 0.01) and not-a-numbers are
+  zeroed (`FUN_004732c0`). The line test `FUN_00470880` works with slopes,
+  a vertical line counting as slope 0, so a vertical and a horizontal line
+  never cross (kept).
+* **The move's results** (`FUN_00479d70`): the terrain; line 1: the lap
+  (`FUN_0047a350`) and the commentator's `lap<n>_1` when its `lap<n>_0`
+  plays (n = laps left + 1, 1..7); line 2: `lap<n>_0` looping (n laps
+  left); line 3: removes it; line 4: `ending` (the story); a wall above
+  speed 1, 25 ms apart: `crashanim` above 90 % of the top speed, else
+  `sparkanim`, at the hit (rounded), and the crash (or crashcar) sound;
+  the skid sound while skidding; the car's sounds follow it.
+* **Laps** (`FUN_0047a350`, before any player finished): only when the
+  driver's laps along the path (`FUN_00472510`: the sequence wrapping)
+  exceed the timed laps: the lap time (laps 1..8, `car+0x230 + 4 x lap`),
+  the best lap; a player's new track record shows `race:BESTLAP` for 5 s
+  (blinking: shown in the second half of each second) and becomes the
+  BEST; the timed lap counts on; past the last lap the car finishes
+  (state 1), a player's car plays `finish` (state 2, timer 1 stops). Any
+  clip ending in state 2 ends the race (`FUN_004770a0`).
+* **Pickups** (`FUN_00479650`, 300 slots of 0x24 bytes): the car's sides
+  crossing a pickup's rectangle: a trap (kind 0: oil spins a car of speed
+  100+ (the gripping velocity goes into sliding, spin 0.025 x speed either
+  way), spikes: the `spikehit` sound, speed x 0.2, damage 0.075, the trap
+  goes); a pickup (kind 1): the `pickup` sound; type 6 (the car part, only
+  for players): the race's value of the track id = 1 and the car part
+  dialog at the end (`FUN_0041c150`); else the trick is held (the view's
+  slot, `slot<type>` in a 50x50 element at z 1 with tricks on). Tricks
+  (`FUN_004798f0`, before the finish, none active): oil / spikes / smoke
+  drop their traps (count and interval of the animation, `dirtytrick`
+  clip), behind the car (half the frame's height) at the interval, smoke
+  +- half the width; turbo: 8 s of top speed and acceleration x 1.2 and a
+  gear more (`turbo1` / `turbo2`); repair: 10 % (kept when there is no
+  damage); the trick's sound (oil, smoke loop). Finished oil and spike
+  animations stay as traps (`FUN_00478bb0`).
+* **The computer** (`FUN_004721f0`): every driver follows the path
+  (`FUN_00472510`: the node within +-12 of the sequence nearest by the
+  integer distance x the car's bias for its type, then the next node of
+  that type, the pit lane's when the car wants repairs (`FUN_00473a90`:
+  damage > 0.1 and not the last lap), `FUN_00472740`; the driver's
+  sequence moves on by less than 18; out of sight (`FUN_004731e0`: not in
+  the viewport drawn last; always in the demo) a computer car whose node
+  did not change for 2.5 s jumps to it (`teleport`); the car's lap counts
+  over the sequence's wrap). Computer cars: wrecked ones roll; stuck (could
+  not turn twice) or hit by a car: back off 0.1..0.5 / 0.1..0.2 s
+  (reversing when it went forwards); the horn stops after its time and not
+  for 5..10 s; repairing in the pit lane rolls; a ray ahead (length
+  (len (1 - f) + len f |speed| / 350) x scale, 200, 0.8, walls, cars and
+  smoke, `FUN_004741b0`) finding something the car's bias (+0x160 + 4 x
+  kind) >= 1 brakes (closer than 75 % or below 25) or rolls, else
+  accelerates (`FUN_004728d0`); the steering: towards the sum of the
+  directions to the next 1 + floor(8 x speed / top) nodes
+  (`FUN_00472a50`: (1 - cos) x track bias x 0.05 to the side) plus the
+  side rays (`FUN_00472e00` / `FUN_00472c40`: a short one (30, 0.25) at
+  60..90 degrees and a long one (150, 0.6) at 7..45 degrees, narrower
+  with speed, (1 - distance) x 25 / length x the bias of the kind, the
+  long one x 0.75) unless both side rays found the same thing; above
+  0.0025 right, below -0.0025 left. A slower car going the same way
+  (cos >= 0.5) counts at a quarter of its distance (`FUN_004740d0`); a car
+  ahead within the horn bias honks (then not for 0.25..1 s).
+  `FUN_00472ec0` (is a car beside?) compares each driver record with the
+  driver itself and so always answers no (kept). Not-a-number steering
+  (a reversing car, no nodes summed) steers left like the FPU's
+  unordered compare.
+* **Drawing** (`FUN_00477ba0`): one viewport 640x480, or two of 318x480
+  (driver 0 at x 322, driver 1 at x 0); per viewport (`FUN_00478190`): the
+  camera (round(car - half the viewport), held to the track); the track;
+  pickups (their bitmap) and traps (their animation's last frame); layer
+  0 animations; the cars (`FUN_004784f0`: centred a twelfth of the frame
+  ahead of the position, the shadow 2 pixels off, a quad of half the frame
+  x the scale turned by angle + pi, `FUN_0046f5a0`); overlays over cars
+  (`FUN_00478980`: the overlays within 7 pixels of a drawn item are
+  painted on the track again, under the skid marks, and noted, 150 at
+  most, to be drawn over the cars: `ontop` 0 before the layer 1
+  animations, 1 after them); skid marks (`FUN_00478f70`) darken the
+  track (two pixels wide, `FUN_0046f410`, x 0.75 with the 565 mask
+  0x7bef) from the wheels' previous to their current points (the corners
+  of the rectangle 10 x 20 smaller). The overlays are part of the track
+  bitmap already. The original's quad filler runs scanlines in 16.16 fixed
+  point; the port samples each pixel's centre.
+* **Views** (0x50ace8, 0x50b320, 0x50b958, 0x638 bytes): one player view
+  0; two players view 1 (player 2, left) and 2 (player 1, right). Each
+  has: the slot (588,428) / (266,428) / (324,428); the commentator's clip
+  (`FUN_00476550`: not in state 2; the clip playing goes on, another is
+  replaced; z 3) at (2,362) / (2,362) / (466,362); the map (2,386) /
+  (2,386) / (495,386) with its dots (`FUN_00478090`: round(x x 143 / w),
+  round(y x 92 / h), centred); `count` (262,182) / (101,182) / (423,182);
+  the HUD (`FUN_00477c40`, layouts 0x4a0048 {best, lap times, position,
+  damage, speed, map dots}: 111111, 111101, 111001, 001001, 000000):
+  `race:BEST` and the best lap (`FUN_00473120` "%d'%02d\"%02d" or "-"),
+  `race:LAPTIME` and "%d." with the times of the laps driven (24 apart),
+  `race:POSITION` "%d / %d" (`arial_20_b`), `race:DAMAGE` "%d%%",
+  `race:SPEED` "%d km/t" = min(revs / gears x top / 2, |speed| / 2), the
+  message (BESTLAP, or WRONGWAY whose flag +0x220 nothing sets); labels
+  left, values right aligned (rectangles in `racing.cpp`).
+* **End** (`FUN_004770c0`): game not running, sounds stopped, the car
+  part's award, the ranks; the menu's race: results (`FUN_00477390`)
+  unless aborted, back to `racemenu`; the story: results, a won race
+  goes on to `goodbye`, else `race:TITLE` / `race:TRYAGAIN` (yes / no):
+  yes starts again (`FUN_004762b0`), no (and Escape) to `menu`.
+* **Results** (`FUN_00477390`): with four cars a player who won gets the
+  track's award (type 3, item `award`, flag 0x10, when not won yet); the
+  cars not finished get their time / progress; the results dialog
+  (`FUN_00421a70`, `roster`: 233x404 at (204,38), dimmed, `roster:TITLE`
+  in `Amerigo BT_10_b` in (8,9)-(219,25); four places at (11,33),
+  (119,33), (11,199), (119,199): `base`, `car_%02d` of the car's id at
+  (+11,+27), `pos<n>` at (+30,+90), the name in `Amerigo BT_10_b` in
+  (+4,+5)-(+93,+21), the time in `LCD_14_` in (+4,+131)-(+93,+153), "-"
+  when wrecked or none; OK 0x29a (75,367) "Ok", Enter and Escape); in
+  the menu's one player race with a lap driven: the race time into the
+  race table (+0x17c) and the best lap into the lap table (+0x180)
+  (`FUN_0041ee50`, no medals, 0x102) and `FUN_0047aa00(1)` so the menu
+  shows them in bold. Engine: `RosterDialog`, `addScore()`,
+  `raceScoreState()`.
+* **Sounds** (`FUN_00473ad0`, ids 0 crash, 1 crashcar, 2 pickup, 3 skid,
+  4 spikehit, 5 brake, 6 teleport, 7 trick, 8 horn, 9 engine; 10.. the
+  track's): a playing crash or looping sound goes on, others start again;
+  crash and skid take one of their sounds at random, the trick slot the
+  trick's. Volume (`FUN_00473c70`): by the distance to the player's car
+  (the nearer player's with two; full for the players' own sounds): 1
+  within the id's radius (0x4a0008: 250, horn 200, engine 400, speaker
+  750, crowd 250, pitstop 150, police 100), else radius / distance, x 100;
+  x the scene's sound.ini factor (speech for the track's sounds, music for
+  the engine, sound for the others) x the race's volume (commentator,
+  engine, effects) x the options' sound volume; pan 0 within 250 across,
+  else +-(1 - 250 / |dx|). `FUN_00414030` turns the percentage into
+  DirectSound hundredths of dB: f = p / 100, below 0.1 7.5 f, else (f -
+  0.1) x 0.2778 + 0.75, (f - 1) x 10000. Engine: `RacingScene::Voice`
+  (10^(dB / 20) as the mixer volume, the pan as ScummVM's balance).
+* **Development aids**: `racing_laps=<n>` (laps of the race),
+  `racing_autopilot=true` (the computer drives the players' cars, with
+  their car.ini [bias]), debug level 2 logs the cars every second.
+* Not ported: the progress bar while loading, the SARA screen effect,
+  gamepads, the obfuscated registry value (`FUN_0040b940`..), the debug
+  print of the story's catch-up.
+
 ## Development aids (config keys in the `[flaaklypa]` section)
 
 `start_scene`, `autoshot` / `autoshot_delay` / `autoshot_quit` (screenshot),

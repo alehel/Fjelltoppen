@@ -289,7 +289,7 @@ RacingScene::RacingScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, d
 	_lapTimerNext(0), _pickupTimerNext(0), _pickupTimer(false), _hudLayout(0), _keyTime(0), _scale(0.85f), _pickupCount(0),
 	_carPartTaken(false), _helpFrames(0), _windX(0), _windY(0), _skidWidth(2), _msgLast(0), _msgPhase(0), _wheelPhase(0.0f),
 	_playerX(0), _playerY(0), _loaded(false), _staticSegs(0), _carSegs(0), _maxSeq(0), _player(nullptr), _viewCount(0),
-	_wheelOn(false), _view(nullptr), _savedBackdrop(nullptr), _labelKey(0), _sara(false), _devLaps(0), _debugTime(0) {
+	_wheelOn(false), _view(nullptr), _savedBackdrop(nullptr), _labelKey(0), _sara(false), _devLaps(0), _debugTime(0), _autopilot(false), _finishNow(false) {
 	for (auto &c : _cheatPos)
 		c = 0;
 	memset((void *)&_settings, 0, sizeof(_settings));
@@ -450,7 +450,9 @@ void RacingScene::onInit(int arg) {
 		_settings.players[0].selected = 0;
 		_story = true;
 	}
-	// Development aid: "racing_laps=<n>" shortens the race
+	// Development aids: "racing_autopilot=true" lets the computer drive the
+	// players' cars; "racing_laps=<n>" shortens the race
+	_autopilot = ConfMan.hasKey("racing_autopilot") && ConfMan.getBool("racing_autopilot");
 	if (ConfMan.hasKey("racing_laps")) {
 		int laps = ConfMan.getInt("racing_laps");
 		if (laps > 0 && laps <= 8)
@@ -1048,6 +1050,11 @@ void RacingScene::onUpdate() {
 	tick();
 	if (!_loaded || _state == kStateAborted)
 		return;
+	if (_finishNow) {
+		_finishNow = false;
+		endRace();
+		return;
+	}
 	updateClips();
 	// FUN_0047a7d0 (event 0x119): the story's race opens the help at its
 	// second frame
