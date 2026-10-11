@@ -22,7 +22,6 @@
 #include "common/endian.h"
 #include "common/system.h"
 #include "graphics/managed_surface.h"
-#include "gui/gui-manager.h"
 
 #include "flaaklypa/award.h"
 #include "flaaklypa/flaaklypa.h"
@@ -262,9 +261,9 @@ int choosePuzzlePicture(Scene *scene, const char *title, int first, int end, int
 
 void printPuzzle(Graphics::ManagedSurface &picture, int32 elapsed) {
 	// FUN_0046b0e0 / FUN_0046ef10: "%s   %s   %s" (the player, today and
-	// the time) in Amerigo BT_10_ at the bottom right (0x202); the original
-	// then hands the picture to the activity centre's print page
-	// ("activity", not ported), the port to ScummVM's print dialog.
+	// the time) in Amerigo BT_10_ at the bottom right (0x202), then the
+	// activity centre with the request {"jigsaw", 0, picture} or
+	// {"sliding", motive, picture} (sliding's init ignores its argument).
 	FlaaklypaEngine *vm = g_engine;
 	const Common::String date = formatScoreDate(FlaaklypaEngine::profileTime());
 	const Common::String time = formatScore(elapsed, kScoreTime);
@@ -273,7 +272,7 @@ void printPuzzle(Graphics::ManagedSurface &picture, int32 elapsed) {
 	BitmapFont font;
 	font.load("Amerigo BT_10_");
 	font.drawString(picture, picture.w - font.stringWidth(text), picture.h - font.height(), text);
-	g_gui.printImage(picture);
+	vm->showActivity(vm->scene()->name(), 0, picture);
 }
 
 // ---- cutting the picture (FUN_0046c1b0 ff.) ------------------------------------

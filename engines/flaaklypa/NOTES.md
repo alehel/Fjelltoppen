@@ -1876,10 +1876,10 @@ centred in (295,3)-(503,36).
   bytes) = {vase, count, kind[30], place[30]}, the flowers in the vase
   sorted by z, written on close (`FUN_0045e830`) and restored on init
   (`FUN_0045e530`).
-* Print (3, `FUN_0045ed10`): the original renders the flowers by z and
-  the vase on top onto white and hands the picture to the `activity`
-  scene's print page. Deviation: the port opens ScummVM's print dialog
-  (`g_gui.printImage`) with it.
+* Print (3, `FUN_0045ec10` / `FUN_0045ed10`): the flowers by z and the
+  vase on top are rendered onto white and the activity centre starts with
+  the request {"bouquet", 0, picture} (`DAT_006a1970`, engine
+  `showActivity()`).
 
 
 ## Activity `mahjong` ("Mah Jongg", add-on set 2, from `outtent`)
@@ -2156,10 +2156,7 @@ lists it.
   surface *picture} (`FUN_0040cd70("activity", &req)`; `FUN_0045c050`
   keeps the three fields: Escape returns to the scene with the argument,
   a picture is placed on the page; bouquet passes {"bouquet", 0, picture}
-  the same way). Deviation: the activity centre is not ported; the port
-  hands the picture to ScummVM's print dialog (`g_gui.printImage`), the
-  help names the centre as the way to print. TODO: the request once
-  `activity` exists.
+  the same way). Engine: `showActivity("colorfill", 0, picture)`.
 * Engine: `ColorfillScene`. The scene table's "cross" has +0x44 = 0, which
   `FUN_00412840` only reads for clips (bitmaps are always loaded) but
   `Anim` treats as invisible, so the cross is shown as the element
@@ -2584,8 +2581,8 @@ on the pieces lie turned in quarter turns (+0x38 of the motive).
 * **Print** (4, solved only): the pieces on a 490x490 picture (the original
   fills it with the 16 bit value 0xff00 first; white here), "%s   %s   %s"
   (the player or `profile:NONAME`, today "dd.mm.yy", the time "mm:ss.cc")
-  at the bottom right in Amerigo BT_10_; the original hands it to the
-  `activity` scene, the port to ScummVM's print dialog.
+  at the bottom right in Amerigo BT_10_, then the activity centre with the
+  request {"jigsaw", 0, picture} (`printPuzzle()` -> `showActivity()`).
 * **Table** (5): `FUN_0041f640(0, item, entry, highlights, 0x102)`, entry
   and highlights only when solved by the player.
 * Deviations: 16 bit colour quantisation not reproduced; the cutter's
@@ -2658,7 +2655,9 @@ n = 3 + item % 3 (`FUN_0046eb20`).
   the value becomes 3; the time goes to the table
   (`FUN_0041ee50(item, ms, 0, 0x102, entry, tables)`).
 * **Print** (2): the tiles in their home places, numbers included, with the
-  jigsaw's text line. **Table** (3): `FUN_0041f640(0, item, entry,
+  jigsaw's text line, to the activity centre with {"sliding", motive,
+  picture} (the motive pointer as the return argument, which sliding's
+  init ignores; the port passes 0). **Table** (3): `FUN_0041f640(0, item, entry,
   highlights, 0x102)`, entry and highlights only once solved.
 * The clock's countdown variant (`DAT_006c0e90`) is never switched on.
 * High scores: `addScore()` in `solved()` (`FUN_0041ee50`, key = the
@@ -2905,6 +2904,153 @@ book, no list dialog (the list dialog caller next to chess,
   with each game (unlike draughts'). Not ported: the `Debug Log` file
   `c:\chess.log` (debug output instead), the CORRUPT error of the board
   checks (warnings), `sound.ini` volumes.
+
+## Activity `activity` ("Aktivitetssenteret", from the scene index)
+
+Handler `FUN_0045be90` (`activity.cpp`, code 0x45b2c0..0x45e0f0): 0x103
+`FUN_0045c050`, 0x104 `FUN_0045cc20`, 0x105 `FUN_0045ce50`, 0x106
+`FUN_0045dd10`, 0x107 and 0x11d (double click) `FUN_0045da90`, 0x109
+`FUN_0045dd70`, 0x10a `FUN_0045de00`, 0x10b `FUN_0045dfa0` (the EVENT
+module's drag, `FUN_0040c1f0`), 0x10c `FUN_0045df60`, 0x116
+`FUN_0045d290`, 0x117 `FUN_0045e0d0`. A page layout program: texts,
+shapes and gallery pictures on a sheet of paper, printed or saved as an
+image. Music `subgame21`; the title `activity:SCENENAME` in Amerigo
+BT_18_ centred in (205,23)-(581,73) z 0xca; `logo` z 0xc9; the frame
+elements `top`, `left`, `right`, `bottomleft`, `bottom` at z 200 (objects
+dragged off the paper slide under them). Nothing is kept: no profile
+values, no awards, no scores.
+
+* **Request** (`FUN_0045c050`): the scene argument is 0 (scene index) or
+  a pointer to {char *returnScene, int returnArg, surface *picture}
+  (`DAT_0069dff8`..`DAT_0069e000`). The callers: bouquet print
+  {"bouquet", 0, picture} (`DAT_006a1970`, `FUN_0045ec10` case 3),
+  colorfill's activity button {"colorfill", 0, 490x490}
+  (`DAT_006a4250`, `FUN_00462220`), jigsaw print {"jigsaw", 0, 490x490}
+  (`FUN_0046b0e0` case 4), sliding print {"sliding", motive pointer,
+  picture} (`FUN_0046ef10` case 2). With a picture, the picture list's
+  first row is `bitmap/activity_1` with the caller's scene title (id
+  0x80) and the picture is on the page from the start (`FUN_0045b9a0(0x80)`);
+  exit (2) and Escape go back to `returnScene` with `returnArg` (Escape is
+  consumed), else exit leaves for the parent and Escape is the global key.
+  The scene owns the picture (freed at close). Engine: `ActivityRequest`,
+  `FlaaklypaEngine::showActivity(request)` / `showActivity(scene, arg,
+  picture)` (copies the picture), the scene gets arg 1 and takes the
+  request from the engine.
+* **Paper** (`FUN_0045b320`): as large as fits the work area
+  (10,90)-(543,585) (0x49f678), portrait (1) w = round(h * 0.777462),
+  landscape (2) h = round(w * 0.777462) (float 0x49f6b8; x87 rounding,
+  halves away from zero), centred: 385x495 or 533x414. `bitmap/paper`
+  (100x100, white with a grey margin line and a shadow) cut at
+  (0x11,0x10)-(0x51,0x50) and tiled to (w + 5) x (h + 6) by
+  `FUN_00420b00`, at (x - 1, y - 1), z -500 (`DAT_0069852c`); the page is
+  that element less (1, 1, 4, 5) (`FUN_0045b2c0`). The layout toggle
+  0x46 (`FUN_0045b300`: pressed = landscape) lays it out again; the
+  objects stay where they are.
+* **Objects** (32 records of 0x108 bytes at `DAT_00698730`): +0 used, +4
+  type (= the tab id: 10 text, 11 shape, 12 picture), +8 z, +0xc the
+  element (hotspot 0), +0xb4.. per type: text {LOGFONT *font, int size
+  (points), COLORREF colour, style (1 bold, 2 italic, 4 underline), char
+  text[]}, shape {kind, colour, w, h}, picture {gallery item or 0x80,
+  surface, float scale x, y}. A full page gives `interfaceh:WARNING` /
+  `activity:OBJECTSMAX` (OK). z: `FUN_0045b570` gives the next value of
+  `DAT_005028b8` (a global starting at -400); once it leaves -400..-369
+  every object goes down by 32 and the count restarts, so after 128 more
+  raises an object never raised again sinks under the paper (-500).
+  * Text (`FUN_0045b4d0`, `FUN_0045b610`, `FUN_0045b660`): the colour,
+    the size field and the style toggles, the font list's row; the text
+    entry (0xf5, 0xf3, `activity:EDITTEXT`, 64 characters, flags 0x1f);
+    an empty text is not added (an edit to empty leaves the element but
+    empties the record, so the printout loses it). The element is as
+    large as the text extent (GDI font of the face, height -round(size *
+    96 / 72) (`FUN_00405a10`), weight 700 for bold), TextOut at its top
+    left, centred where the old element was, else on the work area;
+    transparent (colour key 0x00ff00).
+  * Shapes (`FUN_0045b7b0`, `FUN_0045b840`, `FUN_0045bcf0`): kind = list
+    row: Rectangle, Ellipse, Polygon with the corners of 0x5027d0
+    (diamond, 4), 0x5027f0 (5 point star, 10), 0x502840 (6 point star,
+    12) times w and h rounded; brush = the colour, pen = the device
+    context's default (black, one pixel); w = h = the size field; the
+    rectangle opaque, the others transparent.
+  * Pictures (`FUN_0045b960`, `FUN_0045b9a0`, `FUN_0045ba10`,
+    `FUN_0045bae0`, `FUN_0045bc40`): `common/bitmap/large/<item>`
+    (490x490) or the request's picture, scale = size / 490 (float
+    0x49f6bc) in both directions, the element round(w * scale) x
+    round(h * scale), opaque, StretchBlt in HALFTONE mode (the port
+    averages the source pixels).
+* **Selection** (`FUN_0045dac0`: right button or double click on the
+  topmost object whose element rectangle holds the point, `FUN_0045d1f0`):
+  the object is raised, a frame element (its rectangle + 3, z 0x32, a
+  black one pixel line at inset 1) with `close` (hotspot 100) at its top
+  left and, but for texts, `resize` (101) at its bottom right (z 0x33,
+  `FUN_0045d080`); the tab, list (row of its font / kind / item), size
+  field, colour and style toggles show its settings. A press anywhere but
+  on the list, the scroll bar's thumb (0x14), the colour, size, edit,
+  style and remove buttons deselects (`FUN_0045cde0`) and drags the
+  topmost object under the mouse; `close` removes the selected object,
+  `resize` is dragged. A dragged object takes the frame along (0x10a with
+  the record as data, `FUN_0045dea0`); dropped outside the work area it is
+  removed (`FUN_0045dfa0`). The resize handle's centre follows the mouse
+  clamped to the size field's range from the object's top left; the drop
+  sizes the object to that (the top left stays) and the size field shows
+  the new size (`FUN_0045dc40`: text size, shape width, picture element
+  width).
+* **List** (`FUN_0045c310`): list box (566,138)-(768,376) (0x49f698), bar
+  COLORREF 0x23234b, z 0xc9, scroll bar 0x14 (track (0x307,0xab) 14x171,
+  `scrolltab`, arrows 2000 `up_0/1` (0x307,0x8d) and 2001 `down_0/1`
+  (0x307,0x165), z 0xfa, range rows - shown). Tab 10: the fonts
+  (`FUN_0045c4b0`: `EnumFontFamiliesA`, TrueType with the ANSI character
+  set (`FUN_0045c5d0`), at most 128, sorted by name, 200x20 rows with the
+  name in the font at 10 points in COLORREF 0x9fece8), size range 6..42;
+  11: the shapes (`FUN_0045c650`, 200x34 rows: `figure_<n>` at (1,1), the
+  name `activity:RECTANGLE` .. `STAR6` (0x5027b8) at (40,8) in Amerigo
+  BT_10_), range 20..360; 12: the request's picture and the gallery items
+  the player has (`FUN_0045c6f0`, `FUN_0041b3f0`, `small/<item>` and the
+  name), range 40..240. The start: tab 12, value 200. A click on a row
+  changes the selected object of that tab's kind (`FUN_0045cfd0`).
+* **Size field** (`DAT_0069a830`, `FUN_0045c250` ff.): "%d" in Amerigo
+  BT_14_ centred in (606,392)-(639,427) z 0xfa; a press in it starts a drag
+  (value + 2 per 6 pixels up, truncated, within the range; event 0x109),
+  the release applies it (`FUN_0045d5e0(v, v)`: text size, shape w and h,
+  picture scale v / width, v / height, so a picture becomes square);
+  0x34 / 0x35 add / subtract 5 and apply. Colour (0x32): the colour dialog
+  (below), sample (566,397)-(594,421) z 0xfb, default COLORREF 0xff0000
+  (blue). Edit (0x36) and the style toggles 0x37..0x39 (`FUN_00407000`)
+  act on a selected text. Add 0x3c (or Enter), remove 0x3d (or Delete),
+  clear 0x3e (`interfaceh:WARNING` / `activity:DOCLEAR`, yes/no). Tooltips
+  (0x502768): tabs, colour, edit, bold, italic, underline, layout.
+* **Colour dialog** (`FUN_0041cc10` -> `FUN_0041cd00`, `colordlg` at
+  (0x104,0xc2), dimmed, z 500, handler `LAB_0041ce80`): title
+  `colordlg:TITLE` in Amerigo BT_14_ centred in (14,9)-(257,39), OK 500
+  (0x16,0xa4) and Cancel 501 (0xa8,0xa4) with `button_0/1`, the sample in
+  (126,165)-(144,187); a press or drag over hotspot 200 (the wheel and the
+  palette) takes the dialog bitmap's pixel (`FUN_0041cfc0`, GetPixel of
+  the 16 bit surface); Enter OK, Escape Cancel. Engine: `runColourDialog()`.
+* **Print** (0x48, `activity:DOPRINT` yes/no): `FUN_004104f0` opens the
+  page setup dialog and prints the objects sorted by z (`FUN_0045d6b0`)
+  with GDI, the page stretched to the printable area (MM_ANISOTROPIC),
+  landscape when the layout toggle is pressed. **Save** (0x47): a name
+  (`activity:SAVEPATH`, 24 characters, flags 0x1b) and `FUN_0045d9c0`
+  draws the page 1:1 on white with font smoothing on and writes
+  `<Data Path>\Layouts\<name>.jpg` (`FUN_004103a0` -> `FUN_00414dc0`, JPEG
+  quality 100). On screen the scene turns font smoothing off
+  (`SPI_SETFONTSMOOTHING`, restored at close) so the keyed text elements
+  have no fringes.
+* Not ported: the obfuscated registry value written, read and deleted
+  (`FUN_0040b940` "0000F756E815BD2900000044" / `FUN_0040b8b0` /
+  `FUN_0040ba00`, like the scene index).
+* Deviations: the fonts are ScummVM's TrueType fonts of `fonts.dat`
+  (Go Mono, Liberation Mono/Sans/Serif, Noto Sans/Serif, each with its
+  bold and italic files; monochrome on screen, anti-aliased in the saved
+  page; ScummVM's GUI font when there is no FreeType or `fonts.dat`); the
+  underline is drawn at 0.106 em under the baseline, 0.073 em thick (the
+  Arial metrics); shapes are GDI look-alikes; the colours are not reduced
+  to 16 bits. Print renders the page 1:1 (like save) and hands it to
+  ScummVM's print dialog (`g_gui.printImage`, orientation from the
+  layout, fit to page; it can also save it as an image); save writes
+  `<name>.png` (UTF-8 name) into ScummVM's save directory (the typed name
+  cannot hold a dot, so it never clashes with the profile slots). Double
+  clicks are detected by the scene (500 ms, 4x4 pixels, the Windows
+  defaults). The z counter is a member, not a global.
 
 ## Story page `garage` ("Verkstedet")
 
@@ -3589,7 +3735,9 @@ and tooltip modules are in `button.cpp`). Music `theme`.
 * **BUTTON module** (`FUN_00406540`..`FUN_00406fb0`): 0x278 byte records,
   id = hotspot of the element; type 1 push (pressed bitmap only while
   hovered, click on release over it: `FUN_00406d40`), type 2 tab (fires on
-  press, deselects its group: `FUN_00406c80`); state 0 normal, 1 pressed /
+  press, deselects its group: `FUN_00406c80`), type 3 toggle (`FUN_00407000`:
+  a press switches it between 0 and 1 and fires, `FUN_00406be0`;
+  `SceneButtons::addToggle`); state 0 normal, 1 pressed /
   selected, 2 disabled; hover from the hotspot change events 0x113/0x114.
   The engine's `SceneButtons` draws each button into its own element
   `btn<id>` so several buttons can share a bitmap.
@@ -3750,8 +3898,10 @@ the finish of track 1; `mountain_skip=n<node>` starts on the first
 segment leaving that node of the `.fff` file, e.g. n786 before the car
 part, n668 before the film clip; a crash restarts there until a
 checkpoint is passed).
-`test_colorfill_print=<png>` (colorfill: the activity button writes the
-picture to that file instead of opening ScummVM's print dialog).
+`test_colorfill_print=<png>` (colorfill: the activity button also writes
+the picture to that file). `test_activity_print=<png>` (activity centre:
+print writes the composed page to that file instead of opening ScummVM's
+print dialog).
 `test_draughts=<side 0>/<side 1>` (draughts: the position at the start,
 squares "xy" (column, row 0..7, "k" appended for a king) separated by
 commas; the pieces of each side are used in order, the rest count as
@@ -3815,7 +3965,7 @@ Activities (`[activity]`, open ended):
 | x | sliding | Skyvepusslespillet | garage | data (high score open) |
 | x | chess | Sjakk | intent | data |
 | x | movieplayer | Filmfremviser | tvstation | data |
-| | activity | Aktivitetssenteret | sceneindex | data |
+| x | activity | Aktivitetssenteret | sceneindex | data |
 
 Add-on set 3 (CD 2, fourth index group):
 

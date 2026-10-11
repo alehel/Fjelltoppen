@@ -61,7 +61,11 @@ void puzzleShade(Graphics::ManagedSurface &picture, const byte *height, int ligh
  * -1 when cancelled.
  */
 int choosePuzzlePicture(Scene *scene, const char *title, int first, int end, int (*size)(int));
-/** The text the printouts carry at the bottom right: player, date and time (FUN_0046b0e0 / FUN_0046ef10). */
+/**
+ * Print (FUN_0046b0e0 / FUN_0046ef10): the player, date and time at the
+ * picture's bottom right, then the activity centre with the picture,
+ * returning to the current scene.
+ */
 void printPuzzle(Graphics::ManagedSurface &picture, int32 elapsed);
 
 /**
