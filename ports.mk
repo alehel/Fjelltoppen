@@ -519,15 +519,15 @@ OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libintl.a
 endif
 endif
 
-ifdef USE_TTS
-ifndef USE_NS_SPEECH_SYNTHESIZER
-OSX_STATIC_LIBS += -framework AVFoundation
-endif
-endif
-
 ifneq ($(BACKEND), ios7)
 OSX_STATIC_LIBS += -lreadline
 endif
+endif
+endif
+
+ifdef USE_TTS
+ifndef USE_NS_SPEECH_SYNTHESIZER
+OSX_STATIC_LIBS += -framework AVFoundation
 endif
 endif
 
