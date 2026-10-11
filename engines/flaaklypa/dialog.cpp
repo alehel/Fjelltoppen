@@ -498,12 +498,9 @@ void NavigatorDialog::onKey(const Common::KeyState &key) {
 #define kHelpList Common::Rect(15, 56, 134, 348)   // 0x49cbc8
 #define kHelpText Common::Rect(153, 56, 443, 348)  // 0x49cbd8
 #define kHelpScroll Common::Rect(450, 82, 464, 324)
-// The list box's highlight bar (COLORREF 0x3e5167) and the colour key of
-// its item and text bitmaps (0xff00).
-static const byte kHelpHighlight[3] = { 0x67, 0x51, 0x3e };
 
 HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const Common::String &file) :
-	Dialog(vm, true), _selected(0), _top(0), _rows(0), _rowHeight(0), _text(nullptr), _thumb(nullptr) {
+	Dialog(vm, true), _text(nullptr), _thumb(nullptr) {
 	// FUN_0041e2a0: one topic per section of the scene's help file
 	Common::INIFile ini;
 	if (!_vm->_resources->loadIni(scene, file, ini)) {
@@ -513,7 +510,6 @@ HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const C
 	for (const auto &section : ini.getSections()) {
 		Topic t;
 		t.name = section.name;
-		t.item = nullptr;
 		// FUN_0041dfe0 shows text0, text1, ... up to the first missing key
 		for (int i = 0;; i++) {
 			const Common::INIFile::KeyValue *kv = section.getKey(Common::String::format("text%d", i));
@@ -543,19 +539,18 @@ HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const C
 
 	// FUN_004087a0 / FUN_00408530: each topic name is rendered into its own
 	// bitmap, cut to the size of the list
+	_list.init(kHelpList);
 	for (auto &t : _topics) {
 		int w = MIN<int>(_font.stringWidth(t.name), kHelpList.width());
 		int h = MIN<int>(_font.height(), kHelpList.height());
-		if (w <= 0 || h <= 0)
-			continue;
-		t.item = new Graphics::ManagedSurface(w, h, format);
-		t.item->fillRect(Common::Rect(w, h), key);
-		_font.drawString(*t.item, 0, 0, t.name);
+		Graphics::ManagedSurface *item = nullptr;
+		if (w > 0 && h > 0) {
+			item = new Graphics::ManagedSurface(w, h, format);
+			item->fillRect(Common::Rect(w, h), key);
+			_font.drawString(*item, 0, 0, t.name);
+		}
+		_list.addItem(item);
 	}
-	// FUN_00408160: the row height is the height of the first entry, at
-	// most 32 rows
-	_rowHeight = _topics[0].item ? _topics[0].item->h : _font.height();
-	_rows = MIN<int>(kHelpList.height() / MAX(_rowHeight, 1), 32);
 
 	// FUN_0041e390: title, OK, list arrows, scroll bar
 	BitmapFont titleFont;
@@ -573,45 +568,8 @@ HelpDialog::HelpDialog(FlaaklypaEngine *vm, const Common::String &scene, const C
 }
 
 HelpDialog::~HelpDialog() {
-	for (auto &t : _topics)
-		delete t.item;
 	delete _text;
 	delete _thumb;
-}
-
-// ---- list box
-
-void HelpDialog::listSetTop(int top) {
-	// FUN_00407af0: the last page is kept full
-	int count = _topics.size();
-	top = CLIP(top, 0, count - 1);
-	if (count - _rows - top < 0)
-		top = count - _rows;
-	_top = MAX(top, 0);
-}
-
-void HelpDialog::listSelect(int index) {
-	// FUN_00407e60: scrolls the selection into view
-	_selected = CLIP<int>(index, 0, _topics.size() - 1);
-	if (_selected >= _top && _selected < _top + _rows)
-		return;
-	listSetTop(_selected > _top ? _selected + 1 - _rows : _selected);
-}
-
-void HelpDialog::listMove(int delta) {
-	// FUN_00407ab0
-	int index = CLIP<int>(_selected + delta, 0, _topics.size() - 1);
-	if (index != _selected)
-		listSelect(index);
-}
-
-int HelpDialog::listRowAt(int x, int y) const {
-	Common::Rect r = kHelpList;
-	r.translate(this->x(), this->y());
-	if (!r.contains(x, y))
-		return -1;
-	int row = (y - r.top) / _rowHeight + _top;
-	return row < (int)_topics.size() ? row : -1;
 }
 
 // ---- text box
@@ -629,7 +587,7 @@ int HelpDialog::layoutText(int scroll) {
 	const uint32 key = _text->format.RGBToColor(0, 0xff, 0);
 	_text->fillRect(Common::Rect(_text->w, _text->h), key);
 	int y = -lineHeight * scroll;
-	for (const auto &para : _topics[_selected].paragraphs) {
+	for (const auto &para : _topics[MAX(_list.selected(), 0)].paragraphs) {
 		Common::Array<Common::String> lines = wordWrap(_font, para, kHelpText.width());
 		for (uint i = 0; i < lines.size(); i++)
 			_font.drawString(*_text, 0, y + i * lineHeight, lines[i]);
@@ -649,10 +607,10 @@ void HelpDialog::onButton(int id) {
 		close(1);
 		break;
 	case kButtonPrev:
-		listSetTop(_top - 1);
+		_list.setTop(_list.top() - 1);
 		break;
 	case kButtonNext:
-		listSetTop(_top + 1);
+		_list.setTop(_list.top() + 1);
 		break;
 	case kButtonUp:
 		// FUN_00409450: one step per click; event 0x117 -> FUN_0041e890
@@ -676,12 +634,8 @@ void HelpDialog::onMouseDown(int x, int y, bool onDialog) {
 		layoutText(_scroll.value());
 	if (hit)
 		return;
-	int row = listRowAt(x, y);
-	if (row >= 0) {
-		if (row != _selected)
-			listSelect(row);
+	if (_list.click(x - this->x(), y - this->y()) >= 0)
 		resetText();
-	}
 }
 
 void HelpDialog::onMouseMove(int x, int y, bool leftHeld) {
@@ -704,31 +658,7 @@ void HelpDialog::onWheel(int delta) {
 
 void HelpDialog::onKey(const Common::KeyState &key) {
 	// FUN_0041e700 / FUN_00407f60: a list key shows the selected topic from the top
-	bool listKey = true;
-	switch (key.keycode) {
-	case Common::KEYCODE_PAGEUP:
-		listSetTop(_top - _rows);
-		break;
-	case Common::KEYCODE_PAGEDOWN:
-		listSetTop(_top + _rows);
-		break;
-	case Common::KEYCODE_END:
-		listSelect(_topics.size() - 1);
-		break;
-	case Common::KEYCODE_HOME:
-		listSelect(0);
-		break;
-	case Common::KEYCODE_UP:
-		listMove(-1);
-		break;
-	case Common::KEYCODE_DOWN:
-		listMove(1);
-		break;
-	default:
-		listKey = false;
-		break;
-	}
-	if (listKey)
+	if (_list.key(key) >= 0)
 		resetText();
 	if (key.keycode == Common::KEYCODE_RETURN || key.keycode == Common::KEYCODE_KP_ENTER || key.keycode == Common::KEYCODE_ESCAPE)
 		close(1);
@@ -737,18 +667,7 @@ void HelpDialog::onKey(const Common::KeyState &key) {
 void HelpDialog::drawContents(Graphics::ManagedSurface &dst) {
 	const int dx = x(), dy = y();
 	const uint32 key = dst.format.RGBToColor(0, 0xff, 0);
-	// FUN_00407b60: the highlight bar under the selected entry
-	if (_selected >= _top && _selected < _top + _rows) {
-		int ry = dy + kHelpList.top + (_selected - _top) * _rowHeight;
-		dst.fillRect(Common::Rect(dx + kHelpList.left, ry, dx + kHelpList.right, ry + _rowHeight),
-			dst.format.RGBToColor(kHelpHighlight[0], kHelpHighlight[1], kHelpHighlight[2]));
-	}
-	// FUN_00407c00: the visible entries
-	for (int i = 0; i < _rows && _top + i < (int)_topics.size(); i++) {
-		const Graphics::ManagedSurface *item = _topics[_top + i].item;
-		if (item)
-			dst.transBlitFrom(*item, Common::Point(dx + kHelpList.left, dy + kHelpList.top + i * _rowHeight), key);
-	}
+	_list.draw(dst, dx, dy);
 	if (_text)
 		dst.transBlitFrom(*_text, Common::Point(dx + kHelpText.left, dy + kHelpText.top), key);
 	// The scroll bar's thumb is an opaque element centred on its position

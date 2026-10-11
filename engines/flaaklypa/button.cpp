@@ -428,4 +428,120 @@ Common::Rect ScrollBar::thumbRect() const {
 	return Common::Rect(cx - _thumbW / 2, _thumbY - _thumbH / 2, cx - _thumbW / 2 + _thumbW, _thumbY - _thumbH / 2 + _thumbH);
 }
 
+// ---- ListBox -------------------------------------------------------------------
+
+ListBox::ListBox() : _barColour(0x3e5167), _selected(0), _top(0), _rows(0), _rowHeight(0) {
+}
+
+ListBox::~ListBox() {
+	clear();
+}
+
+void ListBox::init(const Common::Rect &rect, uint32 barColour) {
+	clear();
+	_rect = rect;
+	_barColour = barColour;
+}
+
+void ListBox::clear() {
+	for (auto *item : _items)
+		delete item;
+	_items.clear();
+	_selected = _top = _rows = _rowHeight = 0;
+}
+
+void ListBox::addItem(Graphics::ManagedSurface *item) {
+	_items.push_back(item);
+	// FUN_00408160: the row height is the first row's, at most 32 rows
+	if (_items[0] && _items[0]->h > 0) {
+		_rowHeight = _items[0]->h;
+		_rows = MIN<int>(_rect.height() / _rowHeight, 32);
+	}
+}
+
+void ListBox::setTop(int top) {
+	int n = _items.size();
+	if (n <= 0)
+		return;
+	top = CLIP(top, 0, n - 1);
+	if (n - _rows - top < 0)
+		top = n - _rows;
+	_top = MAX(top, 0);
+}
+
+void ListBox::select(int index) {
+	int n = _items.size();
+	_selected = CLIP(index, 0, MAX(n - 1, 0));
+	if (_selected >= _top && _selected < _top + _rows)
+		return;
+	setTop(_selected > _top ? _selected + 1 - _rows : _selected);
+}
+
+void ListBox::move(int delta) {
+	int n = _items.size();
+	if (n <= 0)
+		return;
+	int index = CLIP(_selected + delta, 0, n - 1);
+	if (index != _selected)
+		select(index);
+}
+
+int ListBox::rowAt(int x, int y) const {
+	if (!_rect.contains(x, y) || _items.empty() || _rowHeight <= 0)
+		return -1;
+	int row = (y - _rect.top) / _rowHeight + _top;
+	return row < (int)_items.size() ? row : -1;
+}
+
+int ListBox::click(int x, int y) {
+	int row = rowAt(x, y);
+	if (row >= 0 && row != _selected)
+		select(row);
+	return row;
+}
+
+int ListBox::key(const Common::KeyState &key) {
+	if (_items.empty())
+		return -1;
+	switch (key.keycode) {
+	case Common::KEYCODE_PAGEUP:
+		setTop(_top - _rows);
+		break;
+	case Common::KEYCODE_PAGEDOWN:
+		setTop(_top + _rows);
+		break;
+	case Common::KEYCODE_END:
+		select(_items.size() - 1);
+		break;
+	case Common::KEYCODE_HOME:
+		select(0);
+		break;
+	case Common::KEYCODE_UP:
+		move(-1);
+		break;
+	case Common::KEYCODE_DOWN:
+		move(1);
+		break;
+	default:
+		return -1;
+	}
+	return _selected;
+}
+
+void ListBox::draw(Graphics::ManagedSurface &dst, int dx, int dy) const {
+	const uint32 key = dst.format.RGBToColor(0, 0xff, 0);
+	// FUN_00407b60: the bar under the selected row
+	if (!_items.empty() && _selected >= _top && _selected < _top + _rows) {
+		int y = dy + _rect.top + (_selected - _top) * _rowHeight;
+		dst.fillRect(Common::Rect(dx + _rect.left, y, dx + _rect.right, y + _rowHeight),
+			dst.format.RGBToColor(_barColour & 0xff, (_barColour >> 8) & 0xff, (_barColour >> 16) & 0xff));
+	}
+	// FUN_00407c00: the rows shown
+	for (int i = 0; i < _rows && _top + i < (int)_items.size(); i++) {
+		const Graphics::ManagedSurface *item = _items[_top + i];
+		if (item)
+			dst.transBlitFrom(*item, Common::Point(dx + _rect.left, dy + _rect.top + i * _rowHeight), key);
+	}
+}
+
 } // End of namespace Flaaklypa

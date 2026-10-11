@@ -219,15 +219,7 @@ private:
 	struct Topic {
 		Common::String name;
 		Common::Array<Common::String> paragraphs;
-		Graphics::ManagedSurface *item;  ///< the list entry (FUN_00408530)
 	};
-
-	// List box (FUN_004085a0 ff.)
-	void listSetTop(int top);
-	void listSelect(int index);
-	void listMove(int delta);
-	/** The list row under the point, or -1 (FUN_00407f00). */
-	int listRowAt(int x, int y) const;
 
 	// Text box
 	/** Back to the top of the selected topic (FUN_0041dfb0). */
@@ -238,7 +230,7 @@ private:
 
 	Common::Array<Topic> _topics;
 	BitmapFont _font;
-	int _selected, _top, _rows, _rowHeight;
+	ListBox _list;      ///< the topics, coordinates relative to the dialog
 	Graphics::ManagedSurface *_text;
 	Graphics::ManagedSurface *_thumb;
 	ScrollBar _scroll;  ///< coordinates relative to the dialog

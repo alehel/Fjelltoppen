@@ -23,6 +23,7 @@
 
 #include "common/array.h"
 #include "common/hashmap.h"
+#include "common/keyboard.h"
 #include "common/hash-str.h"
 #include "common/rect.h"
 #include "common/str.h"
@@ -229,6 +230,49 @@ private:
 	int _thumbY;      ///< the thumb's centre
 	int _value, _max;
 	bool _dragging;
+};
+
+/**
+ * A list box of bitmap rows (the LISTBOX module, FUN_004085a0..FUN_00408850):
+ * the rows are bitmaps (colour key 0x00ff00), the row height is the first
+ * row's height, at most 32 rows show, the selected row has a coloured bar
+ * under it. The owner draws it with draw() and redraws after changes.
+ */
+class ListBox {
+public:
+	ListBox();
+	~ListBox();
+
+	/** FUN_004085a0: the box's rectangle; the bar colour is a COLORREF (0x00bbggrr). */
+	void init(const Common::Rect &rect, uint32 barColour = 0x3e5167);
+	void clear();
+	/** FUN_00408010: adds a row; the list takes the bitmap. */
+	void addItem(Graphics::ManagedSurface *item);
+	int count() const { return _items.size(); }
+	/** FUN_00408850: the selected row, -1 without rows. */
+	int selected() const { return _items.empty() ? -1 : _selected; }
+	int top() const { return _top; }
+	int rows() const { return _rows; }
+	/** FUN_00407af0: the first row shown, the last page kept full. */
+	void setTop(int top);
+	/** FUN_00407e60: selects a row and scrolls it into view. */
+	void select(int index);
+	/** FUN_00407ab0 */
+	void move(int delta);
+	/** FUN_00407f00: the row at a point, -1 outside. */
+	int rowAt(int x, int y) const;
+	/** FUN_00407ec0: a click selects the row under it; returns it or -1. */
+	int click(int x, int y);
+	/** FUN_00407f60: PgUp/PgDn scroll a page, Home/End/Up/Down select; returns the selection or -1. */
+	int key(const Common::KeyState &key);
+	/** Draws the bar and the rows shown, offset by (dx, dy). */
+	void draw(Graphics::ManagedSurface &dst, int dx = 0, int dy = 0) const;
+
+private:
+	Common::Rect _rect;
+	uint32 _barColour;
+	Common::Array<Graphics::ManagedSurface *> _items;
+	int _selected, _top, _rows, _rowHeight;
 };
 
 } // End of namespace Flaaklypa
