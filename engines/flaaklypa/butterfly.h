@@ -109,7 +109,6 @@ private:
 	static const SpeciesDef kEnemies[kEnemyCount];
 	static const int kLevelTable[kLevels][2];     ///< duration ms, points needed
 	static const float kLevelSpeed[kLevels];
-	static bool _collected[kSpeciesCount];
 
 	int randRange(int lo, int hi);
 	static int octantClip(int heading);

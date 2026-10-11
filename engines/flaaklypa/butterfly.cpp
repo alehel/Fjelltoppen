@@ -23,6 +23,7 @@
 #include "common/system.h"
 #include "common/textconsole.h"
 
+#include "flaaklypa/award.h"
 #include "flaaklypa/butterfly.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
@@ -67,7 +68,6 @@ const float ButterflyScene::kLevelSpeed[kLevels] = { 0.7f, 0.75f, 0.8f, 0.85f, 0
 // The meadow (0x49e550); an entity whose 32x32 rectangle leaves it is removed.
 enum { kAreaLeft = 24, kAreaTop = 88, kAreaRight = 702, kAreaBottom = 532 };
 
-bool ButterflyScene::_collected[kSpeciesCount];
 
 static const int kTimerX = 728;
 static const int kTimerBottom = 425;        ///< timermove at the start of a level
@@ -121,7 +121,8 @@ ButterflyScene::~ButterflyScene() {
 }
 
 bool ButterflyScene::isCollected(int species) {
-	return species >= 0 && species < kSpeciesCount && _collected[species];
+	// FUN_0041b5d0(7, profile, species)
+	return species >= 0 && species < kSpeciesCount && awardHasItem(g_engine, kAwardButterfly, species);
 }
 
 bool ButterflyScene::load() {
@@ -344,11 +345,11 @@ void ButterflyScene::gameOver() {
 	_vm->messageBox("interfaceh:GAMEOVER", "butterfly:ENDMESSAGE", MessageBox::kButtonOk);
 	removeAll(_butterflies);
 	removeAll(_enemies);
-	// TODO: profile item 7 (FUN_0041b740(7, species, 0x10, 0)) stores the
-	// caught species; kept in a static until profiles exist.
+	// FUN_0041b740(7, species, 0x10, 0): the species caught go to the
+	// profile's butterfly collection, silently (not in tournament mode)
 	for (int i = 0; i < kSpeciesCount; i++)
 		if (_caught[i] > 0)
-			_collected[i] = true;
+			awardGive(_vm, kAwardButterfly, i, kAwardSpecificItem);
 	// TODO: high score registration FUN_0041f9a0(0, score, medals {1500, 3000, 5000}).
 	for (int i = 0; i < 4; i++) {
 		Common::String name = Common::String::format("level_%d", i);
@@ -725,8 +726,6 @@ ButtercolScene::ButtercolScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene
 
 // FUN_0043a2a0
 void ButtercolScene::onInit(int arg) {
-	// TODO: the flags come from profile item 7 (FUN_0041b5d0(7, profile, i));
-	// ButterflyScene keeps them in a static for now.
 	defineAnim("help_0", false, true, kHotspotHelp, 0, 0, 150)->add(0, 0, 150);
 	defineAnim("help_1", false, true, kHotspotHelp, 0, 0, 150);
 	defineAnim("exit_0", false, true, kHotspotExit, 728, 0, 150)->add(728, 0, 150);
