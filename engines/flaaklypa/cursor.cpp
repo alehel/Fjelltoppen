@@ -61,12 +61,19 @@ void Cursor::set(const Common::String &name) {
 
 void Cursor::showFrame(const Graphics::Surface *frame) {
 	Graphics::Surface *conv = frame->convertTo(g_engine->_screen->format, _video->getPalette());
+	// The colour of the top left pixel is the colour key, as for animations.
+	// With an alpha channel the key pixels are made transparent there as
+	// well: the SDL surface renderer goes by the alpha channel of such a
+	// cursor (its RLE ignores the colour key) and showed the green key.
+	if (conv->format.aBits()) {
+		uint8 a, r, g, b;
+		conv->format.colorToARGB(conv->getPixel(0, 0), a, r, g, b);
+		conv->applyColorKey(r, g, b);
+	}
 	_frame.copyFrom(*conv);
 	conv->free();
 	delete conv;
-	// The colour of the top left pixel is the colour key, as for animations.
-	uint32 key = _frame.getPixel(0, 0);
-	CursorMan.replaceCursor(_frame.rawSurface(), 0, 0, key);
+	CursorMan.replaceCursor(_frame.rawSurface(), 0, 0, _frame.getPixel(0, 0));
 }
 
 void Cursor::update() {
