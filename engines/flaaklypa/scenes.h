@@ -143,6 +143,29 @@ private:
 	bool _leftDown;
 };
 
+/** Activity "Karakter galleri": the six characters with a spoken presentation each. */
+class GalleryScene : public Scene {
+public:
+	GalleryScene(FlaaklypaEngine *vm, const SceneDef *def);
+
+	void onInit(int arg) override;
+	void onMouseMove(int hotspot, int x, int y) override;
+	void onMouseDown(int hotspot, int x, int y) override;
+	void onMouseUp(int hotspot, int x, int y) override;
+	bool handlesKey(const Common::KeyState &key) override;
+	void onKey(const Common::KeyState &key) override;
+	void onTimer(int id, int data) override;
+	void onAnimFinished(Anim *anim) override;
+
+private:
+	void show(int n);
+	void leave();
+
+	SceneButtons _buttons;
+	int _current;
+	Common::String _picture, _voice;
+};
+
 /** Story page 1: the yard (tunet). */
 class YardScene : public Scene {
 public:

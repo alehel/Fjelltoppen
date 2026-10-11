@@ -20,6 +20,7 @@ MODULE_OBJS = \
 	entrydlg.o \
 	flaaklypa.o \
 	font.o \
+	gallery.o \
 	garage.o \
 	gem3d.o \
 	goodbye.o \

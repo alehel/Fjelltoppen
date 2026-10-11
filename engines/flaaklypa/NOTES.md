@@ -1585,6 +1585,16 @@ box relative y as the screen position. Keys (`FUN_00415ea0`): space
 leaves, PgUp/PgDn 18 steps, Home/End, Up/Down one step; the global keys
 follow.
 
+## Activity `gallery` ("Karakter galleri", from `tvroom`)
+
+Handler `FUN_00468e70` (`gallery.cpp`), music `theme`. Six characters:
+`bitmap/character_NN` at the positions of 0x49fee8, and 1.5 s later (timer
+1) the audio only clip `character_NN` (lang1) presents them; data1 has
+subtitles for it (`subtitle/<lang>.ini`, the subtitle module is not
+ported). Buttons help 1, exit 2, prev 3 / next 4 (cycle). Exit and
+Escape (consumed) go back to `tvroom` if the profile has visited it,
+else to the scene index (`FUN_004690f0`). Space stops the presentation.
+
 ## Activity `bouquet` ("Ludvigs blomsterbinderi", from `desk`)
 
 Handler `FUN_0045e0f0` (`bouquet.cpp`). The player arranges flowers in a
@@ -2339,7 +2349,7 @@ Activities (`[activity]`, open ended):
 
 | Done | Scene | Title | Started from | Data |
 |---|---|---|---|---|
-| | gallery | Karakter galleri | tvroom | data |
+| x | gallery | Karakter galleri | tvroom | data |
 | x | bouquet | Ludvigs blomsterbinderi | desk | data |
 | | fence | Musikkgjerdet | pee | data |
 | | colorfill | Reodors tegnebord | desk | data2 |

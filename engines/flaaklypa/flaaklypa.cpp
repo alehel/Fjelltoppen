@@ -98,6 +98,7 @@ bool FlaaklypaEngine::confirmLeave() {
 static const char *const kImplementedGames[] = {
 	"puzzle",
 	"bouquet",
+	"gallery",
 	"sockdrawer",
 	"textinvader",
 	"hopscotch",
