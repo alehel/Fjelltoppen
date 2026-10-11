@@ -190,7 +190,10 @@ private:
 	static const char *const kCollection[];
 	void placeCollection();
 	void highlightButton(int hotspot);
+	/** The cheat code LOVELYFLIES (0x43a390): the album shows every species. */
+	void cheatLovelyFlies();
 	int _highlighted;
+	bool _showAll;  ///< DAT_00666c60 all set (the profile keeps its own)
 };
 
 } // End of namespace Flaaklypa

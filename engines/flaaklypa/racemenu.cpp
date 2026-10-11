@@ -499,7 +499,7 @@ protected:
 
 	// FUN_0041d970
 	void onKey(const Common::KeyState &key) override {
-		int vk = raceVirtualKey(key);
+		int vk = virtualKey(key);
 		if (vk <= 3)
 			return;
 		if (_waiting < 0) {

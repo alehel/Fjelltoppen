@@ -121,6 +121,13 @@ public:
 	// ---- sequences (the "anim list" player of the CHAR module)
 	/** Plays the animation as a one element sequence (cursor hidden while it runs). */
 	void playSingle(const char *name);
+	/**
+	 * FUN_00412c20: the original plays a copy of the element, so the same
+	 * sound can overlap; here it starts again.
+	 */
+	void playClone(const char *name);
+	/** FUN_0040ae50: the cheat sound, common/sound/cheat. */
+	void playCheatSound();
 	void playSequence(AnimList list);
 	bool isSequencePlaying() const { return _seqList != nullptr; }
 	/** Aborts the running sequence and resets the characters to idle (space bar). */

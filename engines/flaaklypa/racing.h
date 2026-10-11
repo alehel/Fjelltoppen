@@ -31,6 +31,7 @@
 #include "common/scummsys.h"
 #include "graphics/managed_surface.h"
 
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/font.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/scene.h"
@@ -101,9 +102,6 @@ void raceDefaultControls(RaceControls &controls, int player, int type);
  * like the original's global.
  */
 RaceSettings &raceMenuSettings();
-
-/** The Windows virtual key code of a key (0 when it has none here). */
-int raceVirtualKey(const Common::KeyState &key);
 
 /**
  * The high score entries of the last race of the menu's settings
@@ -377,7 +375,13 @@ private:
 	void drawWheel();
 	static Common::String formatTime(uint32 ms);
 	void escape();
-	void cheatKey(char c);
+	// the cheat codes (FUN_0040ad50 in the init)
+	void cheatMonsterTruck();
+	void cheatMicroMachines();
+	void cheatSara();
+	void cheatChris();
+	void cheatErik();
+	void cheatTorunn();
 	void applyScale();
 	void setScale(float s);
 	void showImage(const Common::String &elem, const Image &img, int x, int y, int z);
@@ -529,6 +533,7 @@ private:
 	int32 _msgPhase;                  ///< DAT_006cf974
 	float _wheelPhase;                ///< DAT_006cf978
 	int _playerX, _playerY;           ///< DAT_006ce8e0
+	Common::Point _playerPos;         ///< the same, for the zoom of the SARA cheat
 	bool _loaded;
 
 	// the track (DAT_006c9d50, 0x184 bytes)
@@ -608,10 +613,6 @@ private:
 	// the clips of the views
 	ClipPlayer *_clips[3];
 	ClipPlayer *_counts[3];
-
-	// cheats (FUN_0040ad50)
-	int _cheatPos[6];
-	bool _sara;
 
 	// development aids
 	int _devLaps;

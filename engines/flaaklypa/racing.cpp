@@ -290,9 +290,7 @@ RacingScene::RacingScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, d
 	_lapTimerNext(0), _pickupTimerNext(0), _pickupTimer(false), _hudLayout(0), _keyTime(0), _scale(0.85f), _pickupCount(0),
 	_carPartTaken(false), _helpFrames(0), _windX(0), _windY(0), _skidWidth(2), _msgLast(0), _msgPhase(0), _wheelPhase(0.0f),
 	_playerX(0), _playerY(0), _loaded(false), _staticSegs(0), _carSegs(0), _maxSeq(0), _player(nullptr), _viewCount(0),
-	_wheelOn(false), _view(nullptr), _savedBackdrop(nullptr), _labelKey(0), _sara(false), _devLaps(0), _debugTime(0), _autopilot(false), _finishNow(false) {
-	for (auto &c : _cheatPos)
-		c = 0;
+	_wheelOn(false), _view(nullptr), _savedBackdrop(nullptr), _labelKey(0), _devLaps(0), _debugTime(0), _autopilot(false), _finishNow(false) {
 	memset((void *)&_settings, 0, sizeof(_settings));
 	_volumes[0] = _volumes[1] = _volumes[2] = 0.75f;
 	_track.id = -1;
@@ -459,6 +457,13 @@ void RacingScene::onInit(int arg) {
 	}
 	_settings.carCount = CLIP<int32>(_settings.carCount, 1, 4);
 	_settings.laps = CLIP<int32>(_settings.laps, 1, 8);
+	{
+		typedef Common::Functor0Mem<void, RacingScene> Callback;
+		_vm->_cheats->add("MONSTERTRUCK", new Callback(this, &RacingScene::cheatMonsterTruck), this);
+		_vm->_cheats->add("MICROMACHINES", new Callback(this, &RacingScene::cheatMicroMachines), this);
+		_vm->_cheats->add("SARA", new Callback(this, &RacingScene::cheatSara), this);
+		_vm->_cheats->add("CHRIS", new Callback(this, &RacingScene::cheatChris), this);
+	}
 	_vm->setScreenSize(kRaceW, kRaceH);
 	hideCursor();
 	_lapTimer = false;
@@ -831,6 +836,9 @@ void RacingScene::onClose() {
 	}
 	_vm->setScreenSize(800, 600);
 	showCursor();
+	// FUN_0040ae10 for the init's codes (the engine removes the scene's),
+	// then FUN_00476b30
+	cheatChris();
 }
 
 void RacingScene::freeCar(Car *c) {
@@ -843,67 +851,10 @@ void RacingScene::freeCar(Car *c) {
 
 // ---- events -------------------------------------------------------------------------
 
-// The virtual key code of a key (the original reads its keys with
-// GetAsyncKeyState)
-int raceVirtualKey(const Common::KeyState &key) {
-	using namespace Common;
-	switch (key.keycode) {
-	case KEYCODE_UP:
-		return 0x26;
-	case KEYCODE_DOWN:
-		return 0x28;
-	case KEYCODE_LEFT:
-		return 0x25;
-	case KEYCODE_RIGHT:
-		return 0x27;
-	case KEYCODE_LCTRL:
-	case KEYCODE_RCTRL:
-		return 0x11;
-	case KEYCODE_LSHIFT:
-	case KEYCODE_RSHIFT:
-		return 0x10;
-	case KEYCODE_SPACE:
-		return 0x20;
-	case KEYCODE_RETURN:
-	case KEYCODE_KP_ENTER:
-		return 0x0d;
-	case KEYCODE_ESCAPE:
-		return 0x1b;
-	case KEYCODE_TAB:
-		return 0x09;
-	case KEYCODE_PAGEUP:
-		return 0x21;
-	case KEYCODE_PAGEDOWN:
-		return 0x22;
-	case KEYCODE_HOME:
-		return 0x24;
-	case KEYCODE_END:
-		return 0x23;
-	case KEYCODE_INSERT:
-		return 0x2d;
-	case KEYCODE_DELETE:
-		return 0x2e;
-	case KEYCODE_LALT:
-	case KEYCODE_RALT:
-		return 0x12;
-	default:
-		break;
-	}
-	if (key.keycode >= KEYCODE_a && key.keycode <= KEYCODE_z)
-		return 'A' + (key.keycode - KEYCODE_a);
-	if (key.keycode >= KEYCODE_0 && key.keycode <= KEYCODE_9)
-		return '0' + (key.keycode - KEYCODE_0);
-	if (key.keycode >= KEYCODE_KP0 && key.keycode <= KEYCODE_KP9)
-		return 0x60 + (key.keycode - KEYCODE_KP0);
-	if (key.keycode >= KEYCODE_F1 && key.keycode <= KEYCODE_F12)
-		return 0x70 + (key.keycode - KEYCODE_F1);
-	return 0;
-}
-
 // FUN_0047a7f0: Escape asks (not in the demo) and ends the race; Page Up /
 // Page Down show more or less of the HUD (layouts 0..4, 50 ms apart)
 void RacingScene::onKey(const Common::KeyState &key) {
-	int vk = raceVirtualKey(key);
+	int vk = virtualKey(key);
 	if (vk > 0 && vk < 256)
 		_keys[vk] = true;
 	if (vk == 0x1b) {
@@ -923,13 +874,12 @@ void RacingScene::onKey(const Common::KeyState &key) {
 		}
 		return;
 	}
-	// the cheat codes (FUN_0040ae60): typed letters
-	if (vk >= 'A' && vk <= 'Z')
-		cheatKey((char)vk);
+	// The letters go on to the global key handler, which feeds the cheat
+	// codes (FUN_0040ae60).
 }
 
 void RacingScene::onKeyUp(const Common::KeyState &key) {
-	int vk = raceVirtualKey(key);
+	int vk = virtualKey(key);
 	if (vk > 0 && vk < 256)
 		_keys[vk] = false;
 }
@@ -950,48 +900,41 @@ void RacingScene::escape() {
 	endRace();
 }
 
-// FUN_0040ad50 registrations of the init: MONSTERTRUCK and MICROMACHINES
-// scale the cars, SARA (a screen effect, not ported) enables ERIK (the
-// steering wheel, FUN_0047a500) and TORUNN (no wheel), CHRIS ends them
-void RacingScene::cheatKey(char c) {
-	static const char *const kCodes[6] = { "MONSTERTRUCK", "MICROMACHINES", "SARA", "CHRIS", "ERIK", "TORUNN" };
-	for (int i = 0; i < 6; i++) {
-		if (i >= 4 && !_sara)
-			continue;
-		const char *code = kCodes[i];
-		int &pos = _cheatPos[i];
-		if (code[pos] == c)
-			pos++;
-		else
-			pos = code[0] == c ? 1 : 0;
-		if (code[pos] != '\0')
-			continue;
-		pos = 0;
-		debug(1, "Racing: cheat %s", code);
-		switch (i) {
-		case 0:
-			setScale(2.0f);
-			break;
-		case 1:
-			setScale(0.0f);
-			break;
-		case 2:
-			_sara = true;
-			break;
-		case 3:
-			_sara = false;
-			_wheelOn = false;
-			break;
-		case 4:
-			_wheelOn = loadImage("bitmap/wheelanim.bmp", _wheelImage);
-			break;
-		case 5:
-			_wheelOn = false;
-			break;
-		default:
-			break;
-		}
-	}
+// The cheat codes the init registers (FUN_0040ad50): MONSTERTRUCK and
+// MICROMACHINES scale the cars (FUN_00476ad0 / FUN_00476ae0)
+void RacingScene::cheatMonsterTruck() {
+	setScale(2.0f);
+}
+
+void RacingScene::cheatMicroMachines() {
+	setScale(0.0f);
+}
+
+// FUN_00476af0: the screen twice as large around the player's car, and the
+// codes ERIK (the steering wheel, FUN_0047a500) and TORUNN (no wheel)
+void RacingScene::cheatSara() {
+	typedef Common::Functor0Mem<void, RacingScene> Callback;
+	_vm->setZoom(FlaaklypaEngine::kZoomPoint, 2.0f, &_playerPos);
+	_vm->_cheats->add("ERIK", new Callback(this, &RacingScene::cheatErik), this);
+	_vm->_cheats->add("TORUNN", new Callback(this, &RacingScene::cheatTorunn), this);
+}
+
+// FUN_00476b30 (also the close): all of SARA undone
+void RacingScene::cheatChris() {
+	_vm->setZoom(FlaaklypaEngine::kZoomOff);
+	_vm->_cheats->remove("ERIK");
+	_vm->_cheats->remove("TORUNN");
+	_wheelOn = false;
+	_wheelImage = Image();
+}
+
+// FUN_00476b60
+void RacingScene::cheatErik() {
+	_wheelOn = loadImage("bitmap/wheelanim.bmp", _wheelImage);
+}
+
+void RacingScene::cheatTorunn() {
+	_wheelOn = false;
 }
 
 // Events 0x11b / 0x11c (FUN_0047a8b0 / FUN_0047a940): a dialog stops the
@@ -1177,6 +1120,7 @@ void RacingScene::tick() {
 		_playerX = ftol(_player->car->x);
 		_playerY = ftol(_player->car->y);
 		toScreen(_playerX, _playerY);
+		_playerPos = Common::Point(_playerX, _playerY);
 	}
 	if (_state == kStateWrecked) {
 		_vm->messageBox("race:TITLE", "race:CRASHED", MessageBox::kButtonOk);

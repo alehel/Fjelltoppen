@@ -47,6 +47,7 @@ namespace Flaaklypa {
 
 class Cursor;
 class Dialog;
+class Cheats;
 class Music;
 struct Globals;
 class Profile;
@@ -130,8 +131,15 @@ private:
 	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
+	int _zoomMode = 0;                    ///< DAT_0053367c, ZoomMode
+	float _zoomFactor = 1.0f;             ///< DAT_004a353c
+	const Common::Point *_zoomPoint = nullptr; ///< DAT_00533680
 
 	void switchScene();
+	/** FUN_00404440: shows the screen, magnified when a zoom is on. */
+	void presentScreen();
+	/** FUN_0040af00: the cheat codes of the whole game. */
+	void addGlobalCheats();
 	bool confirmLeave();
 	void dispatchEvent(const Common::Event &event);
 	void parseAutoClicks();
@@ -147,6 +155,7 @@ public:
 	Resources *_resources = nullptr;
 	Cursor *_cursor = nullptr;
 	Music *_music = nullptr;
+	Cheats *_cheats = nullptr;      ///< the typed cheat codes (FUN_0040ad50 ff.)
 	Globals *_globals = nullptr;  ///< the scene state kept across visits (the original's globals)
 	Dialog *_dialog = nullptr;     ///< the modal dialog receiving the input, if any
 	Profile *_profile = nullptr;   ///< the active player profile (DAT_0054eaa0), if any
@@ -294,6 +303,23 @@ public:
 	 * music pauses; Music::play() of the same track resumes it.
 	 */
 	void showLoading();
+
+	enum ZoomMode {
+		kZoomOff = 0,
+		kZoomMouse = 1,   ///< around the mouse
+		kZoomPoint = 3    ///< around a point the scene keeps up to date
+	};
+	/**
+	 * FUN_00404b70: shows the part of the screen of 1 / factor its size
+	 * around the mouse or a point (kept on the screen) magnified to the
+	 * whole screen, from the next frame until kZoomOff. A point must stay
+	 * valid until then. (Mode 2 of the original, around an element, is
+	 * unused.)
+	 */
+	void setZoom(int mode, float factor = 1.0f, const Common::Point *point = nullptr);
+	/** The cheat codes ZOOMIN (FUN_0040b070: 2.5 times around the mouse) and ZOOMOUT (FUN_0040b090). */
+	void cheatZoomIn();
+	void cheatZoomOut();
 	/**
 	 * The keys every scene shares (FUN_0040d300, an event handler that runs
 	 * after the scene's): Tab opens the scene index, Escape leaves the scene

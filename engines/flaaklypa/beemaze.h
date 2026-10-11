@@ -48,6 +48,7 @@ public:
 
 	bool load() override;
 	void onInit(int arg) override;
+	void onClose() override;
 	void onMouseDown(int hotspot, int x, int y) override;
 	void onMouseMove(int hotspot, int x, int y) override;
 	void onKey(const Common::KeyState &key) override;
@@ -169,6 +170,9 @@ private:
 	void pickup(int x, int y);
 	void drawPlayerFrame();
 	void updatePlayerAnim();
+	// the cheat codes of the init (FUN_0040ad50)
+	void cheatShrooms();
+	void cheatVoja();
 	void updateSmokePos();
 
 	// bees
@@ -218,6 +222,7 @@ private:
 	int _score;                 ///< DAT_006584c0
 	int _shownScore;            ///< DAT_006584e8
 	uint32 _flags;              ///< DAT_00658504
+	Common::Point _ludvigCentre; ///< DAT_00658570: the middle of Ludvig's element, for the VOJA cheat
 	bool _advance;              ///< DAT_00648d64: next restart goes to the next level
 	int _sticks, _berries, _nuts, _mushrooms, _hives;
 	int _highlighted;

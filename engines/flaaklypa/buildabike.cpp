@@ -23,6 +23,7 @@
 #include "common/textconsole.h"
 
 #include "flaaklypa/buildabike.h"
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
@@ -222,7 +223,9 @@ void BuildabikeScene::onInit(int arg) {
 	const uint32 green = _vm->_screen->format.RGBToColor(0, 255, 0);
 
 	playMusic("subgame8");
-	// "MAJKA" typed on the keyboard fills the store (FUN_0040ad50 -> 0x4398a0); not ported.
+	// FUN_0040ad50: typing MAJKA fills the store (the close removes it,
+	// FUN_0040ae10; here the engine)
+	_vm->_cheats->add("MAJKA", new Common::Functor0Mem<void, BuildabikeScene>(this, &BuildabikeScene::cheatMajka), this);
 	defineAnim("help_0", false, true, kHotspotHelp, 0, 0, 0)->add(0, 0, 0);
 	defineAnim("help_1", false, true, kHotspotHelp, 0, 0, 0);
 	defineAnim("exit_0", false, true, kHotspotExit, 728, 0, 0)->add(728, 0, 0);
@@ -453,6 +456,11 @@ bool BuildabikeScene::bikeComplete(int bike) const {
 		if (_bikes[bike].partKind[s] == kKindBroken)
 			return false;
 	return true;
+}
+
+void BuildabikeScene::cheatMajka() {
+	for (int i = 0; i < kTypes; i++)
+		setWallCount(i, 9);
 }
 
 // FUN_00438e50: the store holds up to nine of each part.

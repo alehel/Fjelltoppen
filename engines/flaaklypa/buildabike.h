@@ -125,6 +125,8 @@ private:
 	bool scoreBike(int bike, bool apply);
 	bool bikeComplete(int bike) const;
 	void setWallCount(int type, int count);
+	/** The cheat code MAJKA (0x4398a0): nine of every part in the store. */
+	void cheatMajka();
 	void setLift(int bike, float lift);
 	void setBikeState(int bike, int state);
 	int allowedBikes() const;

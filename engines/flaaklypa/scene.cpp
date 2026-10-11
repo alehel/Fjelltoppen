@@ -598,6 +598,19 @@ void Scene::playMusic(const char *name) {
 	_vm->_music->play(name);
 }
 
+void Scene::playClone(const char *name) {
+	Anim *a = anim(name);
+	a->remove();
+	a->play();
+	a->setRemoveWhenDone(true);
+}
+
+void Scene::playCheatSound() {
+	static const char kCheatSound[] = "../../common/sound/cheat";
+	defineAnim(kCheatSound, true, false, 0, 0, 0, 0, false);
+	playClone(kCheatSound);
+}
+
 // The ambience clips of the SOUND module (global animation structures at
 // 0x4a68a8, not part of the scenes' tables).
 static const char *const kAmbience[] = {

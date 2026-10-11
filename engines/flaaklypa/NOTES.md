@@ -233,6 +233,46 @@ virtual key code is a letter for `isalpha()`: A..Z, the keypad and
 F1..F11). Engine: `Scene::handlesKey()` and
 `FlaaklypaEngine::globalKey()`.
 
+### Cheat codes and the zoom (`cheats.cpp`)
+
+The CHEAT module keeps up to 0x20c byte slots at `DAT_0053dae8` (active,
+code[256], message[256], callback, position). `FUN_0040ad50(code,
+callback, message)` registers a code unless it is there already,
+`FUN_0040ae10(code)` removes it, `FUN_0040ae60(vk)` takes a key: in every
+active slot a key equal to the next letter counts, any other starts over
+(a wrong key is not counted as the first letter again); a complete code
+plays `common/sound/cheat` (`FUN_0040ae50`), runs the callback and shows
+the message in a `cheat:TITLE` box (no code has a message). Only the
+global key handler `FUN_0040d300` feeds it, with every key that reaches
+it, so codes work where the scene's handler passes the keys on (not in
+textinvader, not under dialogs). Engine: `Cheats`
+(`FlaaklypaEngine::_cheats`, fed by `globalKey()`), `virtualKey()`; a
+scene's codes go when it closes.
+
+* Global codes (`FUN_0040af00`, from the start-up `FUN_0040cfb0`):
+  ZOOMIN (`FUN_0040b070`: zoom 2.5 around the mouse), ZOOMOUT
+  (`FUN_0040b090`: zoom off), and awards like a won game
+  (`FUN_0041bb20`): HOTWHEELS a race car, GIMMETRACKS a track,
+  NOMOREDISHES three car parts, BLOWMEAWAY a film clip, SHOWMEHEAVEN a
+  gallery image.
+* Scene codes, removed by the closes: buildacar SHOWMETHECAR (the close
+  also removes IAMLAZY, which nothing registers), beemaze SHROOMS /
+  VOJA / ALEX, buildabike MAJKA, the race MONSTERTRUCK / MICROMACHINES /
+  SARA (which adds ERIK and TORUNN) / CHRIS, buttercol LOVELYFLIES. The
+  original never removes LOVELYFLIES, whose callback fills the album's
+  flags and places the album's elements in whatever scene runs; fixed in
+  the port: it goes with the album.
+* The zoom (DRAW module): `FUN_00404b70(mode, factor, point)` sets
+  `DAT_0053367c` / `DAT_004a353c` / `DAT_00533680` (mode 0 presents the
+  whole screen again); the flip (`FUN_00404440`) then shows, for mode 1
+  the mouse (`FUN_00404c50`), 2 an element's centre (`FUN_00404bf0`,
+  unused), 3 a point (`FUN_00404bc0`), the rectangle of the screen's size
+  / factor around it, kept on the screen, stretched over the screen
+  (`FUN_00404c80`). The mouse still works in screen coordinates. The race's
+  and beemaze's closes switch it off. Engine: `setZoom()`,
+  `presentScreen()` (ScummVM's cursor is not magnified, the original's
+  is part of the picture).
+
 ### Hotspot index ranges (story pages)
 
 1..3 sub game/activity entries, 55..99 animation hotspots, 100..150 misc,
@@ -844,9 +884,9 @@ Ghidra project; jump table: 0x103 -> `FUN_004391a0` init, 0x104 ->
   health 100, medium 5 / 75, hard 10 / 50. Game over still shows the
   ENDMESSAGE box; after the score (`FUN_0041f9a0` -> the tournament) the
   clearing and the `start` button are skipped (`438d6a`).
-* Not done: the
-  "MAJKA" cheat (fills the store), the belt items'
-  hit rectangle margin (`0x49dbf0`).
+* The init registers the cheat code MAJKA (`0x4398a0`: nine of every
+  part in the store, `FUN_00438e50`), the close removes it.
+* Not done: the belt items' hit rectangle margin (`0x49dbf0`).
 ## Sub game `pipeline` ("Oljeeventyret", started from `outtent`)
 
 A Pipe Mania style game: an oil well and a refinery (Ben Redic's oil lamp)
@@ -1012,7 +1052,11 @@ down, 0x10d -> `42f340` key up, 0x110 -> `432d30` anim finished, 0x111 ->
   level 1/6/11, always maze 1. Game over still shows the GAMEOVER box;
   the score goes to the tournament (`FUN_0041f9a0`), whose callback
   `4329c0` (the start icon) is not run.
-* Not done: the cheat console commands (SHROOMS, ...).
+* Cheat codes of the init (`432e94`), removed by the close (which also
+  switches any zoom off, `FUN_0040b090`): SHROOMS sets the mushroom flag
+  (`0x432f00`), VOJA the zoom 2.5 around the middle of Ludvig's element
+  (`0x432f10`, the point `DAT_00658570` kept by `FUN_00430e50`), ALEX
+  the zoom off.
   Development: `autohold=t:d;t:d` holds (l/r/u/d) or releases (0) an
   arrow key t ms after the scene starts.
 ## Sub game `bugzzz` ("Larveliv i leiren", started from `yard`)
@@ -1350,7 +1394,8 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   (list `0x4d8bd0`, note that it starts small_white, large_white while the
   species table starts largewhite, smallwhite). A click on one opens the
   "info" fact page about it; exit returns to `butterfly`. Registers the
-  cheat "LOVELYFLIES" (`FUN_0040ad50`) which marks all as collected.
+  cheat code LOVELYFLIES (`0x43a390`): the album's 15 flags
+  (`DAT_00666c60`, not the profile) all set, the album placed again.
 * Tournament mode (`FUN_00419490`): no album button (init `43a656`); the
   init ends (`43a746`) with the PLAYERREADY box (`FUN_00419660`) and
   `FUN_0043a820` (start clip removed, `timerstart` plays, net on): no click
@@ -1364,8 +1409,6 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   unknown). After game over the start clip is shown again (the
   original stays in the end state behind its dialogs). `debug(3)` dumps all
   entity positions once a second.
-* Not done: the album button's disabled state during a game, the
-  LOVELYFLIES cheat.
 
 ## Sub game `mountain` ("Solan i farta", started from `morning`, 640x480)
 
@@ -4836,13 +4879,9 @@ all 0 and the parts are hit tested by rectangle tables.
 * **Tooltips** (event 0x11a, `FUN_004244d0`): hotspots 100..113 (the tray
   parts) show `awarddlg:PART_n` of part first + hotspot - 100
   (`FUN_0041b580`), with the module's default delay of 1500 ms.
-* **Cheat codes** (`FUN_0040ae60`, fed by the global key handler
-  `FUN_0040d300` with the virtual key code): each registered code counts
-  matching keys, a wrong one starts over; when complete the `cheat` sound
-  plays (`FUN_0040ae50`), the callback runs and a message is shown if one
-  was given. Engine: the page matches `SHOWMETHECAR` in `onKey()` (letters
-  as upper case virtual keys). The close also unregisters `IAMLAZY`, which
-  nothing registers.
+* **Cheat code** SHOWMETHECAR (see "Cheat codes and the zoom"): the
+  finished car. The close also unregisters `IAMLAZY`, which nothing
+  registers.
 * Right click: navigator (`FUN_00421560`), next `tvstation` once at least
   13 parts were ever fitted (the stored most), else none; previous
   `intent`.
@@ -5248,12 +5287,14 @@ drawing), `racecar.cpp` (driving, collisions, pickups, sounds),
   `ftol(wind x dt)` pixels a frame); `FUN_004762b0` the start; cheats
   (`FUN_0040ad50`): MONSTERTRUCK / MICROMACHINES `FUN_00473020(2.0 / 0)`:
   the cars' scale (`DAT_0050a970`, 0.85, held to 0.45..1.45, `FUN_004730c0`
-  multiplies the sizes), SARA `FUN_00404b70(3, 2.0, &player screen
-  position)` (a screen effect of the DRAW module, not ported) and enables
+  multiplies the sizes), SARA (`FUN_00476af0`) the zoom 2 around the
+  player's car (`FUN_00404b70(3, 2.0, &DAT_006ce8e0)`) and registers
   ERIK (`wheelanim.bmp`, eight 100x100 frames of a steering wheel drawn by
   `FUN_0047a500` at (clamp(x, 160, 480) - 50, clamp(y, 120, 360) + 20) of
   the player's car: frames 0..5 turning at 15 a second, 6 / 7 steering
-  left / right) and TORUNN (no wheel); CHRIS ends them.
+  left / right) and TORUNN (no wheel); CHRIS (`FUN_00476b30`, also run
+  by the close) switches the zoom off, removes ERIK and TORUNN and frees
+  the wheel.
 * **Loading** (`FUN_004749d0`): the best lap: the player's lap table of
   the track (`FUN_00411d10`, key +0x180) or 0x7fffffff; fonts `arial_12_`
   (labels), `arial_16_b` (values), `arial_20_b` (position); `pickup1..6`,
@@ -5577,13 +5618,13 @@ drawing), `racecar.cpp` (driving, collisions, pickups, sounds),
   still go into the menu's tables of its laps), `racing_autopilot=true`
   (the computer drives the players' cars, with their car.ini [bias]),
   debug level 2 logs the cars every second and the clips started.
-* Not ported: the progress bar while loading, the SARA screen effect,
-  gamepads, the obfuscated registry value (`FUN_0040b940`..), the debug
+* Not ported: the progress bar while loading, gamepads, the obfuscated registry value (`FUN_0040b940`..), the debug
   print of the story's catch-up.
 
 ## Development aids (config keys in the `[flaaklypa]` section)
 
-`start_scene`, `autoshot` / `autoshot_delay` / `autoshot_quit` (screenshot),
+`start_scene`, `autoshot` / `autoshot_delay` / `autoshot_quit` (screenshot
+of what the player sees, with a zoom),
 `autoclick=t:x,y;t:x,y,m` (synthetic clicks, `m` = move only, `d` = press
 only, `u` = release only for drags, `r` = right click, t in ms after
 start), `autokey=t:key[:hold];...` (key press at t held for hold ms, default

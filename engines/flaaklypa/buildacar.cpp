@@ -22,6 +22,7 @@
 #include "common/endian.h"
 
 #include "flaaklypa/award.h"
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/music.h"
@@ -169,12 +170,9 @@ enum {
 	kLabelMissing
 };
 
-// The cheat code registered by the init (FUN_0040ad50, no message).
-static const char kCheatCode[] = "SHOWMETHECAR";
-
 BuildacarScene::BuildacarScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def),
 	_won(0), _fitted(0), _stage(0), _buildStage(0), _fittedMask(0), _lastPart(-1), _hintRunning(false), _blinks(0),
-	_drag(nullptr), _dragPart(0), _cheatPos(0), _mesh(nullptr), _solidMask(nullptr), _buttons(this), _tooltip(this) {
+	_drag(nullptr), _dragPart(0), _mesh(nullptr), _solidMask(nullptr), _buttons(this), _tooltip(this) {
 }
 
 BuildacarScene::~BuildacarScene() {
@@ -206,9 +204,8 @@ void BuildacarScene::addSlot(const Slot &s, int z) {
 
 // FUN_00423350
 void BuildacarScene::onInit(int arg) {
-	// FUN_0040ad50("SHOWMETHECAR", FUN_00423d50, 0): typing the code shows
-	// the finished car (see onKey()).
-	_cheatPos = 0;
+	// FUN_0040ad50: typing the code shows the finished car
+	_vm->_cheats->add("SHOWMETHECAR", new Common::Functor0Mem<void, BuildacarScene>(this, &BuildacarScene::showCar), this);
 	loadState();
 	// FUN_0041b540(0) / FUN_0041b690: the stored count is replaced by the
 	// parts won so far
@@ -227,7 +224,7 @@ void BuildacarScene::onInit(int arg) {
 	memset(_solidMask->getPixels(), 1, _solidMask->pitch * _solidMask->h);
 
 	// Audio only clips the original plays as clones (FUN_00412c20)
-	static const char *const kClones[] = { "right", "wrong", "notyet", "../../common/sound/cheat", nullptr };
+	static const char *const kClones[] = { "right", "wrong", "notyet", nullptr };
 	for (int i = 0; kClones[i]; i++)
 		defineAnim(kClones[i], true, false, 0, 0, 0, 0, false);
 
@@ -243,7 +240,7 @@ void BuildacarScene::onInit(int arg) {
 // FUN_00423dd0
 void BuildacarScene::onClose() {
 	// FUN_0040ae10 unregisters the cheat codes IAMLAZY (registered nowhere)
-	// and SHOWMETHECAR.
+	// and SHOWMETHECAR (the engine removes the scene's codes).
 	saveState();
 	// FUN_0040ba00 deletes the registry value of FUN_00423c50; the font and
 	// the labels are freed.
@@ -615,27 +612,6 @@ void BuildacarScene::onRightClick(int x, int y) {
 void BuildacarScene::onKey(const Common::KeyState &key) {
 	if (key.keycode == Common::KEYCODE_SPACE)
 		stopNarrations();
-	// The global key handler feeds the cheat codes (FUN_0040d300 ->
-	// FUN_0040ae60).
-	feedCheat(key);
-}
-
-// FUN_0040ae60 for the one code of the page: virtual key codes (upper case
-// letters) are compared one by one, a wrong key starts over.
-void BuildacarScene::feedCheat(const Common::KeyState &key) {
-	int vk = key.keycode;
-	if (vk >= Common::KEYCODE_a && vk <= Common::KEYCODE_z)
-		vk = 'A' + (vk - Common::KEYCODE_a);
-	if (vk == kCheatCode[_cheatPos])
-		_cheatPos++;
-	else
-		_cheatPos = 0;
-	if (kCheatCode[_cheatPos])
-		return;
-	_cheatPos = 0;
-	debug(1, "Buildacar: cheat %s", kCheatCode);
-	playClone("../../common/sound/cheat");  // FUN_0040ae50
-	showCar();                               // FUN_00423d50
 }
 
 // FUN_004245f0
@@ -777,15 +753,6 @@ void BuildacarScene::hideCar() {
 	removeAnim("fanfare2");
 	removeMesh();               // FUN_00407210
 	_vm->_music->pause(false);  // FUN_0040b720
-}
-
-// FUN_00412c20: the original plays a copy of the element, so the same
-// sound can overlap; here it starts again.
-void BuildacarScene::playClone(const char *name) {
-	Anim *a = anim(name);
-	a->remove();
-	a->play();
-	a->setRemoveWhenDone(true);
 }
 
 // FUN_00407110 / FUN_00407210: the checkerboard mesh that dims the page

@@ -638,8 +638,6 @@ private:
 	void showCar();
 	void hideCar();
 	bool isCarShown();
-	void playClone(const char *name);
-	void feedCheat(const Common::KeyState &key);
 	void addMesh(int z);
 	void removeMesh();
 
@@ -659,7 +657,6 @@ private:
 	Anim *_drag;          ///< the part being dragged ("mouse_part_NN")
 	int _dragPart;
 	Common::Point _dragMouse, _dragPos;
-	int _cheatPos;        ///< typed characters of SHOWMETHECAR
 	Anim *_mesh;
 	Graphics::Surface *_solidMask;
 	BitmapFont _font;

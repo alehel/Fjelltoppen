@@ -20,6 +20,7 @@
  */
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/award.h"
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/console.h"
 #include "flaaklypa/cursor.h"
 #include "flaaklypa/dialog.h"
@@ -77,6 +78,7 @@ FlaaklypaEngine::~FlaaklypaEngine() {
 	delete _screen;
 	delete _globals;
 	delete _limiter;
+	delete _cheats;
 }
 
 uint32 FlaaklypaEngine::getFeatures() const {
@@ -156,8 +158,76 @@ void FlaaklypaEngine::showLoading() {
 	if (font.load("Amerigo BT_10_"))
 		font.drawStringCentred(*box, Common::Rect(13, 9, 106, 27), getString("gamec:LOADING"));
 	_screen->transBlitFrom(*box, Common::Point(_screen->w - box->w - 5, _screen->h - box->h - 5), key);
-	_screen->update();
+	presentScreen();
 	delete box;
+}
+
+void FlaaklypaEngine::setZoom(int mode, float factor, const Common::Point *point) {
+	_zoomMode = mode;
+	_zoomFactor = factor;
+	_zoomPoint = point;
+	// Off: the whole screen again (FUN_00401b00)
+	if (mode == kZoomOff)
+		_screen->markAllDirty();
+}
+
+void FlaaklypaEngine::presentScreen() {
+	Common::Point centre;
+	if (_zoomMode == kZoomMouse)
+		centre = _mousePos;           // FUN_00404c50
+	else if (_zoomMode == kZoomPoint && _zoomPoint)
+		centre = *_zoomPoint;         // FUN_00404bc0
+	else {
+		_screen->update();
+		return;
+	}
+	// FUN_00404c80: the rectangle of the screen's size / factor around the
+	// centre, kept on the screen, stretched over the screen
+	const int w = _screen->w, h = _screen->h;
+	const int halfW = (int)(w / _zoomFactor) / 2, halfH = (int)(h / _zoomFactor) / 2;
+	const int x = CLIP<int>(centre.x, halfW, w - halfW), y = CLIP<int>(centre.y, halfH, h - halfH);
+	Graphics::ManagedSurface zoomed(w, h, _screen->format);
+	zoomed.blitFrom(*_screen, Common::Rect(x - halfW, y - halfH, x + halfW, y + halfH), Common::Rect(0, 0, w, h));
+	g_system->copyRectToScreen(zoomed.getPixels(), zoomed.pitch, 0, 0, w, h);
+	_screen->clearDirtyRects();
+	g_system->updateScreen();
+}
+
+namespace {
+
+/** A cheat code that awards items like a won game (FUN_0041bb20). */
+class AwardCheat : public Cheats::Callback {
+public:
+	AwardCheat(FlaaklypaEngine *vm, int type, int count) : _vm(vm), _type(type), _count(count) {}
+	bool isValid() const override { return true; }
+	void operator()() const override { showAward(_vm, _type, "", "", _count); }
+
+private:
+	FlaaklypaEngine *_vm;
+	int _type, _count;
+};
+
+} // End of anonymous namespace
+
+void FlaaklypaEngine::addGlobalCheats() {
+	typedef Common::Functor0Mem<void, FlaaklypaEngine> Callback;
+	_cheats->add("ZOOMIN", new Callback(this, &FlaaklypaEngine::cheatZoomIn));
+	_cheats->add("ZOOMOUT", new Callback(this, &FlaaklypaEngine::cheatZoomOut));
+	_cheats->add("HOTWHEELS", new AwardCheat(this, kAwardCar, 1));
+	_cheats->add("GIMMETRACKS", new AwardCheat(this, kAwardTrack, 1));
+	_cheats->add("NOMOREDISHES", new AwardCheat(this, kAwardCarPart, 3));
+	_cheats->add("BLOWMEAWAY", new AwardCheat(this, kAwardFilmClip, 1));
+	_cheats->add("SHOWMEHEAVEN", new AwardCheat(this, kAwardImage, 1));
+}
+
+// FUN_0040b070: 2.5 times around the mouse
+void FlaaklypaEngine::cheatZoomIn() {
+	setZoom(kZoomMouse, 2.5f);
+}
+
+// FUN_0040b090
+void FlaaklypaEngine::cheatZoomOut() {
+	setZoom(kZoomOff);
 }
 
 int FlaaklypaEngine::showHelp(const char *file) {
@@ -441,6 +511,7 @@ void FlaaklypaEngine::setScreenSize(int w, int h) {
 }
 
 void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
+	_cheats->key(virtualKey(key)); // FUN_0040ae60
 	switch (key.keycode) {
 	case Common::KEYCODE_TAB:
 		changeScene("sceneindex");
@@ -461,8 +532,7 @@ void FlaaklypaEngine::globalKey(const Common::KeyState &key) {
 		break;
 	default:
 		// F2 saves a JPEG screenshot (FUN_00410410); ScummVM has its own.
-		// F5 redraws the screen. Typed cheat codes (FUN_0040ae60) are up
-		// to the scenes.
+		// F5 redraws the screen.
 		break;
 	}
 }
@@ -578,6 +648,10 @@ void FlaaklypaEngine::switchScene() {
 
 	if (_scene) {
 		_scene->onClose();
+		// A scene's codes and a zoom on its point go with it
+		_cheats->removeAll(_scene);
+		if (_zoomMode == kZoomPoint)
+			setZoom(kZoomOff);
 		delete _scene;
 		_scene = nullptr;
 	}
@@ -661,7 +735,11 @@ void FlaaklypaEngine::runFrame() {
 		_autoshotTime = 0;
 		Common::DumpFile out;
 		if (out.open(Common::Path(ConfMan.get("autoshot"), '/'))) {
-			Image::writePNG(out, *_screen->surfacePtr());
+			// What the player sees, with a zoom
+			Graphics::Surface *shown = g_system->lockScreen();
+			Image::writePNG(out, shown ? *shown : *_screen->surfacePtr());
+			if (shown)
+				g_system->unlockScreen();
 			out.close();
 			debug(1, "Wrote screenshot %s", ConfMan.get("autoshot").c_str());
 		}
@@ -788,7 +866,7 @@ void FlaaklypaEngine::runFrame() {
 		_dialog->draw(*_screen);
 
 	_limiter->delayBeforeSwap();
-	_screen->update();
+	presentScreen();
 	_limiter->startFrame();
 }
 
@@ -805,6 +883,8 @@ Common::Error FlaaklypaEngine::run() {
 	_cursor = new Cursor();
 	_music = new Music();
 	_tournament = new Tournament(this);
+	_cheats = new Cheats(this);
+	addGlobalCheats();
 
 	// Development aid: "profile_import=<path>" adds an original .pfl file as
 	// a new profile.

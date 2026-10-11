@@ -25,6 +25,7 @@
 #include "common/tokenizer.h"
 
 #include "flaaklypa/beemaze.h"
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
@@ -307,6 +308,28 @@ void BeemazeScene::onInit(int arg) {
 		_vm->tournament()->showPlayerReady();
 		startGame();
 	}
+
+	// FUN_0040ad50: SHROOMS gives the mushroom's speed (0x432f00), VOJA shows
+	// the screen 2.5 times as large around Ludvig (0x432f10), ALEX undoes
+	// it (the global ZOOMOUT's FUN_0040b090)
+	typedef Common::Functor0Mem<void, BeemazeScene> Callback;
+	_vm->_cheats->add("SHROOMS", new Callback(this, &BeemazeScene::cheatShrooms), this);
+	_vm->_cheats->add("VOJA", new Callback(this, &BeemazeScene::cheatVoja), this);
+	_vm->_cheats->add("ALEX", new Common::Functor0Mem<void, FlaaklypaEngine>(_vm, &FlaaklypaEngine::cheatZoomOut), this);
+}
+
+// FUN_00432f30 ends with FUN_0040b090: whatever zoom is on goes, and the
+// engine removes the scene's cheat codes
+void BeemazeScene::onClose() {
+	_vm->setZoom(FlaaklypaEngine::kZoomOff);
+}
+
+void BeemazeScene::cheatShrooms() {
+	_flags |= kFlagMushroom;
+}
+
+void BeemazeScene::cheatVoja() {
+	_vm->setZoom(FlaaklypaEngine::kZoomPoint, 2.5f, &_ludvigCentre);
 }
 
 void BeemazeScene::drawTitle() {
@@ -822,6 +845,7 @@ void BeemazeScene::drawPlayerFrame() {
 
 void BeemazeScene::updatePlayerAnim() {
 	_player->setPos(_px + kSpriteDX, _py + kSpriteDY);
+	_ludvigCentre = Common::Point(_player->x() + kSpriteWidth / 2, _player->y() + kSpriteHeight / 2);
 	drawPlayerFrame();
 }
 

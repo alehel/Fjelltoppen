@@ -25,6 +25,7 @@
 
 #include "flaaklypa/award.h"
 #include "flaaklypa/butterfly.h"
+#include "flaaklypa/cheats.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
@@ -752,7 +753,7 @@ const char *const ButtercolScene::kCollection[] = {
 	"clear_wing_coll", "big_blue_coll", "african_coll", "queen_coll"
 };
 
-ButtercolScene::ButtercolScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0) {
+ButtercolScene::ButtercolScene(FlaaklypaEngine *vm, const SceneDef *def) : Scene(vm, def), _highlighted(0), _showAll(false) {
 }
 
 // FUN_0043a2a0
@@ -763,8 +764,15 @@ void ButtercolScene::onInit(int arg) {
 	defineAnim("exit_1", false, true, kHotspotExit, 728, 0, 150);
 	_highlighted = 0;
 	placeCollection();
-	// The original also registers the "LOVELYFLIES" cheat (FUN_0040ad50)
-	// which marks every species as collected.
+	// FUN_0040ad50. Fixed in the port: the original never removes the code,
+	// so typing it on another screen later would add the album's elements
+	// to that scene; here it goes with the album.
+	_vm->_cheats->add("LOVELYFLIES", new Common::Functor0Mem<void, ButtercolScene>(this, &ButtercolScene::cheatLovelyFlies), this);
+}
+
+void ButtercolScene::cheatLovelyFlies() {
+	_showAll = true;
+	placeCollection();
 }
 
 // FUN_0043a340
@@ -774,7 +782,7 @@ void ButtercolScene::placeCollection() {
 		a->setHotspot(kHotspotFirst + i);
 		if (a->isAdded())
 			a->remove();
-		if (ButterflyScene::isCollected(i))
+		if (_showAll || ButterflyScene::isCollected(i))
 			a->add(Anim::kDefaultPos, Anim::kDefaultPos, -10);
 	}
 }
