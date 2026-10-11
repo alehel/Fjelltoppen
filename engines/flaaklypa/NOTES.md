@@ -1684,6 +1684,145 @@ centred in (295,3)-(503,36).
   (`g_gui.printImage`) with it.
 
 
+## Activity `mahjong` ("Mah Jongg", add-on set 2, from `outtent`)
+
+Handler `FUN_00450310` (`mahjong.cpp`): 0x103 `FUN_00450400`, 0x104
+`FUN_004506d0`, 0x105 `FUN_00450730` (stores the press for the next
+tick), 0x108 `FUN_00450750` (camera tilt), 0x109 nothing, 0x112 tick
+`FUN_00450b00`, 0x116 `FUN_00450870`. Code 0x450310..0x452720 (from
+0x452720 on it is the puzzle's). A Mah Jongg solitaire on the turtle
+layout, the tiles drawn as 3D boxes by the 3D module (`FUN_00458840`..
+`FUN_0045aee0`, the puzzle's renderer, see `gem3d.cpp`). No music
+(`FUN_0040b2f0`), no profile values, no hidden car part.
+
+* **Screen.** Buttons (BUTTON module, all transparent): help 2 at (2,1),
+  exit 1 at (726,2) (font `Amerigo BT_10_b`); with labels in `Amerigo
+  BT_10_c` at y 0x21d: undo 4 (0xb0) `undo_0/1` `mahjong:UNDO`, hint 3
+  (0x125) `hint_0` + `undo_1` (sic) `HINT`, new 5 (0x199) `new_0/1` `NEW`,
+  high scores 6 (0x20d) `new_0/1` `HISCORE`. Text areas (`FUN_00407930`,
+  centred 0x101): status (297,19)-(503,36) `Amerigo BT_10_b`, starts with
+  the scene title, then `"%d %s"` pairs + `mahjong:PAIRS` or
+  `NOMORETILES`; clock (357,46)-(445,62) `LCD_14_WHITE` (data2),
+  `"%02d:%02d:%02d"` h:m:s (`FUN_0041ecb0`), set every tick while a board
+  exists. The board is a 750x400 element (key green) added at (25,100)
+  z 100 by the first "new game"; until then the page is empty. Every
+  frame starts from the backdrop under it (`FUN_00401ca0` into
+  `DAT_006927c4`, copied to a 565 buffer `board+0x4ed0`).
+* **Layouts** at 0x4e6b10, 0x141 bytes each: layer count, 10 layers x 8
+  rows x {present, first column, count, pad}. `FUN_00450a50` calls
+  `FUN_0040c530(3)` but always builds layout 0 (the turtle, 144 tiles;
+  layout 1 has 136, layout 2 72). Places (`FUN_00451260`, 6 words at
+  0x692830): x = (col - 8) * 32, y = (row - 4) * 32, z = -layer * 32;
+  layer 4 (the top tile, (7,3)) +16, +16, -8; layers 5..7 (the end tiles
+  (1,3), (14,3), (15,3)) z 0, y + 16. Boxes sit at place + 16.
+* **Tiles** (`FUN_00451400`, 0x84 bytes, board 0x4ed8 bytes: tiles,
+  count +0x4a40, undo pairs +0x4a44 / count +0x4c84, list +0x4c88, the
+  3D scene +0x4ed4). Seven groups (0x4e6a60..): A1..A9, B1..B9, C1..C9,
+  E1..E4, D1..D3 (four tiles per kind), seasons SUM AUT WIN SPR and
+  flowers MUM PLUM BAM ORC (one each), counts at 0x4e6b08. Created as
+  four sets of groups 0..4, then groups 5 and 6; tile n goes to place
+  perm[n] (`FUN_004513b0`: perm[i] swapped with perm[rand % 144] for
+  each i). Per tile the random calls are: side colour b, g, r (each
+  0x68 + rand % 0x30), then `FUN_00451730`: four flight path points
+  (0x80 + rand % 0x300, unused) and the spin (rand % 360 - 180 for x, y,
+  z). Then (`FUN_00450f40`) layer 4 is the top tile (`DAT_00693694`),
+  layer 5 the left end tile (`DAT_00692818`, blocks (col+1, row) and
+  (col+1, row+1) of layer 0: `DAT_006935b0/b4`), layer 6 the right one
+  (`DAT_00692828`, blocks col-1: `DAT_006935fc/600`); 5..7 become layer 0.
+* **Rules.** Match (`FUN_00451f30`): groups 0..4 same group and index,
+  5/6 same group. Free (`FUN_00451fa0`): layer 3 is blocked while the top
+  tile is there, the end tiles block their two tiles, else free when no
+  tile is at (col, row, layer+1) and (col-1) or (col+1) of the layer is
+  empty. `FUN_004520d0` counts matching pairs of free tiles (a char;
+  i < j in board order); with its flag the first pair blinks instead.
+  Click (`FUN_00450b00`, the press of 0x105, on any press incl. buttons):
+  no free tile -> the selection goes (`noselect2`); a selection and a
+  free match -> `FUN_004521f0` removes both (`select1`, status), else the
+  new tile is selected (`select2`). After each change `FUN_00450950`:
+  pairs = 0 -> `NOMORETILES`, `win` (all gone, `FUN_004526f0`) or `loose`,
+  game over, the stop watch stops, 60 units (600 ms) later the message
+  box `mahjong:SOLVED`/`SOLVED_TEXT` or `GAMEOVER`/`GAMEOVER_TEXT`, and
+  for a solved game `FUN_0041ee50(0, time ms, no medals, 0x102, entry,
+  rows)` (`addScore`: no medal, so no award). Button 6:
+  `FUN_0041f640(0, 0, entry, rows, 0x101)` (`showScoreTables`, times as
+  hh:mm:ss; entry and rows only after a solved game of this visit; the
+  flag is not reset by a new game). Hint 3: `FUN_004520d0(.., 1)`,
+  `noselect1` (play, the others are clones), status. Undo 4
+  (`FUN_00452300`): the last pair comes back (alive, visible, unselected,
+  place, scale 1, rotation (0,0,90)); it does not update the tiles'
+  sides, the remaining count (+0x4ec9, unused) nor a flight still going
+  on (such a tile vanishes at its end but stays in play). Hint and undo
+  only while a game runs and is not over.
+* **Boxes** (`FUN_00459230(scene, 16, 16, 16, face material, side
+  material, id)`): corners (+-16), sides (1,0,3,2) y-, (0,4,7,3) z- (the
+  picture: triangles 2 and 3 use the face material), (4,5,6,7) y+,
+  (2,6,5,1) z+, (3,7,6,2) x+, (1,5,4,0) x-, each two triangles (q0,q1,q2)
+  (q0,q2,q3). Texture coordinates live in the corners: each side sets
+  q0 (0,0) q1 (w,0) q2 (w,1 then w,w) q3 (0,w), the last writer wins, so
+  only the front is mapped (upright). Corner normals = sum of the
+  triangle normals (`FUN_00458de0`). Rotation (0,0,90) turns local y into
+  world x. Matrix (`FUN_00459710`) = scale * rotZ * rotX * rotY + position.
+  `FUN_00452550` (after every removal): sides next to a live tile and the
+  back are not drawn; the picture of a covered tile (not layer 3) gets
+  material type 0 (not drawn, but its number still goes into the pick
+  buffer). `FUN_00452270`: a removed tile shows all sides.
+* **Materials** (`FUN_0045ae70`, 0x38 bytes, two layers {flags, ?,
+  colour, kd, ks, ?, texture} at +0 and +0x1c). Face (`FUN_00452420`):
+  type 4 (texture = `bitmap/<name>.bmp`, its own copy) and layer 2 flags 8
+  (environment map `illum.bmp`); the picture is scaled per channel by
+  1.6 - 0.01 * level, level = (5 - layer) * 20 or 100 for layers > 4 (0.6
+  for layer 0 and the end tiles, 1.4 for the top tile), clamped, in 565.
+  Side: type 2, a flat random colour. Drawing (`FUN_0045a1d0`): type 4
+  with layer 2 flag 8 = picture and environment map averaged per pixel in
+  565 (`(a >> 1 & 0x7bef) + (b >> 1 & 0x7bef)`), environment coordinates
+  (normal + 1) * size / 2 from the view space corner normals; otherwise
+  each layer on its own (`FUN_0045a410`): 2 flat colour, 4 texture, 8
+  environment map. Selected (`FUN_00451ed0`) = layer 2 flags 0: the bare
+  picture, brighter. Hint: both tiles blink (layer 2 flags 8 / 0) in turn
+  every 25 units, 8 times, then go back to their selection state.
+* **Removal**: `alive` 0, flying for 50 units (500 ms, `DAT_00692820`,
+  rate 0.02): scale 1 - s, rotation spin * s with s = smoothstep
+  (`FUN_00450e80`); the rotation starts at (0,0,0), so the picture turns
+  by 90 degrees at once. At the end the box is hidden.
+* **Camera** (`FUN_00451aa0`): eye = (0, 0, -375) * rotX(ax) * rotY(ay)
+  + (10,0,0), looking at (10,0,0) (`FUN_00459880`, up = y). The first 2 s
+  of a board (`DAT_00692824` += dt * 0.005) the distance is
+  smoothstep * 9625 - 10000. Mouse (`FUN_00450750`): ay = x * 20.25 /
+  400 - 20.25; f = (40.5 - y * 40.5 / 300) * 0.025 clamped to [-1, 1],
+  ax = Bezier(f, {0,50,50,0}) for f > 0 else Bezier(f + 1, {0,-50,-50,0})
+  (`FUN_00451a40`), i.e. 0 at the top, +37.5 at y 150, 0 at y 300, -37.5
+  at y 450, 0 at the bottom. Projection (`FUN_0045a950(750, 400, 100,
+  200, 5000)`): f = 375 * tan(50 deg) = 446.9 for x and y, 1/z by the bit
+  trick `0x7f000000 - bits(z)` and one Newton step (`FUN_00459fb0`).
+* **Render** (`FUN_00459ad0`): every shown triangle of every visible box
+  (board order) goes into a list with depth = mean view z; a quicksort on
+  the depths truncated to int (`FUN_0045a0c0`, swaps depth and index
+  between places, the depth moving down truncated) and the list is drawn
+  from the end (far first). A triangle is drawn when all three corners
+  are within [0,750]x[0,400] (`FUN_0045a040`) and it faces the camera
+  (`FUN_0045a3d0`, unless material flag 0x40). Rasterisers: 16.16 fixed
+  point, rows ceil(top)..ceil(bottom)-1, affine texture coordinates.
+* **Picking** (`FUN_00450df0`): each drawn triangle first writes its
+  box's id (tile + 1) into a half resolution 375x200 byte buffer
+  (`FUN_00456370`, `DAT_00692730`); a click at (x,y) reads
+  ((x-25)>>1, (y-100)>>1) (both > 0), then clears the whole buffer, and
+  answers the tile unless it is blocked. The buffer is never cleared
+  otherwise (not even by a new game), so until the next click it holds
+  every frame drawn since: places where the camera showed a tile before,
+  removed tiles included, still answer. A removed tile can thus be picked
+  and matched again (its partner goes alone). Mirrored.
+* **Timing**: stop watch `DAT_006927e8` (`FUN_0047c5a0` reset,
+  `FUN_0047c5c0` time, `FUN_0047c5e0` step, `FUN_0047c610` stop); dt =
+  step * 0.1 (10 ms units). A stopped watch keeps returning its last step,
+  so after the end the animations run on with it.
+* Engine: `MahjongScene`. Deviations: the "loading" note
+  (`FUN_0040cb20`) is not shown; the mouse is polled every frame (the
+  engine reports moves only on hotspot changes); the message flag is
+  cleared before the box; rasterisers in float with the same fill rules,
+  not bit-exact; the backdrop under the board keeps 24 bits (tiles in
+  565). Not done: `sound.ini` volumes.
+
+
 ## High scores (`hiscore.cpp`, HISCORE module)
 
 The tables every sub game updates at the end of a round and the
@@ -2660,6 +2799,11 @@ registration of a sub game one second after the start, with its medal
 table and title: awards, then the dialog; `test_highscore_medal=<n>`
 first raises every other sub game's medal to n so the lowest medal can
 rise; the medal, row and car parts are logged).
+`test_mahjong=<n>` (mahjong: a game starts at once and at its first tick
+all tiles but n are removed, leaving n/2 matching pairs that are all
+free; a negative n removes the hint's pair until none is left, usually
+a lost game); with `--debuglevel=2` mahjong logs where to click each
+free tile (the camera follows the mouse) and what each click picks.
 
 ## Mini game checklist
 
@@ -2697,7 +2841,7 @@ Activities (`[activity]`, open ended):
 | | fence | Musikkgjerdet | pee | data |
 | | colorfill | Reodors tegnebord | desk | data2 |
 | | jigsaw | Puslespillet | yard | data |
-| | mahjong | Mah Jongg | outtent | data2 |
+| x | mahjong | Mah Jongg | outtent | data2 |
 | | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 |
 | | sliding | Skyvepusslespillet | garage | data |

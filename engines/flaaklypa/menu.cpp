@@ -30,6 +30,7 @@
 #include "flaaklypa/butterfly.h"
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/hustle.h"
+#include "flaaklypa/mahjong.h"
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/entrydlg.h"
@@ -488,6 +489,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new PeeScene(vm, def);
 	if (!scumm_stricmp(name, "bouquet"))
 		return new BouquetScene(vm, def);
+	if (!scumm_stricmp(name, "mahjong"))
+		return new MahjongScene(vm, def);
 	if (!scumm_stricmp(name, "sceneindex"))
 		return new SceneindexScene(vm, def);
 	if (!scumm_stricmp(name, "buildacar"))
