@@ -33,6 +33,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/whackamole.h"
 
 namespace Flaaklypa {
@@ -387,8 +388,9 @@ void WhackamoleScene::endLevel() {
 	_vm->setGameRunning(false);
 	debug(1, "Whackamole: game over at level %d with %d %%, %d points", _level, (int)p, _points);
 	_vm->messageBox("interfaceh:GAMEOVER", "whackamole:GAMEOVER", MessageBox::kButtonOk);
-	// TODO: high score registration FUN_0041f9a0(0, points, medals at
-	// 0x49f0f8 = {2500, 5000, 10000, 20000}, 0).
+	// FUN_0041f9a0(0, points, 0x49f0f8, 0)
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _points, kMedals);
 	// In tournament mode (FUN_00419490) the start sign does not come back.
 	addAnim("startbuttn", Anim::kDefaultPos, Anim::kDefaultPos, kZButtons);
 }

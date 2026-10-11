@@ -24,6 +24,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/puzzle.h"
 #include "flaaklypa/resources.h"
 
@@ -465,7 +466,8 @@ void PuzzleScene::onUpdate() {
 			// Cleared before the box: the nested frames run this again.
 			_gameOverPending = false;
 			_vm->messageBox("puzzle:GAMEOVER", "puzzle:LOOSE", MessageBox::kButtonOk);
-			// TODO: the high score registration FUN_0041f9a0(0, score, 0, 0).
+			// FUN_0041f9a0(0, score, 0, 0): no medals
+			registerScore(_vm, "", _finalScore, nullptr);
 			_busy = true;
 			playAnim("lid2");
 		}

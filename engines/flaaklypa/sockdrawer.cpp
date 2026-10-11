@@ -24,6 +24,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/sockdrawer.h"
 
 namespace Flaaklypa {
@@ -562,8 +563,8 @@ void SockdrawerScene::gameOver() {
 	// Modal: the state is idle, so the pair timer and the hatches do nothing
 	// in the nested frames.
 	_vm->messageBox("interfaceh:GAMEOVER", "sockdrawer:ENDMESSAGE", MessageBox::kButtonOk);
-	// TODO: the high score registration FUN_0041f9a0(0, score, kMedals,
-	// callback).
+	// FUN_0041f9a0(0, score, 0x49f080, 0x44c3e0)
+	registerScore(_vm, "", _score, kMedals);
 	// The callback (0x44c3e0) of the high score dialog: close the hatches
 	// and show the start cabinet again.
 	closeAllDrawers();

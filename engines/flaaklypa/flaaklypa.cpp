@@ -25,6 +25,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/detection.h"
 #include "flaaklypa/entrydlg.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
@@ -577,6 +578,13 @@ void FlaaklypaEngine::runFrame() {
 		Common::String spec = ConfMan.get("test_award");
 		ConfMan.removeKey("test_award", ConfMan.getActiveDomainName());
 		testAward(this, spec);
+	}
+	// "test_highscore=<scene>,<score>[,<flags>[,<key>]]" registers a score
+	// like the sub game does (see testHighscore()).
+	if (!_dialog && _scene && ConfMan.hasKey("test_highscore") && g_system->getMillis() - _startTime > 1000) {
+		Common::String spec = ConfMan.get("test_highscore");
+		ConfMan.removeKey("test_highscore", ConfMan.getActiveDomainName());
+		testHighscore(this, spec);
 	}
 
 	// A scene change requested under a dialog waits until the dialog is gone

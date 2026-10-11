@@ -4,11 +4,12 @@ Status: scene framework in place (see "Engine structure" below): backdrop,
 hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
-The menu (partly), the scene index, the story pages (the race aside), the
-message box, navigator and help dialogs and 15 sub games work (see the
-checklist at the end), with player profiles (save slots) and the award
-dialog. Not done: high scores and medals, the remaining sub games and
-activities, racing.
+The menu (partly), the scene index, every story page (the race aside),
+the message box, navigator and help dialogs, 15 sub games and several
+activities work (see the checklist at the end), with player profiles
+(save slots), the award dialog and the high score tables with their
+medals. Not done: the remaining sub games and activities, the high score
+overview (`mainscore`), tournament mode, racing.
 
 ## The game
 
@@ -305,8 +306,7 @@ Handler `0x454fb0` (not a function in the Ghidra project; dispatches 0x103 ->
 * Game over message box `puzzle:GAMEOVER` / `puzzle:LOOSE` (OK), then
   `lid2`; the pending flag is cleared before the box (its nested frames run
   the tick again).
-* Not done: high score registration (`FUN_0041f9a0`), `sound.ini`
-  volumes.
+* Not done: `sound.ini` volumes.
 
 ## Sub game `sockdrawer` ("Sokkeskapet", from `desk`)
 
@@ -366,8 +366,7 @@ A memory game: a cabinet with 5x4 hatches hides pairs of socks. Handler
 * Game over (`FUN_0044c380`): state 0, message box `interfaceh:GAMEOVER` /
   `sockdrawer:ENDMESSAGE`. The start cabinet sets the "sub game running"
   flag (`FUN_0040d8a0`), so leaving a running game asks first.
-* Not done: high score registration, tournament mode
-  (`FUN_00419490`), `sound.ini` volumes.
+* Not done: tournament mode (`FUN_00419490`), `sound.ini` volumes.
 ## Sub game `hopscotch` ("Solan og Ludvig i Paradis", add-on set 1)
 
 A Simon says game on a hopscotch grid. Handler `0x43bbd0` (jump table, not a
@@ -420,8 +419,7 @@ B/C/D tone sets and Solan's start poses), `lang/hopscotch.bin` (help.ini).
   `hopscotch:GAMEOVER`, then the hourglass, state and jumpers are reset; the
   frame tick is skipped while the box is open (the state is still the
   player's turn with the time up). Start sets the "sub game running" flag.
-* Not done: high score registration (`FUN_0041f9a0`, medals 3000/5000/7000
-  and 10000 at `0x49e918`), profile start level and the
+* Not done: profile start level and the
   tournament "PLAYERREADY" box.
 ## Sub game `audiopairs` ("Reodors Lydmaskin", house)
 
@@ -492,7 +490,7 @@ table, not a function in the Ghidra project): 0x103 -> `FUN_00428bd0` init,
   original tests the rectangle. `Scene::defineAnim()` got a `visible`
   parameter (default true) for the audio only clips, which have no palette
   to convert a frame with.
-* Not done: high score / award registration, profile difficulty,
+* Not done: profile difficulty,
   `sound.ini` volumes.
 ## Sub game `wheelbarrow` ("Eplehøsten", started from `pee`)
 
@@ -563,7 +561,7 @@ finished, 0x111 -> `450270` timer, 0x112 -> `44fb70` tick, 0x116 ->
   loop `birds`. `sound.ini` volumes are not applied.
 * Game over (`FUN_00450180`): Solan neutral, pie/pickup/putdown removed,
   then the message box `interfaceh:GAMEOVER` / `wheelbarrow:GAMEOVER` and
-  (not done) the high score registration `FUN_0041f9a0`
+  the high score registration `FUN_0041f9a0`
   (`wheelbarrow:LONGNAME`, medals 2500/5000/10000/15000); without a
   profile the start button returns and the apples are cleared.
 * Testing: `autokey=t:key[:hold];...` (see "Development aids") presses the
@@ -632,7 +630,7 @@ finished -> `43ea80`, 0x111 the 250 ms timer -> `43f750`, 0x112 ->
   `borderleft` (0, 99), `s1_1_frame` (116, 48), bell (677, 324) z -45. z:
   bags -30 (`0x672574`), flags -15, bagout -31, pusher/stamp -45, Solan
   -44/-46, letters 0..59. Music `subgame8`.
-* Not done: high score registration, tournament mode
+* Not done: tournament mode
   (`FUN_00419490`: immediate start at level difficulty * 3), the registry
   value `FUN_0040b940` writes at init, `sound.ini` volumes. A
   delivery clip that is still playing when the next level starts is
@@ -694,7 +692,7 @@ shuffle cannot be skipped, 0x110 -> `43d160`, 0x111 -> `43d950`, 0x116 ->
 * Buttons (BUTTON module, z 1, hotspot = id, fire on release): `help_0/1` at
   (0, 0), `exit_0/1` at (728, 0), 7 at (693, 404) with only a hover bitmap
   `bet_1`. The buttons highlight on the frame tick.
-* Not done: high score, tournament mode. The SmackGoto
+* Not done: tournament mode. The SmackGoto
   frame of the hand is `round(...) + 1` in the original; the port shows the
   rounded frame (0 based).
 ## Sub game `buildabike` ("Reodors sykkelverksted")
@@ -771,7 +769,7 @@ Ghidra project; jump table: 0x103 -> `FUN_004391a0` init, 0x104 ->
   at 50/s. `points` label (lang bitmap) at (511, 128). Music `subgame8`.
 * Game over (`FUN_00438c50`): message box `interfaceh:GAMEOVER` with
   `buildabike:ENDMESSAGE` formatted with the minutes, seconds and score.
-* Not done: high score / medals, the profile difficulty, the
+* Not done: the profile difficulty, the
   "MAJKA" cheat (fills the store), the belt items'
   hit rectangle margin (`0x49dbf0`), `sound.ini` volumes.
 ## Sub game `pipeline` ("Oljeeventyret", started from `outtent`)
@@ -856,8 +854,7 @@ flowing after a countdown, reaches an open pipe end. Handler `0x448410`
 * Message boxes: `pipeline:LEVELCOMPLETE` / `pipeline:LEVELMESSAGE` before
   the next level is built, `interfaceh:GAMEOVER` / `pipeline:ENDMESSAGE`
   at game over (both OK, the oil is stopped meanwhile).
-* Not done: high score registration (`FUN_0041f9a0`, medals
-  2500/5000/10000), tournament mode, `sound.ini` volumes.
+* Not done: tournament mode, `sound.ini` volumes.
   Deviation: the bend's inflow rectangle is
   always drawn up to the corner square (the original stops once the corner
   phase starts, which leaves a one pixel gap at low frame rates).
@@ -928,9 +925,7 @@ down, 0x10d -> `42f340` key up, 0x110 -> `432d30` anim finished, 0x111 ->
   `smoke_1`, `honey_1` (`FUN_00431a00`, "%s_%d").
 * Game over (`FUN_004328e0`): message box `interfaceh:GAMEOVER` /
   `beemaze:GAMEOVER`, then the maze is cleared.
-* Not done: high score registration (`FUN_0041f9a0`, its callback puts the
-  start icon back),
-  tournament mode (`FUN_00419490`: one life, level from the
+* Not done: tournament mode (`FUN_00419490`: one life, level from the
   round), `sound.ini` volumes, the cheat console commands (SHROOMS, ...).
   Development: `autohold=t:d;t:d` holds (l/r/u/d) or releases (0) an
   arrow key t ms after the scene starts.
@@ -1031,9 +1026,7 @@ only scene besides racing that uses WAV files.
   nested frames would complete the level again, and moves the time base on
   by the time the box was open (the original's game clock pauses under a
   dialog). `bugzzz_required=0` completes every level at once (box test).
-* Not done: the high score registration (`FUN_0041f9a0`, medals
-  500/1000/1500 at
-  `0x4d7200`), tournament mode (`FUN_00419490`: one life,
+* Not done: tournament mode (`FUN_00419490`: one life,
   no joining), the unused "frags" and five way spit debug modes, Tab to the
   scene index. The woodpecker's first branch is added at z 10 (the original
   uses z 99 once, a quirk). Development aids: `bugzzz_keys=t:name[,u][*n/ms]`
@@ -1116,8 +1109,7 @@ table: 0x103 -> `FUN_0044c740`, 0x104 -> `44cf70`, 0x105 -> `44d720`,
   then the start sign again (without a profile).
 * Difficulty comes from the profile (`FUN_004194a0`); without one it is 0.
   With a profile the original shows `tournament:PLAYERREADY` and starts at
-  once. Not done: profiles/difficulty, high score,
-  `sound.ini` volumes.
+  once. Not done: profiles/difficulty, `sound.ini` volumes.
 ## Sub game `whackamole` ("Dra meg baklengs!", add-on set 2)
 
 A whack-a-mole with birds: they peek out of seven bird houses and five nests
@@ -1184,8 +1176,7 @@ Handler `0x44d980` (not a function in the Ghidra project; dispatches 0x103 ->
   clips have no palette and must not be decoded for drawing).
 * The frame tick is skipped while the next level box is open (the level
   time is still up then).
-* Not done: high score registration, tournament mode auto
-  start, `sound.ini` volumes.
+* Not done: tournament mode auto start, `sound.ini` volumes.
 ## Sub game `butterfly` ("Sommerfugler i magen") and its album `buttercol`
 
 Catch butterflies with a net on a meadow; wasps and bees cost points. Handler
@@ -1261,8 +1252,7 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   profiles exist. After game over the start clip is shown again (the
   original stays in the end state behind its dialogs). `debug(3)` dumps all
   entity positions once a second.
-* Not done: profile storage, high score / medals, the album
-  button's disabled state during a game, the "info" fact page, `sound.ini`
+* Not done: the album button's disabled state during a game, `sound.ini`
   volumes, the LOVELYFLIES cheat.
 
 ## Dialogs (`dialog.cpp`)
@@ -1667,6 +1657,149 @@ centred in (295,3)-(503,36).
   scene's print page. Deviation: the port opens ScummVM's print dialog
   (`g_gui.printImage`) with it.
 
+
+## High scores (`hiscore.cpp`, HISCORE module)
+
+The tables every sub game updates at the end of a round and the
+`highscore` dialog that shows them (`FUN_0041e8e0`..`FUN_0041f9d0`).
+Engine: `hiscore.h`.
+
+* **Entry points.** `FUN_0041f9a0(title, score, medals, callback)` =
+  `FUN_0041f8c0(title, key 0, score, medals, flags 0, callback)`.
+  `FUN_0041f9d0(title, score, medals)` is the same with `DAT_005a6fe0` set
+  around it (the medal brings no car parts; gametrivia `FUN_0047fab0`
+  0x4a03d8 {5000, 10000, 15000, 20000}, mathlab `FUN_004820d0` 0x4a03f8
+  {2500, 5000, 15000, 30000}, synonym `FUN_00483eb0` 0x4a0580 {2500, 5000,
+  10000, 20000}). `FUN_0041f8c0`: in tournament mode (`FUN_00419490`,
+  `DAT_0058905c`) the score goes into the tournament's table for the game
+  (`FUN_004196c0`: {current player, 0, score} into `DAT_006ea760 + game *
+  0x174`) and `FUN_00419740` moves on to the next game or `tourneyscore`,
+  no dialog, no callback; else `FUN_0041f910` and then `callback(0)`. The
+  title is a string already looked up, 0 = the current scene's title
+  (`FUN_0040ce70` -> `FUN_0040ce20`: `gamec:SCENENOTFOUND`, `OLDSCENE`,
+  `NOTAVAILABLE` fallbacks). Medals: four thresholds {bronze, silver, gold,
+  platinum} or 0. Flags: low byte the format (`FUN_0041ed90`: 0 `"%d"`, 1
+  milliseconds as `"%02d:%02d:%02d"` h:m:s, 2 as `"%02d:%02d.%02d"` m:s.cs
+  with the minutes not wrapped, other values leave the buffer alone so the
+  score column repeats the date), 0x100 in the high byte ranks lower values
+  first (`FUN_0041e930` swaps the operands); `flags & 3` selects the `_TIME`
+  tab labels and the TIME column. Only 0 and 0x102 are used.
+* **Data.** In memory a table is 0x174 bytes: medal, count, 10 x {name
+  [0x1c], time, score} (0x24 each), +0x170 the row shown in bold. The
+  module keeps three: player `DAT_005a4718`, global `DAT_005a5c18`, union
+  `DAT_005a5d90` (flags `DAT_005a5d8c`, done `DAT_005a4938`, result
+  `DAT_005a49e8`, always 0x10). The profile record 0x401 (0x58 bytes)
+  holds medal, count, 10 x {time, score} of the current scene
+  (`DAT_0054f6cc`, copied by `FUN_00412030` on every scene entry) under the
+  key: `FUN_004115c0` reads the active profile's (`FUN_00411620` names
+  every entry after the profile, `strncpy` 0x18, and copies `count`
+  entries unchecked), `FUN_00411c70` / `FUN_00411cc0` write it.
+* **Loading** (`FUN_0041ebd0(scene, key, player, global, union, flags)`,
+  each table optional): global and union come from `FUN_00411d40`, the
+  record of every profile file (`FUN_00410d20`, sorted by name with
+  `_stricmp`, at most 0x40 tables); `FUN_0041eaf0` inserts each profile's
+  entries in order until one does not make it, `FUN_0041eb60` likewise
+  with the one-entry-per-player insert. The player's table is
+  `FUN_0041eac0` (cleared, then `FUN_004115c0`). Every table is cleared
+  first, so the bold row is 0 after loading.
+* **Insert** (`FUN_0041e9c0`): before the first entry the new one strictly
+  beats (equal scores go after the old ones); the table is cut to 9 first,
+  so the 10th entry drops out; a full table that is not beaten gives -1.
+  `FUN_0041ea50` (union): an entry of the same name (`strcmp`,
+  `FUN_0041e960`) that the new one does not beat gives -1, a beaten one is
+  removed first.
+* **Registration** (`FUN_0041f910`): scene frozen, default cursor,
+  `FUN_0041ee50(key, score, medals, flags, entry, rows)`: the entry is the
+  profile name (`profile:NONAME` without one), `time()` and the score
+  (`FUN_0041e8e0`); the tables of `FUN_00411ed0()` (the current scene, or
+  `profile:NOSECTION` = "(navnløs)" without a profile, which no profile
+  has: global and union stay empty) are loaded, then `FUN_0041eed0`:
+  lowest = `FUN_0040d9b0()` (the smallest key 0 medal of the 18 scenes of
+  type 3 in the scene registry 0x4a7f08, played or not, through
+  `FUN_0041ec80`; 0 without a profile); the entry goes into the three
+  tables (`FUN_0041ef80`, rows to +0x170); medal = `FUN_0041efe0`: the
+  highest i with `compare(score, medals[i]) >= 0` (score >= threshold, or
+  <= for times), 0 without medals; if it beats the table's medal:
+  `FUN_0041bb20(0, 0, 0, gain, medal)` (award dialog with the medal and
+  `gain` = medal steps car parts, 0 for `FUN_0041f9d0`) and the table keeps
+  the new medal; the table is written only when the entry made it; then
+  if `FUN_0040d9b0()` rose, `FUN_0041bb20(0, 0, 0, rise, 0)` (car parts with
+  the default texts). Returns the player row. Both awards come before the
+  dialog. Without a profile nothing is stored, so a medal score shows the
+  medal award every round.
+* **Dialog** (`FUN_0041f230`): fonts `Amerigo BT_10_` and `Amerigo
+  BT_10_b` (the "bold" one only has lighter glyphs, e8e8b8 instead of
+  f8e898); `highscore/backdrop.bmp` 325x395 (dimmed: +0x40 of the dialog
+  struct 0x4afc10 is 1; hit mask `hotspot.bmp` with the button ids) at
+  ((800 - 325) / 2, (600 - 395) / 2) = (237, 102), z 500. Buttons
+  (`FUN_0041f360`, z 0x1f9, labels in `Amerigo BT_10_`): tabs of group 1
+  (`FUN_004075c0`, type 2) with only a selected bitmap, transparent (flags
+  1): 0xc9 `profile_1` at (14, 0) `interfaceh:SCORE_PROFILE[_TIME]`, 0xca
+  `global_1` (112, 0) `SCORE_GLOBAL[_TIME]`, 0xcb `union_1` (211, 0)
+  `SCORE_UNION[_TIME]`; CLOSE 0xcc (`FUN_00407390`, only the pressed
+  `close_1`, opaque) at (221, 352), `interfaceh:CLOSE`. Labels
+  (`FUN_0041f4a0`, z 0x1fe, centred 0x101): the title in the bold font in
+  (8, 31)-(310, 46), `interfaceh:NAME` (6, 51)-(124, 67), `DATE` (126,
+  51)-(209, 67), `POINTS` or `TIME` (211, 51)-(313, 67); text areas (z
+  0x1fe, colour key 0xff00) for the new entry at (15, 72) 291x21 and the
+  table at (15, 100) 291x210. The player tab starts selected
+  (`FUN_00406720(0xc9, 1)`). A table (`FUN_0041f2f0`) has rows 0x15 apart,
+  the +0x170 row in bold; a row (`FUN_0041f120`): name left aligned and
+  centred vertically in (0, y) 102x21, date (`FUN_0041ed50`,
+  `"%02d.%02d.%02d"` of `localtime`: day, month, year % 100) centred in
+  (119, y) 68x21, score right aligned in (203, y) 88x21 (not clipped but
+  to the area). `FUN_0041f0e0` writes the new entry in bold into its area.
+  Alignment `FUN_004124e0`: 0xHHVV, H 0 left 1 centre 2 right, V 0 top 1
+  centre 2 bottom.
+* Handler `LAB_0041f670` (priority 0x32, byte table 0x41f74c, jump table
+  0x41f72c): 0x104 closes and passes on, 0x105/0x106 button press /
+  release (`FUN_00406b50` / `FUN_00406cf0`), 0x10c Enter or Escape closes
+  (`FUN_0041f890`), 0x113/0x114 hover (passed on), 0x116 `FUN_0041f760`:
+  a tab shows its table (the entry line stays), 0xcc closes; everything else
+  is swallowed. Close (`FUN_0041f7d0`) gives 0x10 and removes everything.
+* Other users: `FUN_0041f640(title, key, entry, rows, flags)` ->
+  `FUN_0041f030(FUN_00411ed0(), ...)` shows the tables without registering
+  (rows given or 0): jigsaw `FUN_0046b0e0`, sliding `FUN_0046ef10`, mahjong
+  `FUN_00450870`, anaglyph `FUN_0047de90`; racemenu `FUN_0047c2a0` calls
+  `FUN_0041f030("racing", ..., 0x102)`. `FUN_0041ee50` alone (awards
+  included, no dialog): mahjong `FUN_00450b00`, jigsaw `FUN_0046abc0` (key =
+  motive, 0x102), sliding `FUN_0046edb0` (0x102), race `FUN_00477390` (lap
+  and race times, 0x102), anaglyph `FUN_0047dca0`. The `mainscore` screen
+  (`FUN_00416960`) reads `subgame.ini` `game<n>` / `version<n>` / `name<n>`
+  and loads the tables with `FUN_0041ebd0(scene, version, ...)`; its rows
+  are `FUN_00417060`. `FUN_00411d10` (racing) reads the current scene's
+  table.
+* **Callers of `FUN_0041f9a0`** (title, medals, callback): audiopairs
+  `FUN_00429600` (0, 0x49d7d8 {2000, 6000, 10000, 14000}); balloonhunt
+  `FUN_0042c580` (0, 0x49d7e8 {2500, 5000, 10000, 20000}; its time trial
+  calls `FUN_0041f8c0("%s %d"` of `balloonhunt:TRACK` and the track, key =
+  track, time, no medals, 0x102)); beemaze `FUN_004328e0` (0, 0x49db00
+  {2500, 5000, 10000, 20000}, 0x4329c0: the start icon); bugzzz
+  `FUN_00434530` (one player only: `bugzzz:HISCORE` "biller", 0x4d7200
+  {500, 1000, 1500, 2000}); buildabike `FUN_00438c50` (0x49e02c {2500, ...,
+  20000}); butterfly `FUN_0043b990` (0x49e53c {1500, 3000, 5000, 7000},
+  0x43bb90: the start clip); hopscotch `FUN_0043cd90` (0x49e918 {3000, 5000,
+  7000, 10000}); hustle `FUN_0043d770` (0x4d9d68 {5000, 40000, 160000,
+  220000}); lettersort `FUN_0043fce0` (0x49ead0 {2500, ..., 20000},
+  0x43fd50: reset and start); mountain `FUN_00447e43` (`FUN_0041f8c0` with a
+  title from its ini, key = track, 0x4dc654 {2500, 5000, 10000, 15000});
+  pipeline `FUN_0044a740` (0x49eea0); sockdrawer `FUN_0044c380` (0x49f080,
+  0x44c3e0: close the hatches, start cabinet); textinvader `FUN_0044d450`
+  (0x49f0a0); whackamole `FUN_0044eb30` (0x49f0f8); wheelbarrow
+  `FUN_00450180` (`wheelbarrow:LONGNAME`, 0x49f1f8 {2500, 5000, 10000,
+  15000}); puzzle `FUN_00455890` (no medals). The tables not listed are
+  {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
+  (the callbacks are the code after the call); balloonhunt, mountain and the
+  add-on set 3 games are not ported.
+* Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
+  (title a language.ini key or text, "" = scene title; returns the player
+  row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
+  `showScoreTables()`, `loadScoreTables()`, `readScoreTable()`,
+  `scoreTableMedal()`, `lowestSubGameMedal()`, `formatScore()`,
+  `formatScoreDate()`; `ScoreTable::insert/insertBest`. Deviations: the
+  active profile's table comes from memory (the original rereads its file,
+  which it keeps current); a record's count is cut to 10; the time stamps
+  are local times (`profileTime()`). TODO: tournament mode.
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2476,6 +2609,11 @@ the start: kind = a category number with count items and flags = medal |
 scene, `easy`/`medium`/`hard` with count car parts; without an active
 profile a temporary one, preset by `test_award_counters=<8 numbers>` and
 `test_award_anaglyph=<mask>`; the counters are logged before and after).
+`test_highscore=<scene>,<score>[,<flags>[,<key>]]` (the high score
+registration of a sub game one second after the start, with its medal
+table and title: awards, then the dialog; `test_highscore_medal=<n>`
+first raises every other sub game's medal to n so the lowest medal can
+rise; the medal, row and car parts are logged).
 
 ## Mini game checklist
 
@@ -2484,7 +2622,7 @@ they get ported; each needs a scene class, `createScene()` and
 `FlaaklypaEngine::startGame()`.
 
 Sub games (`[subgame]`, score based). Common gaps of the ported ones:
-high score registration, profiles / tournament mode, `sound.ini` volumes.
+profiles / tournament mode, `sound.ini` volumes.
 
 | Done | Scene | Title | Started from | Data |
 |---|---|---|---|---|
@@ -2515,7 +2653,7 @@ Activities (`[activity]`, open ended):
 | | jigsaw | Puslespillet | yard | data |
 | | mahjong | Mah Jongg | outtent | data2 |
 | | draughts | Damm | tvroom | data |
-| x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
+| x | puzzle | Solines Smykkeskrin | intent | data2 |
 | | sliding | Skyvepusslespillet | garage | data |
 | | chess | Sjakk | intent | data |
 | x | movieplayer | Filmfremviser | tvstation | data |

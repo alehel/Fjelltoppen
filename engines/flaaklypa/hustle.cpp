@@ -25,6 +25,7 @@
 
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/hustle.h"
 #include "flaaklypa/resources.h"
 
@@ -425,7 +426,8 @@ void HustleScene::gameOver(int bananas) {
 	// in the nested frames. The clock timer keeps ticking as it does after
 	// the box in the original (it only stops itself when the time is up).
 	_vm->messageBox("interfaceh:GAMEOVER", bananas > kMinBet ? "hustle:TIMEOUT" : "hustle:NOMONEY", MessageBox::kButtonOk);
-	// TODO: high score registration FUN_0041f9a0(0, bananas, kMedals, 0).
+	// FUN_0041f9a0(0, bananas, 0x4d9d68, 0)
+	registerScore(_vm, "", bananas, kMedals);
 }
 
 // ---- events --------------------------------------------------------------

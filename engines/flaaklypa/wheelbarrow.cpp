@@ -25,6 +25,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/wheelbarrow.h"
 
 namespace Flaaklypa {
@@ -246,9 +247,10 @@ void WheelbarrowScene::gameOver() {
 	// Modal: the game has stopped (_running, no spawn timer), the nested
 	// frames leave Solan and the apples alone.
 	_vm->messageBox("interfaceh:GAMEOVER", "wheelbarrow:GAMEOVER", MessageBox::kButtonOk);
-	// TODO: the high score registration FUN_0041f9a0("wheelbarrow:LONGNAME",
-	// score, medals 2500/5000/10000/15000).
-	// Without a profile the start button comes back.
+	// FUN_0041f9a0("wheelbarrow:LONGNAME", score, 0x49f1f8, 0)
+	static const int kMedals[4] = { 2500, 5000, 10000, 15000 };
+	registerScore(_vm, "wheelbarrow:LONGNAME", _score, kMedals);
+	// Then (not in tournament mode) the start button comes back.
 	showStartScreen();
 	clearApples();
 }

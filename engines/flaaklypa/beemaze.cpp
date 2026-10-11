@@ -26,6 +26,7 @@
 
 #include "flaaklypa/beemaze.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 
@@ -499,8 +500,10 @@ void BeemazeScene::gameOver() {
 	_running = false;
 	clearItems();
 	clearBees();
-	// TODO: the high score registration FUN_0041f9a0(0, score, ...); its
-	// callback (0x4329c0) puts the start icon back.
+	// FUN_0041f9a0(0, score, 0x49db00, 0x4329c0); the callback puts the
+	// start icon back.
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _score, kMedals);
 	addAnim("start_icon", Anim::kDefaultPos, Anim::kDefaultPos, kZLives);
 }
 

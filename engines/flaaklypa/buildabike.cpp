@@ -24,6 +24,7 @@
 
 #include "flaaklypa/buildabike.h"
 #include "flaaklypa/dialog.h"
+#include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 
@@ -588,8 +589,9 @@ void BuildabikeScene::gameOver() {
 	// Modal: _running is already false, so the nested frames leave the game
 	// alone (onUpdate() and tickBike()'s caller check it).
 	_vm->messageBox("interfaceh:GAMEOVER", msg, MessageBox::kButtonOk);
-	// TODO: high score registration FUN_0041f9a0(0, score, {2500, 5000,
-	// 10000, 20000}, 0).
+	// FUN_0041f9a0(0, score, 0x49e02c, 0)
+	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
+	registerScore(_vm, "", _score, kMedals);
 
 	// Without a player profile the screen returns to the start button.
 	for (int i = 0; i < kBeltItems; i++)
