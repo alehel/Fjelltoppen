@@ -2,6 +2,7 @@ MODULE := engines/flaaklypa
 
 MODULE_OBJS = \
 	activity.o \
+	anaglyph.o \
 	anim.o \
 	archive.o \
 	audiopairs.o \

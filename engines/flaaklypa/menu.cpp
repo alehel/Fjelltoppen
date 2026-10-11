@@ -22,6 +22,7 @@
 #include "common/debug.h"
 
 #include "flaaklypa/activity.h"
+#include "flaaklypa/anaglyph.h"
 #include "flaaklypa/audiopairs.h"
 #include "flaaklypa/balloonhunt.h"
 #include "flaaklypa/beemaze.h"
@@ -453,6 +454,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new InfoScene(vm, def);
 	if (!scumm_stricmp(name, "activity"))
 		return new ActivityScene(vm, def);
+	if (!scumm_stricmp(name, "anaglyph"))
+		return new AnaglyphScene(vm, def);
 	if (!scumm_stricmp(name, "movieplayer"))
 		return new MovieplayerScene(vm, def);
 	if (!scumm_stricmp(name, "gallery"))

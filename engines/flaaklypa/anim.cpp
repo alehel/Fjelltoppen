@@ -65,9 +65,9 @@ void blitKeyed(Graphics::ManagedSurface &dst, const Graphics::ManagedSurface &sr
 }
 
 Anim::Anim(Scene *scene, const AnimDef *def) : _scene(scene), _def(def),
-	_video(nullptr), _volume(255), _frame(nullptr), _hasKey(false), _keyColor(0),
+	_video(nullptr), _volume(255), _volumeChannel(FlaaklypaEngine::kVolumeSound), _frame(nullptr), _hasKey(false), _keyColor(0),
 	_x(def->x), _y(def->y), _z(def->zOrder), _hotspot(def->hotspot), _hitMask(nullptr), _hitRadius(0), _group(def->group),
-	_added(false), _playing(false), _removeWhenDone(false), _ownSurface(false), _lastFrameTime(0), _lastFrameShown(false) {
+	_added(false), _playing(false), _removeWhenDone(false), _ownSurface(false), _lastFrameTime(0), _lastFrameShown(false), _hasPalette(false) {
 }
 
 Anim::~Anim() {
@@ -80,6 +80,7 @@ void Anim::load() {
 	Resources *res = _scene->resources();
 	const Common::String &sceneName = _scene->name();
 	if (_def->smacker) {
+		_hasPalette = false;
 		_video = res->openSmacker(sceneName, Common::String::format("animation/%s.smk", _def->name));
 		applyVolume();
 		if (_video && _def->visible) {
@@ -145,11 +146,16 @@ void Anim::setVolume(int volume) {
 	applyVolume();
 }
 
+void Anim::setVolumeChannel(int channel) {
+	_volumeChannel = channel;
+	applyVolume();
+}
+
 void Anim::applyVolume() {
 	// FUN_004037c0 / FUN_004131b0: track 0 at the sound volume, track 1 at
 	// the speech volume
 	if (_video)
-		_video->setTrackVolumes(_volume * g_engine->mixerVolume(FlaaklypaEngine::kVolumeSound) / 255,
+		_video->setTrackVolumes(_volume * g_engine->mixerVolume(_volumeChannel) / 255,
 		                        g_engine->mixerVolume(FlaaklypaEngine::kVolumeSpeech));
 }
 
@@ -160,6 +166,12 @@ void Anim::setFrameRate(int fps) {
 
 void Anim::convertFrame(const Graphics::Surface *frame) {
 	const byte *palette = _video->getPalette();
+	if (palette) {
+		memcpy(_palette, palette, sizeof(_palette));
+		_hasPalette = true;
+	} else if (_hasPalette) {
+		palette = _palette;
+	}
 	// Audio only clips (4x4 pixels, no palette chunk) have nothing to show.
 	if (!palette && frame->format.bytesPerPixel == 1)
 		return;
@@ -224,6 +236,17 @@ void Anim::stop() {
 	if (_video && _playing)
 		_video->stop();
 	_playing = false;
+}
+
+void Anim::resume() {
+	if (!_added || _playing || !_def->smacker)
+		return;
+	// VideoDecoder::stop() kept the position; start() goes on from there
+	if (_video)
+		_video->start();
+	_playing = true;
+	_lastFrameShown = false;
+	debug(2, "Anim %s resumed t=%u", _def->name, g_engine->getGameMillis());
 }
 
 void Anim::pause(bool pause) {

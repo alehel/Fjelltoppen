@@ -132,6 +132,7 @@ static const char *const kImplementedGames[] = {
 	"balloonhunt",
 	"synonym",
 	"gametrivia",
+	"anaglyph",
 	nullptr
 };
 
