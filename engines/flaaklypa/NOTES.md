@@ -1805,6 +1805,50 @@ id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
 by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), chess
 (`FUN_00461970`), the 3D viewer (`FUN_0047d880`) and `FUN_0041a080`.
 
+## Activity `sliding` ("Skyvepusslespillet", from `garage`)
+
+Handler `FUN_0046dc50` (`sliding.cpp`, code 0x46dc50..0x46ef10), music
+`activity9`. The fifteen puzzle: a gallery picture in n x n numbered tiles,
+n = 3 + item % 3 (`FUN_0046eb20`).
+
+* **Start** (`FUN_0046dd10`): the clock as in the jigsaw (z 1), buttons
+  (z 1): help 0 (the port uses id 6: `SceneButtons` reports 0 for "no
+  click"), exit 1, print 2 (2,0x200, hidden), start 5 (0xf,0x66)
+  `button_0/1` `sliding:START`, table 3 (0xf,0x9b) `sliding:HISCORE`
+  (disabled until a game starts); then the chooser (`FUN_0046e880`, the
+  jigsaw's without categories). Start always begins a new game.
+* **Motive** (`FUN_0046eb40`): value 2 (begun) when 0; a 4 x 4 or 5 x 5
+  board of item > 5 has a fixed tile at (1 + rand(n - 2), 1 + rand(n - 2)),
+  a 5 x 5 board of item > 11 a second one (they may coincide).
+* **Tiles** (`FUN_0046df60`): tile size w / n x h / n (163, 122, 98 for
+  490); a height map (0x80) gets 0x3c along the tile edges (columns tw *
+  i and + 1, rows th * j and + 1, i, j = 0..n), is blurred four times and
+  lights the picture (light 4, `FUN_0046bd30`); each tile (0xbc byte
+  records `DAT_006c20b8`, five per row) is its part of the lit picture with
+  " %2d " (its number) at the top right (alignment 0x200) in Amerigo
+  BT_10_, an opaque element with hotspot n * row + 7 + column at the board
+  ((800 - n tw) / 2, (600 - n th) / 2) + its place, z 0. The top left
+  tile is the gap (not shown). `fixed-<n>` marks the fixed tiles (z 1).
+  The board (`DAT_006c0e1c`, 5 x 5) holds the tile at each place.
+* **Moves** (`FUN_0046eca0`, mouse down, hotspot - 7 = the tile's number
+  - 1): a tile in the gap's row or column moves with the tiles between it
+  and the gap one place towards the gap (`FUN_0046e400` / `FUN_0046e5f0`),
+  unless one of them is fixed; a `slide 1..4` clone sounds on a move. The
+  shuffle (`FUN_0046e350`) makes 1000 random such moves (row or column by
+  `rand() % 2`, place (gap + 1 + rand(n - 1)) % n).
+* **Solved** (`FUN_0046ed30`: the gap at the top left, every tile home;
+  `FUN_0046edb0`): moves end, the clock stops, the picture (155,55) z 2 and
+  the gap's tile come, print shows; when the value is 2 the motives with
+  value 3 are counted plus this one and every fifth gives `awardJigsaw`,
+  the value becomes 3; the time goes to the table
+  (`FUN_0041ee50(item, ms, 0, 0x102, entry, tables)`).
+* **Print** (2): the tiles in their home places, numbers included, with the
+  jigsaw's text line. **Table** (3): `FUN_0041f640(0, item, entry,
+  highlights, 0x102)`, entry and highlights only once solved.
+* The clock's countdown variant (`DAT_006c0e90`) is never switched on.
+* TODO: the high score calls (`FUN_0041ee50` in `solved()`, `FUN_0041f640`
+  for button 3).
+
 ## Story page `garage` ("Verkstedet")
 
 Reodor's workshop with Solan, Ludvig and Reodor; the second page of the
@@ -2605,7 +2649,8 @@ Cancel one second after the start; language.ini keys or plain text),
 (the menu's birthday calendar; `test_calendar=<month>,<day>` with that
 date); both log their result. At debug level 2 the jigsaw logs each piece
 ("Jigsaw: piece <n> rot <r> at <x>,<y> ... place <x>,<y> ... grab <x>,<y>",
-an uncovered point on it) after each release, for scripted drags. `profile_import=<path>` adds an original
+an uncovered point on it) after each release, and sliding the board after
+the shuffle, for scripted drags and moves. `profile_import=<path>` adds an original
 .pfl file as a new profile and makes it the active one. Use
 `savepath=/tmp/...` in test configs so test profiles stay out of the
 real save directory. Without `start_scene` the game starts with the logo
@@ -2656,7 +2701,7 @@ Activities (`[activity]`, open ended):
 | | mahjong | Mah Jongg | outtent | data2 |
 | | draughts | Damm | tvroom | data |
 | x | puzzle | Solines Smykkeskrin | intent | data2 (high score open) |
-| | sliding | Skyvepusslespillet | garage | data |
+| x | sliding | Skyvepusslespillet | garage | data (high score open) |
 | | chess | Sjakk | intent | data |
 | x | movieplayer | Filmfremviser | tvstation | data |
 | | activity | Aktivitetssenteret | sceneindex | data |

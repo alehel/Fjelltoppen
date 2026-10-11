@@ -39,6 +39,7 @@
 #include "flaaklypa/puzzle.h"
 #include "flaaklypa/sceneindex.h"
 #include "flaaklypa/scenes.h"
+#include "flaaklypa/sliding.h"
 #include "flaaklypa/sockdrawer.h"
 #include "flaaklypa/textinvader.h"
 #include "flaaklypa/whackamole.h"
@@ -486,6 +487,8 @@ Scene *createScene(FlaaklypaEngine *vm, const char *name) {
 		return new BouquetScene(vm, def);
 	if (!scumm_stricmp(name, "jigsaw"))
 		return new JigsawScene(vm, def);
+	if (!scumm_stricmp(name, "sliding"))
+		return new SlidingScene(vm, def);
 	if (!scumm_stricmp(name, "sceneindex"))
 		return new SceneindexScene(vm, def);
 	if (!scumm_stricmp(name, "buildacar"))

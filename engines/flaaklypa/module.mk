@@ -51,6 +51,7 @@ MODULE_OBJS = \
 	scene.o \
 	scenedata.o \
 	sceneindex.o \
+	sliding.o \
 	sockdrawer.o \
 	sound.o \
 	textinvader.o \
