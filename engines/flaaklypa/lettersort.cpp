@@ -28,6 +28,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/lettersort.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -299,8 +300,13 @@ void LettersortScene::onInit(int arg) {
 
 	playMusic("subgame8");
 
-	// TODO: tournament mode (FUN_00419490) starts the game at once with
-	// the level set by the tournament's difficulty.
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the game starts at once (FUN_0043dea0, no start button click).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Lettersort: tournament mode, starting at once");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 // FUN_0043e020: clears the floor and the belt and all counters.
@@ -1069,9 +1075,13 @@ void LettersortScene::bellTick() {
 	// so the nested frames do not come back here.
 	_vm->messageBox("interfaceh:GAMEOVER", "lettersort:GAMEOVER", MessageBox::kButtonOk);
 	// FUN_0041f9a0(0, score, 0x49ead0, LAB_0043fd50); the callback follows.
+	// In tournament mode the score goes to the tournament, which moves on
+	// (the next player or the results), and the callback is not run: no
+	// start button comes back.
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _score, kMedals);
-	gameOverDone();
+	if (!_vm->tournament()->isActive())
+		gameOverDone();
 }
 
 // LAB_0043fd50: back to the start button.
@@ -1139,8 +1149,15 @@ void LettersortScene::onAnimFinished(Anim *a) {
 	if (!strcmp(a->name(), "s1_1_start")) {
 		a->remove();
 		_running = true;
-		// TODO: tournament difficulty * 3 as the start level (FUN_004194a0)
-		setLevel(0);
+		// Tournament mode (FUN_00419490): the game starts at the player's
+		// level (FUN_004194a0: 0 easy, 1 medium, 2 hard) * 3, i.e. level
+		// 1, 4 or 7.
+		int level = 0;
+		if (_vm->tournament()->isActive()) {
+			_vm->tournament()->player(nullptr, &level);
+			level *= 3;
+		}
+		setLevel(level);
 		return;
 	}
 	for (int c = 0; c < kMaxClaws; c++)

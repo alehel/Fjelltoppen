@@ -9,8 +9,8 @@ message box, navigator, help and options dialogs, the 15 sub games and
 the activities of the base game and add-on sets 1 and 2 work (see the
 checklist at the end), with player profiles (save slots), the volumes,
 the award dialog, the high score tables with their medals and the high
-score overview (`mainscore`). Not done: the add-on set 3 scenes,
-tournament mode, racing.
+score overview (`mainscore`) and tournament mode. Not done: the add-on
+set 3 scenes, racing.
 
 ## The game
 
@@ -370,7 +370,13 @@ A memory game: a cabinet with 5x4 hatches hides pairs of socks. Handler
 * Game over (`FUN_0044c380`): state 0, message box `interfaceh:GAMEOVER` /
   `sockdrawer:ENDMESSAGE`. The start cabinet sets the "sub game running"
   flag (`FUN_0040d8a0`), so leaving a running game asks first.
-* Not done: tournament mode (`FUN_00419490`).
+* Tournament mode (`FUN_00419490`, init `44b81c`): `FUN_00419660`
+  (PLAYERREADY), `FUN_0044ba30`, level `DAT_00680024` = the player's level
+  (`FUN_004194a0`, `44b836`) * 5 (table entry 0, 5 or 10: 4 socks / 20 s,
+  14 socks / 110 s, 20 socks of 16 kinds / 60 s), `FUN_0044ba90` and the
+  `start` clip: a click on the cabinet without `FUN_0040d8a0(1)`. At game
+  over the high score callback `0x44c3e0` (hatches closed, start cabinet
+  back) is not run.
 ## Sub game `hopscotch` ("Solan og Ludvig i Paradis", add-on set 1)
 
 A Simon says game on a hopscotch grid. Handler `0x43bbd0` (jump table, not a
@@ -397,8 +403,8 @@ B/C/D tone sets and Solan's start poses), `lang/hopscotch.bin` (help.ini).
   repeats, `FUN_0040a150`); round r shows base + r of them, capped at base +
   rounds - 1 (`FUN_0043c5e0`). Levels 0..2 grid 1 (6 squares), 3..5 grid 2
   (9), 6..8 grid 3 (9), 9..11 grid 4 (12), 12..15 base lengths 8/10/12/14 on
-  grids 1..4 again; level 15 repeats forever. Times 22..28 s. Without a
-  profile the game starts at level 0 (with one: 3 x the profile difficulty).
+  grids 1..4 again; level 15 repeats forever. Times 22..28 s. Outside a
+  tournament the game starts at level 0 (in one: 3 x the player's level).
 * Screen: grid bitmaps `grid1..4` at (320,192) (373,200) (206,220) (251,195)
   (`0x49e628`), square bitmaps `number01..12` / `symbol01..12` at the offsets
   of `0x49e648..` z 2, jump clips 152x152 at square - 38 z 5, start positions
@@ -423,8 +429,12 @@ B/C/D tone sets and Solan's start poses), `lang/hopscotch.bin` (help.ini).
   `hopscotch:GAMEOVER`, then the hourglass, state and jumpers are reset; the
   frame tick is skipped while the box is open (the state is still the
   player's turn with the time up). Start sets the "sub game running" flag.
-* Not done: profile start level and the
-  tournament "PLAYERREADY" box.
+* Tournament mode (`FUN_00419490`): init (`FUN_0043bc90`, 43bdbd) shows
+  `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once
+  (`FUN_0043c310`) at level 3 x the player's level (`FUN_004194a0`, 43c341:
+  0/3/6, i.e. grid 1/2/3); game over (`FUN_0043cd90`, 43cdf4) shows the
+  GAMEOVER box, the score goes to the tournament, the score box keeps the
+  score (no title).
 ## Sub game `audiopairs` ("Reodors Lydmaskin", house)
 
 A sound memory game on Reodor's cash register. Handler `0x428ae0` (a jump
@@ -468,7 +478,7 @@ table, not a function in the Ghidra project): 0x103 -> `FUN_00428bd0` init,
   time, not a random number).
 * Rules: init shows all 28 parts and all keys green but inactive, plays
   `start`. Start (hotspot 3, `FUN_004290a0`): score 0, 15 tries, level 0
-  (+ 2 x profile difficulty), state 5: one part (right side first) vanishes
+  (+ 2 x the tournament player's level), state 5: one part (right side first) vanishes
   per tick until none are left, then a board. Board (`FUN_00429450`): all
   keys black and inactive, N pairs (`0x49d798`: level 0: 3, 1: 4, ... 6:
   9, 7+: 10) of random unused sounds on random free keys, `lever` plays.
@@ -486,15 +496,21 @@ table, not a function in the Ghidra project): 0x103 -> `FUN_00428bd0` init,
   `right` done: everything removed, counts 0, state 1, new board. Game
   over: state 0, message box `audiopairs:ENDMESSAGE` /
   `interfaceh:GAMEOVER`, high score `FUN_0041f9a0(0, score, 0x49d7d8 =
-  {2000, 6000, 10000, 14000}, 0)`, `start` plays again unless a profile is
-  active (then the game started automatically after
+  {2000, 6000, 10000, 14000}, 0)`, `start` plays again unless in
+  tournament mode (then the game started automatically after
   `tournament:PLAYERREADY`).
 * Engine notes: the keys are surface elements (`key00..19`) because several
   keys share one bitmap; the engine hit tests their opaque pixels where the
   original tests the rectangle. `Scene::defineAnim()` got a `visible`
   parameter (default true) for the audio only clips, which have no palette
   to convert a frame with.
-* Not done: profile difficulty.
+* Tournament mode (`FUN_00419490`): init (`FUN_00428bd0`, 428d60) shows
+  `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once
+  (`FUN_004290a0`); the start level is 2 x the player's level
+  (`FUN_004194a0`, 4290ea: 0/2/4, i.e. 3/5/7 pairs, sound groups
+  sound/birds/horn); 15 tries as usual; game over (4296df) shows the
+  GAMEOVER box, the score goes to the tournament (`FUN_0041f9a0`), `start`
+  does not come back.
 ## Sub game `wheelbarrow` ("Eplehøsten", started from `pee`)
 
 Catch the apples that ripen on the roof. Handler `0x44ed50` (not a function
@@ -553,9 +569,14 @@ finished, 0x111 -> `450270` timer, 0x112 -> `44fb70` tick, 0x116 ->
   `pie` (the pie out of the window) -> level + 1, 500 points, pies
   redrawn, timer restarted -> `putdown` -> `basket0`.
 * Score (`FUN_0044f8d0`): every 3000 points give a life (`lifeup1`). Start:
-  3 lives, level 0 (with a profile the original starts at 3 x the
-  profile's value and shows `tournament:PLAYERREADY`). The wheelbarrow
-  counter is not reset by a new game (quirk of `FUN_0044f110`).
+  3 lives, level 0. The wheelbarrow counter is not reset by a new game
+  (quirk of `FUN_0044f110`).
+* Tournament mode (`FUN_00419490`): init (`FUN_0044ee50`, 44ef99) shows
+  `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once
+  (`FUN_0044f110`) at level 3 x the player's level (`FUN_004194a0`, 44efae:
+  0/3/6, 0/3/6 pies, spawn period 3750/2850/1950 ms), 3 lives; game over
+  (`FUN_00450180`, 450242) shows the GAMEOVER box, the score goes to the
+  tournament, no start button, the apples are not cleared.
 * Screen: `help_0/1` at (0, 0), `exit_0/1` at (728, 0), z 100; `start`
   (353, 267) z 100 with `wheelbarrow:START` in `Amerigo BT_14_` centred in
   (356, 296, 89 x 33) z 101; labels `wheelbarrow:SCORE` / `:LIFE` centred in
@@ -565,8 +586,8 @@ finished, 0x111 -> `450270` timer, 0x112 -> `44fb70` tick, 0x116 ->
 * Game over (`FUN_00450180`): Solan neutral, pie/pickup/putdown removed,
   then the message box `interfaceh:GAMEOVER` / `wheelbarrow:GAMEOVER` and
   the high score registration `FUN_0041f9a0`
-  (`wheelbarrow:LONGNAME`, medals 2500/5000/10000/15000); without a
-  profile the start button returns and the apples are cleared.
+  (`wheelbarrow:LONGNAME`, medals 2500/5000/10000/15000); outside a
+  tournament the start button returns and the apples are cleared.
 * Testing: `autokey=t:key[:hold];...` (see "Development aids") presses the
   arrow keys; the start button is at (400, 300).
 ## Sub game `lettersort` ("Postsorteringsmaskinen", yard)
@@ -633,9 +654,13 @@ finished -> `43ea80`, 0x111 the 250 ms timer -> `43f750`, 0x112 ->
   `borderleft` (0, 99), `s1_1_frame` (116, 48), bell (677, 324) z -45. z:
   bags -30 (`0x672574`), flags -15, bagout -31, pusher/stamp -45, Solan
   -44/-46, letters 0..59. Music `subgame8`.
-* Not done: tournament mode
-  (`FUN_00419490`: immediate start at level difficulty * 3), the registry
-  value `FUN_0040b940` writes at init. A
+* Tournament mode (`FUN_00419490`): init (`43dd9d`) shows `FUN_00419660`
+  (PLAYERREADY) and calls `FUN_0043dea0` at once (no start button click);
+  when `s1_1_start` ends (`FUN_0043ea80`, `43eacb`) the first level is the
+  player's level (`FUN_004194a0`, `43eadb`) * 3 instead of 0: level 1, 4 or
+  7 (stamp `level01/04/07`). The game over box still shows; the high score
+  callback `LAB_0043fd50` (start button back) is not run.
+* Not done: the registry value `FUN_0040b940` writes at init. A
   delivery clip that is still playing when the next level starts is
   restarted (the original only renames the struct).
 ## Sub game `hustle` ("Emanuels utfordring")
@@ -671,7 +696,7 @@ shuffle cannot be skipped, 0x110 -> `43d160`, 0x111 -> `43d950`, 0x116 ->
   track (`FUN_004092d0`). Text fields (15, 529)-(89, 546) stake and
   (15, 559)-(89, 576) bananas, `Amerigo BT_10_` centred.
 * Bet (`FUN_0043d9c0`, button 7): level index = clamp(1 + L/9, 0, 11) (the 1
-  is the tournament player's level otherwise), stake from L, round counter
+  is the player's level 0..2 in tournament mode), stake from L, round counter
   incremented. Moves (`FUN_0043da30`): `kMoveCount[idx]` = 3..17 moves, each
   `rand() % kMoveRange[idx]` (3..11) into the list anim_b, anim_e, anim_a,
   anim_c, anim_d, anim_f, anim_g, 2g, 2b, 2a2, 2a. Sequence (`FUN_0043da80`):
@@ -695,7 +720,14 @@ shuffle cannot be skipped, 0x110 -> `43d160`, 0x111 -> `43d950`, 0x116 ->
 * Buttons (BUTTON module, z 1, hotspot = id, fire on release): `help_0/1` at
   (0, 0), `exit_0/1` at (728, 0), 7 at (693, 404) with only a hover bitmap
   `bet_1`. The buttons highlight on the frame tick.
-* Not done: tournament mode. The SmackGoto
+* Tournament mode (`FUN_00419490`): the init ends (`43d00e`) with the
+  PLAYERREADY box (`FUN_00419660`), `FUN_004194a0` (result unused) and
+  `FUN_00412b90("start_0")`: the clock clip plays as if clicked and the
+  game starts when it ends; `FUN_0043d560` (`43d588`) sets the level base
+  `DAT_00670d30` to the player's level (0 easy, 1 medium, 2 hard) instead
+  of 1. Game over as usual (box, start clock back, state 0); the score
+  goes to the tournament (`FUN_0041f9a0`, no callback).
+* Not done: the SmackGoto
   frame of the hand is `round(...) + 1` in the original; the port shows the
   rounded frame (0 based).
 ## Sub game `buildabike` ("Reodors sykkelverksted")
@@ -730,7 +762,7 @@ Ghidra project; jump table: 0x103 -> `FUN_004391a0` init, 0x104 ->
   `0x4d7b48` remembers the origin), score `0x66341c`, health `0x664348`,
   bikes done `0x66454c`.
 * Rules: `start` -> `FUN_00439620`: bikes done = 0/5/10 and health =
-  100/75/50 by difficulty (`0x49e014`; 1 without a profile), store 3 of each
+  100/75/50 by difficulty (`0x49e014`; difficulty 1 outside a tournament), store 3 of each
   part. `FUN_00438030` keeps 1/2/3 bikes in play (bikes done >= 0/15/40):
   an empty platform (state 4) goes down (`down` sound, pending), gets 1..4
   broken parts (`FUN_00438510`: clamp(done/3 - rand(3) + 1, 1, 4),
@@ -772,7 +804,14 @@ Ghidra project; jump table: 0x103 -> `FUN_004391a0` init, 0x104 ->
   at 50/s. `points` label (lang bitmap) at (511, 128). Music `subgame8`.
 * Game over (`FUN_00438c50`): message box `interfaceh:GAMEOVER` with
   `buildabike:ENDMESSAGE` formatted with the minutes, seconds and score.
-* Not done: the profile difficulty, the
+* Tournament mode (`FUN_00419490`): the init (`4392ba`) adds no `start`
+  button but shows the PLAYERREADY box (`FUN_00419660`) and jumps to
+  `FUN_00439620`, whose difficulty (a local preset to 1) becomes the
+  player's level (`FUN_004194a0` at `439643`): easy 0 bikes done /
+  health 100, medium 5 / 75, hard 10 / 50. Game over still shows the
+  ENDMESSAGE box; after the score (`FUN_0041f9a0` -> the tournament) the
+  clearing and the `start` button are skipped (`438d6a`).
+* Not done: the
   "MAJKA" cheat (fills the store), the belt items'
   hit rectangle margin (`0x49dbf0`).
 ## Sub game `pipeline` ("Oljeeventyret", started from `outtent`)
@@ -857,8 +896,13 @@ flowing after a countdown, reaches an open pipe end. Handler `0x448410`
 * Message boxes: `pipeline:LEVELCOMPLETE` / `pipeline:LEVELMESSAGE` before
   the next level is built, `interfaceh:GAMEOVER` / `pipeline:ENDMESSAGE`
   at game over (both OK, the oil is stopped meanwhile).
-* Not done: tournament mode.
-  Deviation: the bend's inflow rectangle is
+* Tournament mode (`FUN_00419490`): init (`448665`) shows `FUN_00419660`
+  (PLAYERREADY) and starts the game at once (`FUN_00448880`, as the Start
+  button) at level 1; the player's level is not used. Game over
+  (`FUN_0044a740`): the box shows, `FUN_0041f9a0` hands the score to the
+  tournament, and the board reset (cells, clips, store, score, timer,
+  turbo, `level00`) is skipped (`44a808`).
+* Deviation: the bend's inflow rectangle is
   always drawn up to the corner square (the original stops once the corner
   phase starts, which leaves a one pixel gap at low frame rates).
 ## Sub game `beemaze` ("Ludvigs Labyrint", started from `tvroom`)
@@ -928,8 +972,14 @@ down, 0x10d -> `42f340` key up, 0x110 -> `432d30` anim finished, 0x111 ->
   `smoke_1`, `honey_1` (`FUN_00431a00`, "%s_%d").
 * Game over (`FUN_004328e0`): message box `interfaceh:GAMEOVER` /
   `beemaze:GAMEOVER`, then the maze is cleared.
-* Not done: tournament mode (`FUN_00419490`: one life, level from the
-  round), the cheat console commands (SHROOMS, ...).
+* Tournament mode (`FUN_00419490`): the init (`432e64`) adds no
+  `start_icon` but shows the PLAYERREADY box (`FUN_00419660`) and starts
+  at once (`FUN_00432c90`): 1 life instead of 3, level = the player's
+  level (`FUN_004194a0`, 0..2) x 5 (`432ce9` lea ecx,[eax+4*eax]), i.e.
+  level 1/6/11, always maze 1. Game over still shows the GAMEOVER box;
+  the score goes to the tournament (`FUN_0041f9a0`), whose callback
+  `4329c0` (the start icon) is not run.
+* Not done: the cheat console commands (SHROOMS, ...).
   Development: `autohold=t:d;t:d` holds (l/r/u/d) or releases (0) an
   arrow key t ms after the scene starts.
 ## Sub game `bugzzz` ("Larveliv i leiren", started from `yard`)
@@ -1029,8 +1079,18 @@ only scene besides racing that uses WAV files.
   nested frames would complete the level again, and moves the time base on
   by the time the box was open (the original's game clock pauses under a
   dialog). `bugzzz_required=0` completes every level at once (box test).
-* Not done: tournament mode (`FUN_00419490`: one life,
-  no joining), the unused "frags" and five way spit debug modes, Tab to the
+* Tournament mode (`FUN_00419490`): the free colours' text panels say
+  `JOINMSG2` ("Ikke tigjengelig!", init `4371a2`) instead of `JOINMSG1`;
+  colour clicks and keys 1..4 do nothing (`FUN_00437a10`, `437a26`), so
+  green (preselected) plays alone and the ranking is never shown; in the
+  selection state the frame handler (`433118`) shows the PLAYERREADY box
+  (`FUN_00419660`, `DAT_00661fc4` set around it) and starts the game at
+  once (`FUN_00433790`) at level `DAT_00661fa8` (0) + the player's level
+  x 2 (`4337cf` lea ecx,[edx+2*eax]: level 1/3/5); every worm starts with
+  1 life instead of 3 (`FUN_00433890` at `433890`: 3 - 2 x active); larva
+  extra lives still count. Game over: the single player high score, into
+  the tournament.
+* Not done: the unused "frags" and five way spit debug modes, Tab to the
   scene index. The woodpecker's first branch is added at z 10 (the original
   uses z 99 once, a quirk). Development aids: `bugzzz_keys=t:name[,u][*n/ms]`
   presses / releases keys (left, right, return, space, ctrl, a, s, j, k,
@@ -1109,10 +1169,13 @@ table: 0x103 -> `FUN_0044c740`, 0x104 -> `44cf70`, 0x105 -> `44d720`,
   even levels raise the maximum word length (max 32).
 * Game over (`FUN_0044d450`) when energy <= 0: all slots cleared, message
   box `textinvader:GAMEOVER`, high score `FUN_0041f9a0(0, score, 0x49f0a0, 0)`,
-  then the start sign again (without a profile).
-* Difficulty comes from the profile (`FUN_004194a0`); without one it is 0.
-  With a profile the original shows `tournament:PLAYERREADY` and starts at
-  once. Not done: profiles/difficulty.
+  then the start sign again (outside a tournament, `44d4c0`).
+* Tournament mode (`FUN_00419490`): init (`44c88e`) shows `FUN_00419660`
+  (PLAYERREADY) and turns the sign at once (`FUN_0044d720(4, 0, 0)`); the
+  game starts when it has turned. The difficulty `DAT_00687500` (tables at
+  `0x4de620`..) is the player's level (`FUN_004194a0`, `44c963`: 0 easy,
+  1 medium, 2 hard) in a tournament, else 0 (`FUN_0044c950`). At game over
+  the start sign comes back only outside a tournament (`44d4c0`).
 ## Sub game `whackamole` ("Dra meg baklengs!", add-on set 2)
 
 A whack-a-mole with birds: they peek out of seven bird houses and five nests
@@ -1179,7 +1242,12 @@ Handler `0x44d980` (not a function in the Ghidra project; dispatches 0x103 ->
   clips have no palette and must not be decoded for drawing).
 * The frame tick is skipped while the next level box is open (the level
   time is still up then).
-* Not done: tournament mode auto start.
+* Tournament mode (`FUN_00419490`): init (`FUN_0044e1f0`, 44e2d4) shows
+  `tournament:PLAYERREADY` (`FUN_00419660`) and starts at once
+  (`FUN_0044da80(0x22, 0, 0)` -> `FUN_0044df40`), level 1 whatever the
+  player's level; game over (`FUN_0044eb30`, 44ec2e) shows the GAMEOVER
+  box, the score goes to the tournament, the start sign does not come
+  back.
 ## Sub game `butterfly` ("Sommerfugler i magen") and its album `buttercol`
 
 Catch butterflies with a net on a meadow; wasps and bees cost points. Handler
@@ -1250,6 +1318,15 @@ buttons (2 help `FUN_0041e580`, 3 exit `FUN_0040cc30`, 4 album -> scene
   species table starts largewhite, smallwhite). A click on one opens the
   "info" fact page about it; exit returns to `butterfly`. Registers the
   cheat "LOVELYFLIES" (`FUN_0040ad50`) which marks all as collected.
+* Tournament mode (`FUN_00419490`): no album button (init `43a656`); the
+  init ends (`43a746`) with the PLAYERREADY box (`FUN_00419660`) and
+  `FUN_0043a820` (start clip removed, `timerstart` plays, net on): no click
+  needed; when `timerstart` ends (`43ba04`) the first level is the
+  player's level (`FUN_004194a0`, 0..2) x 3 (`lea edx, [eax + 2*eax]`):
+  level 1, 4 or 7. Game over (`43ba8a`): the GAMEOVER box as usual, no
+  species awards (the `FUN_0041b740` loop is skipped), the score goes to
+  the tournament (`FUN_0041f9a0`, its callback 0x43bb90 is not run: no
+  start clip again).
 * Engine notes: ticks are frames (60 fps limiter; the original's rate is
   unknown). The collected flags live in a static of `ButterflyScene` until
   profiles exist. After game over the start clip is shown again (the
@@ -1440,6 +1517,20 @@ work. Engine: `mountain.cpp`.
   track, score, 0x4dc654 {2500, 5000, 10000, 15000}, 0)`: the track is the
   table key (mainscore's `version` 0/1). Engine: `showAward()`,
   `registerScore(vm, section, score, medals, track, kScorePoints)`.
+* **Tournament mode** (`FUN_00419490`): init (`44103b`): no start screen;
+  the PLAYERREADY box (`FUN_00419660`), the difficulty `DAT_00678afc` =
+  the player's level (`FUN_004194a0`: 0 easy, 1 medium, 2 hard `.l`),
+  then `FUN_0044108e` at once. There (`4410a1`): the track `DAT_00678b08`
+  = the current game's version (`FUN_00419540`; subgame.ini has
+  `mountain` with version 0/1 = TRACK1/TRACK2), 0 when negative, else
+  min(version, section count) (sic: may be one past the last),
+  `DAT_00678b04` = -1 (always a full load), `FUN_004415b5` (no title
+  label, `4415fb`); 1 life instead of 3 (`4412d8`: `(-(t != 0) & ~1) +
+  3`). Frame: the last life lost shows no start screen (`4447fb`), the
+  finish does not go to `town` (`44485e`). `FUN_00447e43` still writes
+  profile value 0 and gives the film clip / car part awards (no
+  tournament check there); `FUN_0041f8c0` puts the score into the
+  tournament.
 * **Port notes**: the original is 16 bit; colour keys compare in RGB565
   (`normaliseKey()`, `rgb565()`: New.bmp has 830 near-red pixels that are
   transparent there). WAV sounds play through the scene's own voices
@@ -1447,8 +1538,7 @@ work. Engine: `mountain.cpp`.
   DirectSound percentages linear); clip audio relative to it.
   Clip frames advance at their rate (SmackWait). The playfield is cleared
   to black where layer 0 has no tile (the original leaves the back
-  buffer). Not done: tournament mode (`FUN_00419490`: no start screen,
-  the round's track, one life), the loading box, the cursor auto hide
+  buffer). Not done: the loading box, the cursor auto hide
   (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
   Development aid: `mountain_skip=<x>` / `mountain_skip=n<node>`.
 
@@ -1478,9 +1568,8 @@ no awards besides the medals. Engine: `balloonhunt.cpp`.
   `0000`..`0606` (gyroscope, 65x65: "%02d%02d" of the climb and bank
   steps), the 24 balloons `01`..`24` (128x128) with `small 01`.. (30x30,
   table 0x4cbd68, 0x90 bytes: name, small name, rise speed 10, pointers),
-  `mix2.wav`, buttons at z 3. Tournament mode (`FUN_00419490`) would start
-  a points round at the tournament's track (not ported); else the start
-  screen. All bitmaps but the tiles, the sky, the maps and the billboards
+  `mix2.wav`, buttons at z 3. Tournament mode: see below; else the start
+  screen (`FUN_0042ba40`). All bitmaps but the tiles, the sky, the maps and the billboards
   get their pixel (0, 0) as colour key.
 * **World** (`FUN_0042a470`): one unit = one texel. `fulltile.bmp`
   (512x3136) is cut into 64x64 tiles row by row (392), each with 32, 16
@@ -1598,7 +1687,7 @@ no awards besides the medals. Engine: `balloonhunt.cpp`.
   (`interfaceh:GAMEOVER` / `balloonhunt:OUTOFTIME`, OK), gas < 0.01 ->
   `FUN_0042c580(1)` (`OUTOFGAS`). `FUN_0042c580`: mix off, flag off;
   points: the message, `FUN_0041f9a0(0, points, 0x49d7e8 {2500, 5000,
-  10000, 20000}, 0)` (tournament: the same, then no clean up); time trial:
+  10000, 20000}, 0)`; time trial:
   `FUN_0041f8c0("%s %d"` of `balloonhunt:TRACK` and the level number,
   key = that number (1 based), time = last hit - start, no medals,
   0x102); then the round's elements go and the start screen comes back.
@@ -1625,8 +1714,23 @@ no awards besides the medals. Engine: `balloonhunt.cpp`.
   keyed elements cost about 35 ms a frame in the engine.) Volumes:
   the engine's sound volume, DirectSound percentages linear.
   The flight keys are held states (reset when a dialog closes). Not done:
-  tournament mode, the loading box. Development aid:
-  `balloonhunt_warp=<n>` (below).
+  the loading box. Development aid: `balloonhunt_warp=<n>` (below).
+* **Tournament mode** (`FUN_00419490`): init (0x42a357..0x42a377): after
+  all loading (the loading box `FUN_0040cb20` and the `FUN_0042a3a0(3)`
+  delay loop as usual) no start screen; `FUN_00419660` (PLAYERREADY),
+  `FUN_004194a0(0, &level)`, `FUN_0042ad60(2, level)`: a points round from
+  section `level % 20` (easy `[level01]` track 1 120 s, medium `[level02]`
+  track 2 40 s, hard `[level03]` track 3 45 s; level label 1..3), then the
+  following levels as usual; the init argument is not read. End
+  (`FUN_0042c580`, 0x42c603): mix and flag off, the GAMEOVER box
+  (OUTOFGAS / OUTOFTIME) as usual, then `FUN_0041f9a0(0, points,
+  0x49d7e8, 0)` (the tournament's table, its next player or
+  `tourneyscore`) and `ret` (0x42c62a): no clean up (`DAT_00608fe0` stays
+  2, the round's elements stay, no start screen). Engine: `onInit()` ->
+  `showPlayerReady()`, `startRound(kModeNormal, playerLevel())`;
+  `endRound()` returns after `registerScore()` with `_mode = kModeMenu`
+  (the scene lives to the end of the frame; this keeps `afterDraw()`'s
+  gas check from ending the round a second time).
 
 ## Dialogs (`dialog.cpp`)
 
@@ -1658,8 +1762,10 @@ while a dialog is open waits until it closes.
   (`FUN_0040d8a0`, `DAT_0054bf98`; `setGameRunning()`) is set asks
   `interfaceh:WARNING` / `gamec:SUBGAMEABORT` with Yes/No; only Yes leaves
   (and clears the flag). Engine: `changeScene()` / `endGame()` return false
-  when the player stays. TODO: tournament mode leaves at once
-  (`FUN_00419410`).
+  when the player stays. In tournament mode (`FUN_00419490`) leaving a
+  sub game always asks `FUN_00419410` instead (`tournament:ABORT`, Yes
+  ends the tournament and opens the setup screen) and the change asked
+  for never happens, whatever the flag says (see "Tournament").
 * `getString()` mirrors the INI reader of the original (`FUN_0040e0c0`,
   `FUN_0040e160`): one leading and one trailing quote are dropped and
   `\"`, `\\`, `\n`, `\t`, `\0` expanded.
@@ -1909,7 +2015,7 @@ as 0 and changes are lost). Engine: free functions in `award.h` on
   higher) and draughts `FUN_004650c0` (`l = (DAT_00508628 - 3) / 2`,
   `FUN_0041c0b0(l, l + 1 - key0)`, key 0 := l + 1). Direct
   `FUN_0041bb20`: high score `FUN_0041eed0` (a better medal: type 0,
-  count = medal gain, 0 in tournament mode, flags = medal; then the rise
+  count = medal gain, 0 for `FUN_0041f9d0` (`DAT_005a6fe0`), flags = medal; then the rise
   of the lowest medal over all sub games, `FUN_0040d9b0`, as car parts),
   birthday `FUN_004154a0` (`birthday:AWARD_TITLE`, `AWARD_DESC` with the
   name, 1 part), outro credits `FUN_00418770` (`outro:AWARD_TITLE/DESC`, 1
@@ -1952,6 +2058,249 @@ row, hotspot 500 + n, z 0x3c, with their names as tooltips. The table box
 left, date centred, score (`"%d"`) right aligned (`FUN_00417060`); the
 game's title in `Amerigo BT_14_` centred in (201,138)-(751,165). A
 click on a row or a list key shows that game. Help 2, exit 1.
+
+## Tournament (`tournament.cpp`, TOURNAMENT module, menu button 7)
+
+Up to 8 players (profiles, each with a difficulty) play up to 12 sub games
+in turn: each game is played by every player once, then the results
+screen `tourneyscore` gives points by rank, then the next game. Engine:
+`Tournament` (`tournament.h`, `FlaaklypaEngine::tournament()`), the scenes
+`TournamentScene` and `TourneyscoreScene` (`tourneyscore.cpp`). The state
+lives as long as the engine (the original's globals), nothing is saved.
+
+* **State** (0x588fe0..0x58905c, then the score tables): `DAT_00588fe0`
+  the name of the profile the tournament was set up with (0x1c bytes);
+  `DAT_00588ffc[8]` pointers to the players' slots, count `DAT_0058901c`,
+  current `DAT_00589020`; `DAT_00589024[12]` pointers to entries of the
+  sub game table, count `DAT_00589054`, current `DAT_00589058`; the mode
+  `DAT_0058905c`. Player slots: 8 x 0x28 bytes at 0x583f30 {int used;
+  char name[0x1c] (strncpy 0x18 of the profile name); +0x20 the list row
+  bitmap; +0x24 the level 0 easy, 1 medium, 2 hard}. The sub game table
+  (rebuilt by every setup screen init): 20 x 0x28 bytes at 0x5866a0
+  {char scene[0x20]; +0x20 the title; +0x24 the version, the scene's init
+  argument}, count `DAT_0057e100`. Score tables: 12 x 0x174 at
+  `DAT_006ea760` (the HISCORE layout, flags 0).
+* **API**: `FUN_00419490` the mode (`isActive()`); `FUN_004194a0(&name,
+  &level)` the current player, -1 and nothing written outside a
+  tournament (`player()`, `playerLevel(def)`); `FUN_004194e0(i, &entry,
+  &title, &version)` / `FUN_00419540(&entry, &version)` a game / the
+  current one (`game()`, `currentGame()`); `FUN_00419560(i, table)` copies
+  a game's table (`table()`); `FUN_004195b0(names, levels, n)` the
+  players (`playerAt()`); `FUN_00419610` the games; `FUN_00419660` the
+  message box `tournament:SCENENAME` / `tournament:PLAYERREADY` ("Er %s
+  klar?", sprintf with the player's name), OK (`showPlayerReady()`);
+  `FUN_004196c0(score)` inserts {player, 0, score} into the current
+  game's table (`FUN_0041e9c0`, flags 0: higher first, equal after the
+  older) (`addScore()`); `FUN_00419740` next player: cur = (cur + 1) %
+  players, then the same game with its version (`FUN_0040ccd0`) or, after
+  the last player, `tourneyscore` (`nextPlayer()`); `FUN_00419790` next
+  game: game = (game + 1) % games, after the last `FUN_00419450`, else
+  that game (`nextGame()`); `FUN_00419470` the last game
+  (`isLastGame()`); `FUN_00419410` asks `interfaceh:WARNING` /
+  `tournament:ABORT` (Yes/No), Yes = `FUN_00419450`: mode off and
+  `FUN_0040ccd0("tournament")` (`askAbort()`, `end()`). All scene changes
+  of the module use `FUN_0040ccd0` (no abort question): engine
+  `FlaaklypaEngine::gotoScene()`; changeScene() calls after it in the
+  same frame are ignored (the original has switched already).
+* **High scores**: `FUN_0041f8c0` (all sub games) in tournament mode only
+  does `FUN_004196c0` + `FUN_00419740`: no tables, no medals or car parts,
+  no dialog, and the callback is not run (`registerScore()` returns -1 at
+  once). The games guard their code after it with `FUN_00419490`.
+* **Leaving a sub game** (`FUN_0040cd90` in `FUN_0040cd70`, the scene
+  change: Escape, Tab, the exit buttons): a scene of type 3 in tournament
+  mode always asks `FUN_00419410` and cancels the change (Yes has opened
+  the setup screen instead), whatever the round running flag says.
+  Engine: `confirmLeave()`.
+* **Setup screen** `tournament` (handler `FUN_004197d0`: 0x103 init, 0x104
+  close, 0x105 `FUN_0041a5d0`, 0x116 `FUN_0041a080`; everything returns
+  0, so the keys are the global ones). Init `FUN_00419870`: music `theme`,
+  fonts `Amerigo BT_10_`/`_14_`/`_18_`, `logo` (231,28) z 0, labels z 1
+  centred: the scene title (18) in (202,25)-(584,71), `tournament:PLAYERS`
+  (14) in (37,106)-(246,138), `tournament:GAME` (14) in (555,106)-(761,138);
+  the bitmaps `easy`/`medium`/`hard` (50x16, `FUN_00413940`) get
+  `tournament:EASY`/`MEDIUM`/`HARD` centred in `Small Fonts_07_`. Buttons
+  (`FUN_00419d80`, z 10, labels `Amerigo BT_10_`): help 200 (0,0) and exit
+  201 (0x2d8,0) `help_0/1`, `exit_0/1` transparent; 1/2/3 add / remove /
+  clear player at (0x100, 199/0xfc/0x131), 4/5/6 the same for games at
+  (0x1b5, ...), all with only the pressed `standard_1` (108x39, the
+  backdrop and the hit mask hold the buttons) and `tournament:ADD` /
+  `REMOVE` / `CLEAR`; 7/8 player up/down (0x98/0xc0, 0x9e) and 9/10 game
+  up/down (0x22d/0x255, 0x9e), only `sortV_opp_1`/`sortV_ned_1`,
+  transparent; 11 start (0x155,0x1b6) `start_1`, `tournament:START`.
+  `FUN_00419a20`: `subgame.ini` (data3's, 19 games) `[subgame]` game<n>
+  (n < 20, up to the first missing), version<n> (int, 0), name<n>
+  (looked up, else the scene title `FUN_0040ce00`), state<n> (int,
+  default the active profile's visits of the scene, `FUN_00411370`; none
+  in the files): offered when > 0. The profiles (`FUN_00410d20`, by name,
+  at most 0x40). List font `Amerigo BT_14_` (`FUN_00408990`, never
+  restored). Player list (44,200)-(239,550) (`FUN_004085a0`, flag 1: rows
+  owned by the slots), game list (562,200)-(756,550) (`FUN_00408720`, text
+  rows); both have the default bar 0x3e5167, no scroll bars, no keys.
+  Then `strcmp(DAT_00588fe0, FUN_00411eb0())` (the active profile's name,
+  `profile:NONAME` without one): another profile clears the 0x80 bytes
+  from 0x588fe0 (the players, the games and the mode are forgotten) and
+  takes its name: a tournament belongs to the profile it was set up with.
+  The players and games of the last tournament started are put back
+  (`*slot = 1`). A player row (`FUN_00408470`, `FUN_00419ce0`): list
+  width x (font height + 2), the name at (0,0), the level bitmap opaque
+  at (width - 50 - 3, centred). A game row (`FUN_004087f0`): the title's
+  extent cut to the list. Rows are inserted after the selected one and
+  selected (`FUN_00408010`), so the last one put back is selected.
+* Mouse down `FUN_0041a5d0`: the game list's click (`FUN_00407ec0`), then
+  a click on the selected player cycles his level (`FUN_00419ce0(slot,
+  level + 1)`, % 3, the row redrawn, `FUN_00408920`). Buttons
+  (`FUN_0041a080`): 1 a free slot (`FUN_0041a3f0`, else
+  `tournament:MAXPLAYER`), the profiles not in a used slot (`FUN_0041a410`,
+  `_stricmp`; none: `MAXPROFILE`), the list dialog `tournament:NEWPLAYER`
+  (`FUN_00420750`, flags 0x102: text rows in the list font, Cancel); the
+  slot gets the name and level 1 (medium). 2 frees the selected player's
+  slot and removes the row (`FUN_0041a4a0`; the selection moves up when it
+  was the last), 3 frees all 8 slots and clears the list (`FUN_0041a500`).
+  4: no game offered `tournament:NOSUBGAME`, 12 in the list `MAXSUBGAME`,
+  else the list dialog `tournament:NEWGAME` of the titles; the same game
+  may be added twice. 5 removes, 6 clears the game list. 7/8/9/10 move
+  the selected row up/down (`FUN_00408330`: the order is the order of
+  play). 11 `FUN_0041a520`: the players in list order into
+  `DAT_00588ffc` (none: `NOPLAYER`), then the games (none: `NOGAME`;
+  each step is kept when the next fails), the tables cleared, player 0
+  and game 0, mode on, `FUN_0040ccd0(game 0, its version)`. 200 help,
+  201 `FUN_0040cc30` (the menu). Messages: `interfaceh:WARNING` with OK.
+  Close `FUN_00419fd0`: all slots unused (`FUN_0041a050`). So players
+  added but not started are lost when the screen is left; the ones of
+  the last tournament come back.
+* **Results** `tourneyscore` (handler `FUN_0041a650`: 0x103 `FUN_0041a700`,
+  0x104 `FUN_0041b270`, 0x105 `FUN_0041b320`, 0x10c `FUN_0041b390`, 0x116
+  `FUN_0041b350`; all return 0; byte table 0x41a6e8). Init: music `theme`,
+  fonts 10/14/18; `FUN_0041a8f0` the list (48,143)-(132,518) (flag 1, bar
+  0x3e5167) of the games 0..current: `bitmap/<scene>[<version>]`
+  (`"%s%s"`, the version `"%d"` when > 0) centred in a row (list width - 2)
+  x (icon height + 4) at y 2 (`FUN_0041a970`); `FUN_0041ac80`: `logo`
+  z 0x31, labels z 0x32 centred: the title (18) in (206,25)-(587,73),
+  `"%d / %d"` (game + 1, games; 10) in (41,102)-(160,127),
+  `interfaceh:NAME` (208,173)-(421,199), `tourneyscore:AWARD`
+  (437,173)-(551,199), `interfaceh:POINTS` (567,173)-(746,199) (10); text
+  areas z 0x32: the game's title (201,138)-(751,165) and the table at
+  (213,210) 539x335. Buttons (`FUN_0041b0d0`, labels 10): help 2, exit 1
+  (as above), 0x29a (0x283,0x223) `button_0/1` opaque with
+  `tourneyscore:NEXTGAME`, or `ENDGAME` for the last game; tabs of group
+  1 (`tab_0/1`, transparent) 3 (0xd1,0x62) `tourneyscore:GAME`, 4
+  (0x146,0x62) `tourneyscore:TOTAL`; scroll bar 0x65: track (0x95,0xa8)
+  14x0x150, `scrolltab`, arrows `up_0/1` (0x95,0x88) / `down_0/1`
+  (0x95,0x1fd), range rows - visible rows. `FUN_0041aa70`: each game's
+  table copied (`FUN_00419560`) into 0x58e610 with the points of each
+  rank in the time field (`FUN_0041aaf0`: {10, 7, 5, 4, 3, 2, 2, 1, 1, 0}
+  by row; an entry with the score of the row before gets that row's
+  points, so ties share the higher points and the next row keeps its own:
+  10, 10, 5, ...); 20 tables at 0x589060 cleared; per player in the
+  tournament's order (`FUN_0041ab90`): for each game his points
+  (`FUN_0041ac30`: the sum over the rows with his name, `_stricmp`), the
+  running total, and {name, points, total} into that game's standings
+  (`FUN_0041e9c0`, flags 0: an equal total goes after the players
+  before). Then the current game is shown (`FUN_0041ae80`) and selected,
+  the scroll bar set to the list's top, tab 3 (`FUN_0041b0c0`). After the
+  last game (`FUN_00419470`): the message box `tourneyscore:WINNERTITLE`
+  / `WINNER` ("Turnering ble vunnet av %s.") with the players whose total
+  equals the best one, joined by `tourneyscore:COMMA` (", ") and before
+  the i-th one by `AND` (" og ") when i is the last player of the
+  tournament (i == players - 1), else COMMA: two of three tied read "a,
+  b". A game (`FUN_0041ae90`): `"%s (%d)"` of its title and number (14,
+  centred), then tab 3 its table with the points, tab 4 its standings
+  (`FUN_0041af50` / `FUN_0041afc0`: rows 25 apart in `Amerigo BT_14_`,
+  vertically centred: the name left aligned at 7 (203 wide), the points
+  `"%d"` centred in 235..340, the score / total `FUN_0041ed90` flags 0
+  right aligned in 363..534).
+* Input: a click selects a game and shows it (`FUN_0041b320`); the list
+  keys (`FUN_0041b390`) too, the scroll bar then follows the list's top.
+  The scene has no handler for the scroll bar's event 0x117: the arrows
+  and the track move the thumb but not the list (only with more than 6
+  games). Buttons (`FUN_0041b350`): 1 `FUN_00419410` (abort question), 2
+  help, 3/4 the tab, 0x29a `FUN_00419790` (the next game, or after the
+  last one the end and the setup screen).
+* Original quirks kept: Escape (and Tab) on the results screen are the
+  global keys: the menu (the scene index), without the abort question,
+  with the tournament still on, so a sub game started from the story then
+  runs in tournament mode for the tournament's current player and its
+  score goes to the tournament (which then goes on with its own game); the
+  setup screen opened again keeps the mode on until a start or a
+  profile change. The sub game table entries are copied (the original
+  keeps pointers into the table, which the next setup screen rebuilds:
+  if a newly visited game then shifts the entries, it shows other games).
+* Menu button 7 (`FUN_00417e90` -> `FUN_00418040("tournament")`): the
+  profile shown becomes the active one (`FUN_0040d860`), then the setup
+  screen.
+* Engine notes: `ListBox` (button.h) got the list operations the setup
+  screen needs, with a value per row: `insertItem()` (`FUN_00408010`:
+  after the selected row, selected), `removeSelected()` (`FUN_004081e0`),
+  `moveSelected()` (`FUN_00408330`), `setItem()` (`FUN_00408920`),
+  `itemData()` (`FUN_004088c0`). The list dialog's text rows (flag
+  0x100) are rendered by the scene in `Amerigo BT_14_`, the extent cut to
+  the dialog's list box. `Tournament::game()` entries are copies (see
+  above). Development aids `test_tournament` /
+  `test_tournament_autoscore` (see "Development aids").
+* Sub games (`FUN_00419490` callers; details in each game's section): in
+  tournament mode they skip their start screen / button, show
+  `FUN_00419660` (from the init, bugzzz from its first frame) and start at
+  once; the start level comes from the player's level (0..2): audiopairs
+  x 2, bugzzz x 2 (1 life, green alone), beemaze x 5 (1 life), butterfly x
+  3, hopscotch x 3, lettersort x 3, sockdrawer x 5, wheelbarrow x 3,
+  buildabike / hustle / textinvader / mountain (1 life, the track = the
+  game's version) / balloonhunt (a points round from level 1..3) take it
+  unscaled, pipeline and whackamole ignore it; after the score they skip
+  what would restart a round (start buttons, high score callbacks, board
+  resets); butterfly gives no species awards and has no album button.
+* Add-on set 3 (ported elsewhere, to wire after merging):
+  * `gametrivia` tournament mode (`FUN_00419490`; calls
+    0x47e390/0x47e3a0/0x47e407/0x47e410 in `FUN_0047e370`, 0x47faf1/0x47fb53
+    in `FUN_0047fab0`): the level `DAT_006da3ac` is 1 (medium, always
+    outside a tournament); a tournament overwrites it with the player's
+    level 0..2 unscaled (`FUN_004194a0(0, &DAT_006da3ac)`) BEFORE
+    `FUN_0047ef50` reads trivia.ini `[round]` `difficulty<r>_<level>` (the
+    question difficulty of round r) and `time<r>_<level>` (ms per question):
+    easy 0/0/0/1, 14/11/8/8 s; medium 0/1/1/2, 10/8/6/6 s; hard 1/2/2/2,
+    6/5/4/4 s (4 rounds x 8 questions). Port:
+    `_vm->tournament()->player(nullptr, &_level)` after `_level = 1`, before
+    `loadData()`. At the end of init (after the clock timer, Solan and
+    "fan", 0x47e407) a tournament calls `showPlayerReady()`, then
+    `startGame()` (`FUN_0047e530`, jmp) instead of adding the `start`
+    button. Game over: the `gametrivia:GAMEOVER` box (right / total) only
+    outside a tournament (0x47faf1); `registerScoreNoCarParts()`
+    (`FUN_0041f9d0(0, score, 0x4a03d8)`) does the tournament; the `start`
+    button comes back only outside it (0x47fb53). No lives; nothing else
+    differs.
+  * `mathlab` tournament mode (`FUN_00419490`; calls
+    0x47ffa3/0x47ffac/0x47ffb8 in `FUN_0047ff70`, 0x480b75 in
+    `FUN_004809d0`, 0x48214b in `FUN_004820d0`): `FUN_004809d0`
+    (`initScreen()`) adds the `start` ball only outside a tournament. After
+    `DAT_006dba6c = 1` (`_generation = 1`) a tournament calls
+    `showPlayerReady()`, then starts the round at once with the player's
+    level unscaled: `player(nullptr, &level)`, `startRound(level)`
+    (`FUN_0047ffd0`; the start ball, hotspot 3, always starts 0). The level
+    is the first stage `DAT_006e3d68` (shown 1..3; stage times 80/60/60 s,
+    table 0x5120b0) plus 100/60/30 s extra (`DAT_006dba50`); hard (stage
+    index 2) gets the third operator row (`plus_2`.., "3 shows up",
+    `disable2` gone) at once (`FUN_00480530(1)`: `1 < DAT_006e3d68`). Game
+    over (`FUN_004820d0`): the operator buttons go, and the
+    `interfaceh:GAMEOVER`/`whackamole:GAMEOVER` box shows in BOTH modes (no
+    guard); after `registerScoreNoCarParts()` (`FUN_0041f9d0(0, score,
+    0x4a03f8)`) a tournament returns at once (`return 1`): no clearing of
+    labels, meters and boxes, no pump button removal (0x8c), no `start`
+    ball, the state stays "over" (`DAT_006e1d88` 2).
+  * `synonym` tournament mode (`FUN_00419490`; calls 0x48234d/0x482356 in
+    `FUN_00482320`, 0x4823c4/0x4823d3 in `FUN_00482380`, 0x483ee4 in
+    `FUN_00483eb0`): at the end of init (after the screen, words and levels,
+    state 0, `DAT_006e62a0` = now) a tournament calls `showPlayerReady()`,
+    then `startGame()` (`FUN_00482380`, jmp) instead of adding the `start`
+    ball. `FUN_00482380` starts level 0; a tournament uses the player's
+    level x 2 (`player(nullptr, &d)`, `lvl = d * 2`, asm `lea edx, [ecx +
+    ecx]`): 0/2/4 into `FUN_00482400` (`DAT_006e76a0`, `startLevel()`, shown
+    1/3/5; level.ini `[level]`: total time 260/240/210 s, hints 1/2/3, base
+    points 20/20/25, sec points 3/5/8, longer words, 10 to solve). The
+    tournament value replaces the `synonym_level` aid's value (the
+    original's 0); later levels rise as usual. Game over (`FUN_00483eb0`):
+    no message box in either mode; game running off, state 0, the drag
+    dropped, `registerScoreNoCarParts()` (`FUN_0041f9d0(0, score,
+    0x4a0580)`) does the tournament; the `start` ball comes back only
+    outside it (0x483ee4).
 
 ## Credits (`credits`, menu button 13)
 
@@ -2651,7 +3000,7 @@ Engine: `hiscore.h`.
   `formatScoreDate()`; `ScoreTable::insert/insertBest`. Deviations: the
   active profile's table comes from memory (the original rereads its file,
   which it keeps current); a record's count is cut to 10; the time stamps
-  are local times (`profileTime()`). TODO: tournament mode.
+  are local times (`profileTime()`). Tournament mode: see "Tournament".
 ## Activity `jigsaw` ("Puslespillet", from `yard`)
 
 Handler `FUN_00469960` (`jigsaw.cpp`, code 0x469910..0x46d1f0), music
@@ -2788,8 +3137,10 @@ under the mouse (`FUN_00407ec0`), the list keys (`FUN_00407f60`: PgUp/PgDn,
 Home/End, Up/Down) move the selection and set the scroll bar to the top,
 Enter = OK, Escape and close = Cancel. Returns the selected row (and its
 id) for OK, else -1. Engine: `runListDialog()` (bitmap rows only; flag
-0x100, rows rendered from strings by `FUN_00408720`, is not ported; the
-fence renders its string rows itself). Used
+0x100, rows rendered from strings by `FUN_00408720` in the list font
+`DAT_005385a4` (Amerigo BT_14_ once the tournament or the fence set it),
+is not ported: the fence and the tournament render their string rows
+themselves). Used
 by jigsaw, sliding, fence (`FUN_00467990` / `FUN_00467a20`), colorfill
 (`FUN_00461970`), the 3D viewer (`FUN_0047d880`) and `FUN_0041a080`.
 
@@ -4125,6 +4476,15 @@ registration of a sub game one second after the start, with its medal
 table and title: awards, then the dialog; `test_highscore_medal=<n>`
 first raises every other sub game's medal to n so the lowest medal can
 rise; the medal, row and car parts are logged).
+`test_tournament=<scene>[:<version>],...;<player>[:<level>],...` (a
+tournament with these games and players, level 0 easy .. 2 hard, starts
+as soon as the first scene runs; the players need not be profiles, the
+active profile owns it), `test_tournament_autoscore=<ms>[,<score>,...]`
+(in a tournament every sub game round ends <ms> after its PLAYERREADY
+box closed: the next score of the list, cycled, or a random one is
+registered as if the game had ended), e.g. `test_tournament=lettersort,
+beemaze;A:1,B:2` with `test_tournament_autoscore=3000,500,800,800,200`
+and `autokey` Returns for the boxes runs a whole tournament.
 `test_mahjong=<n>` (mahjong: a game starts at once and at its first tick
 all tiles but n are removed, leaving n/2 matching pairs that are all
 free; a negative n removes the hint's pair until none is left, usually
@@ -4168,8 +4528,8 @@ From `sceneindex/scene.ini` and `language.ini` (Gold edition). Tick off as
 they get ported; each needs a scene class, `createScene()` and
 `FlaaklypaEngine::startGame()`.
 
-Sub games (`[subgame]`, score based). Common gaps of the ported ones:
-profiles / tournament mode.
+Sub games (`[subgame]`, score based). All ported ones have their
+tournament mode (see "Tournament").
 
 | Done | Scene | Title | Started from | Data |
 |---|---|---|---|---|

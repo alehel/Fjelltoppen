@@ -28,6 +28,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/hustle.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -143,8 +144,17 @@ void HustleScene::onInit(int arg) {
 
 	addAnim("start_0", Anim::kDefaultPos, Anim::kDefaultPos, 0);
 	addAnim("cups", Anim::kDefaultPos, Anim::kDefaultPos, 10);
-	// TODO: tournament mode (FUN_00419490): "tournament:PLAYERREADY" message
-	// box, the player's level as _levelBase and an automatic start.
+
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the clock clip plays as if it had been clicked (FUN_00412b90),
+	// and the game starts when it ends. The original also asks for the
+	// player's level here (FUN_004194a0) but does not use it; startGame()
+	// asks again.
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Hustle: tournament mode, starting at once");
+		_vm->tournament()->showPlayerReady();
+		playAnim("start_0");
+	}
 }
 
 // FUN_0043d040: buttons, text fields, the banana bar and the stake slider.
@@ -310,8 +320,13 @@ void HustleScene::startGame() {
 	_clockStart = g_engine->getGameMillis();
 	_clockRunning = true;
 	_state = kStateBetting;
+	// The base of the shuffle level (the bet adds stake level / 9): 1, in
+	// tournament mode (FUN_00419490) the player's level (FUN_004194a0: 0
+	// easy, 1 medium, 2 hard).
 	_levelBase = 1;
-	// TODO: tournament mode: _levelBase from the player's tournament entry
+	if (_vm->tournament()->isActive())
+		_vm->tournament()->player(nullptr, &_levelBase);
+	debug(1, "Hustle: game starts, level base %d", _levelBase);
 	_rounds = 0;
 	_handFrame = -1;
 	setBananas(100);
@@ -426,7 +441,9 @@ void HustleScene::gameOver(int bananas) {
 	// in the nested frames. The clock timer keeps ticking as it does after
 	// the box in the original (it only stops itself when the time is up).
 	_vm->messageBox("interfaceh:GAMEOVER", bananas > kMinBet ? "hustle:TIMEOUT" : "hustle:NOMONEY", MessageBox::kButtonOk);
-	// FUN_0041f9a0(0, bananas, 0x4d9d68, 0)
+	// FUN_0041f9a0(0, bananas, 0x4d9d68, 0); in tournament mode the score
+	// goes to the tournament, which moves on (the next player or the
+	// results). Everything above runs in tournament mode too.
 	registerScore(_vm, "", bananas, kMedals);
 }
 

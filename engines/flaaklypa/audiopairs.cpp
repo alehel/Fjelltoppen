@@ -26,6 +26,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -174,9 +175,13 @@ void AudiopairsScene::initScreen() {
 	playAnim("start");
 	_compareDelay = kCompareDelay;
 
-	// TODO: with an active player profile (FUN_00419490) the original shows
-	// the "tournament:PLAYERREADY" message box (FUN_00419660) and starts the
-	// game at once (FUN_004290a0).
+	// In tournament mode (FUN_00419490) the "tournament:PLAYERREADY" box
+	// (FUN_00419660), then the game starts at once (FUN_004290a0).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Audiopairs: tournament round");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 void AudiopairsScene::drawLabel(const char *name, const Common::String &text) {
@@ -457,8 +462,10 @@ void AudiopairsScene::startGame() {
 	_lives = kLivesAtStart;
 	updateLives();
 	_level = 0;
-	// TODO: with a profile the level starts at twice its difficulty
-	// (FUN_004194a0, profile field +0x24).
+	// In tournament mode (FUN_00419490) the level starts at twice the
+	// player's level (FUN_004194a0: 0, 2 or 4).
+	if (_vm->tournament()->isActive())
+		_level += _vm->tournament()->playerLevel() * 2;
 	setState(kStateClearAll);
 }
 
@@ -491,10 +498,12 @@ void AudiopairsScene::gameOver() {
 	setState(kStateIdle);
 	// Modal: the nested frames only see the idle state (no timer is armed).
 	_vm->messageBox("interfaceh:GAMEOVER", "audiopairs:ENDMESSAGE", MessageBox::kButtonOk);
-	// FUN_0041f9a0(0, score, 0x49d7d8, 0)
+	// FUN_0041f9a0(0, score, 0x49d7d8, 0); in tournament mode the score
+	// goes to the tournament, whose next round follows.
 	registerScore(_vm, "", _score, kAwards);
-	// Then (not in tournament mode) the start button comes back.
-	playAnim("start");
+	// Then (not in tournament mode, FUN_00419490) the start button comes back.
+	if (!_vm->tournament()->isActive())
+		playAnim("start");
 }
 
 // FUN_00429600: the timer handler, for both timers.

@@ -265,6 +265,20 @@ public:
 	void clear();
 	/** FUN_00408010: adds a row; the list takes the bitmap. */
 	void addItem(Graphics::ManagedSurface *item);
+	/**
+	 * FUN_00408010 exactly: inserts a row after the selected one (the first
+	 * row of an empty list) and selects it; the list takes the bitmap, data
+	 * is the row's value.
+	 */
+	void insertItem(Graphics::ManagedSurface *item, int data = 0);
+	/** FUN_00408920: replaces a row's bitmap (the list takes it) and value. */
+	void setItem(int index, Graphics::ManagedSurface *item, int data);
+	/** FUN_004088c0: a row's value, 0 outside the list. */
+	int itemData(int index) const;
+	/** FUN_004081e0 / FUN_00408220: removes the selected row; the selection stays in the list. */
+	bool removeSelected();
+	/** FUN_00408330: moves the selected row delta rows up or down (clamped); it stays selected. */
+	void moveSelected(int delta);
 	int count() const { return _items.size(); }
 	/** FUN_00408850: the selected row, -1 without rows. */
 	int selected() const { return _items.empty() ? -1 : _selected; }
@@ -289,6 +303,7 @@ private:
 	Common::Rect _rect;
 	uint32 _barColour;
 	Common::Array<Graphics::ManagedSurface *> _items;
+	Common::Array<int> _data;   ///< the rows' values
 	int _selected, _top, _rows, _rowHeight;
 };
 

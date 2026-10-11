@@ -33,6 +33,7 @@
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/sound.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -413,7 +414,9 @@ void BugzzzScene::onInit(int arg) {
 		_panels[i].next = nullptr;
 		_panels[i].time = 0;
 	}
-	setPanelMessages(4, "bugzzz:JOINMSG1");   // JOINMSG2 in tournament mode
+	// The free colours' panels: "press n to join", in tournament mode
+	// (FUN_00419490) "not available".
+	setPanelMessages(4, _vm->tournament()->isActive() ? "bugzzz:JOINMSG2" : "bugzzz:JOINMSG1");
 	setPanelMessages(5, "bugzzz:READYMSG2");
 
 	for (int i = 0; i < kPlayers; i++)
@@ -815,10 +818,11 @@ void BugzzzScene::setSpeed(Worm &w, float speed) {
 	w.speed = speed;
 }
 
-// FUN_00433890: a new game for a player.
+// FUN_00433890: a new game for a player; one life in tournament mode
+// (FUN_00419490), else three.
 void BugzzzScene::resetPlayer(int i) {
 	Worm &w = _worms[i];
-	w.lives = 3;    // 1 in tournament mode
+	w.lives = _vm->tournament()->isActive() ? 1 : 3;
 	w.score = 0;
 	w.frags = 0;
 	w.deaths = 0;
@@ -1659,6 +1663,13 @@ void BugzzzScene::startGame() {
 	if (!_playerCount)
 		return;
 	_level = _startLevel;
+	// Tournament mode (FUN_00419490): the player's level (FUN_004194a0: 0
+	// easy, 1 medium, 2 hard) x 2 levels further on.
+	int level = 0;
+	if (_vm->tournament()->player(nullptr, &level) >= 0) {
+		_level += level * 2;
+		debug(1, "Bugzzz: tournament round, level %d", _level + 1);
+	}
 	buildGameScreen();
 	for (int i = 0; i < kPlayers; i++) {
 		if (_selected[i]) {
@@ -1888,9 +1899,12 @@ void BugzzzScene::backToMenu() {
 }
 
 // FUN_00437a10: a colour button (or its key) toggles the player before a
-// game; during a game it lets a player join in two steps.
+// game; during a game it lets a player join in two steps. Neither in
+// tournament mode (FUN_00419490): green plays alone.
 void BugzzzScene::playerClicked(int p) {
 	if (p < 0 || p >= kPlayers)
+		return;
+	if (_vm->tournament()->isActive())
 		return;
 	Panel &panel = _panels[p];
 	if (!_running) {
@@ -2000,6 +2014,17 @@ void BugzzzScene::onUpdate() {
 	updatePanels();
 	clearPlayfield();
 	if (_inMenu) {
+		// Tournament mode (FUN_00419490): no selection; the "player ready"
+		// box (FUN_00419660, with DAT_00661fc4 set around it, which makes
+		// this handler skip), then the game starts at once (FUN_00433790)
+		// with green, the only player selected.
+		if (_vm->tournament()->isActive()) {
+			_messageBox = true;
+			_vm->tournament()->showPlayerReady();
+			_messageBox = false;
+			startGame();
+			return;
+		}
 		if (!_menuBuilt) {
 			backToMenu();
 			buildMenu(true);

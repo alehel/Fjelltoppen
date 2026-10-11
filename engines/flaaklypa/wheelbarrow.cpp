@@ -26,6 +26,7 @@
 #include "flaaklypa/resources.h"
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
+#include "flaaklypa/tournament.h"
 #include "flaaklypa/wheelbarrow.h"
 
 namespace Flaaklypa {
@@ -175,8 +176,14 @@ void WheelbarrowScene::onInit(int arg) {
 	playAnim("birds");
 	_basketCapacity = kBasketCapacity;
 
-	// With an active profile the original shows "tournament:PLAYERREADY"
-	// and starts right away at level 3 * <profile value>. TODO: profiles.
+	// In tournament mode (FUN_00419490) the "tournament:PLAYERREADY" box
+	// (FUN_00419660), then the game starts at once (FUN_0044f110) at three
+	// times the player's level (FUN_004194a0: 0, 3 or 6).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Wheelbarrow: tournament round");
+		_vm->tournament()->showPlayerReady();
+		startGame(_vm->tournament()->playerLevel() * 3);
+	}
 }
 
 // FUN_0044f5f0
@@ -247,12 +254,16 @@ void WheelbarrowScene::gameOver() {
 	// Modal: the game has stopped (_running, no spawn timer), the nested
 	// frames leave Solan and the apples alone.
 	_vm->messageBox("interfaceh:GAMEOVER", "wheelbarrow:GAMEOVER", MessageBox::kButtonOk);
-	// FUN_0041f9a0("wheelbarrow:LONGNAME", score, 0x49f1f8, 0)
+	// FUN_0041f9a0("wheelbarrow:LONGNAME", score, 0x49f1f8, 0); in tournament
+	// mode the score goes to the tournament, whose next round follows.
 	static const int kMedals[4] = { 2500, 5000, 10000, 15000 };
 	registerScore(_vm, "wheelbarrow:LONGNAME", _score, kMedals);
-	// Then (not in tournament mode) the start button comes back.
-	showStartScreen();
-	clearApples();
+	// Then (not in tournament mode, FUN_00419490) the start button comes
+	// back and the apples are cleared.
+	if (!_vm->tournament()->isActive()) {
+		showStartScreen();
+		clearApples();
+	}
 }
 
 // FUN_0044f520: shows the pies and sets the ripening rate of the level.

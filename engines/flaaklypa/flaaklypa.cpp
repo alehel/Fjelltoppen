@@ -30,6 +30,7 @@
 #include "flaaklypa/profile.h"
 #include "flaaklypa/resources.h"
 #include "flaaklypa/scenes.h"
+#include "flaaklypa/tournament.h"
 
 #include "common/config-manager.h"
 #include "common/debug.h"
@@ -63,6 +64,7 @@ FlaaklypaEngine::FlaaklypaEngine(OSystem *syst, const ADGameDescription *gameDes
 }
 
 FlaaklypaEngine::~FlaaklypaEngine() {
+	delete _tournament;
 	delete _profile;
 	delete _scene;
 	delete _language;
@@ -81,6 +83,9 @@ Common::String FlaaklypaEngine::getGameId() const {
 }
 
 bool FlaaklypaEngine::changeScene(const Common::String &name, int arg) {
+	// After gotoScene() the original runs the new scene already.
+	if (_nextSceneForced)
+		return false;
 	if (!confirmLeave())
 		return false;
 	_nextScene = name;
@@ -88,12 +93,25 @@ bool FlaaklypaEngine::changeScene(const Common::String &name, int arg) {
 	return true;
 }
 
-// FUN_0040cd90: leaving a sub game with a round in progress asks first;
-// only Yes leaves (and clears the flag).
+void FlaaklypaEngine::gotoScene(const Common::String &name, int arg) {
+	_nextScene = name;
+	_nextSceneArg = arg;
+	_nextSceneForced = true;
+}
+
+// FUN_0040cd90: leaving a sub game in a tournament asks whether to abort
+// the tournament (FUN_00419410: Yes ends it and opens the setup screen
+// instead, the change asked for never happens); else leaving one with a
+// round in progress asks first, only Yes leaves (and clears the flag).
 bool FlaaklypaEngine::confirmLeave() {
-	if (!_scene || !_scene->def() || _scene->def()->type != kSceneSubGame || !_gameRunning)
+	if (!_scene || !_scene->def() || _scene->def()->type != kSceneSubGame)
 		return true;
-	// TODO: tournament mode (FUN_00419490 / FUN_00419410) leaves at once.
+	if (_tournament && _tournament->isActive()) {
+		_tournament->askAbort();
+		return false;
+	}
+	if (!_gameRunning)
+		return true;
 	int r = messageBox("interfaceh:WARNING", "gamec:SUBGAMEABORT", MessageBox::kButtonYes | MessageBox::kButtonNo);
 	_gameRunning = r != MessageBox::kButtonYes;
 	return !_gameRunning;
@@ -572,6 +590,7 @@ void FlaaklypaEngine::switchScene() {
 	Common::String name = _nextScene;
 	int arg = _nextSceneArg;
 	_nextScene.clear();
+	_nextSceneForced = false;
 	// Leaving always clears it in the original too (Yes in confirmLeave()).
 	_gameRunning = false;
 
@@ -718,6 +737,9 @@ void FlaaklypaEngine::runFrame() {
 		ConfMan.removeKey("test_highscore", ConfMan.getActiveDomainName());
 		testHighscore(this, spec);
 	}
+	// "test_tournament..." (see Tournament::runTests())
+	if (!_dialog && _scene)
+		_tournament->runTests();
 
 	// A scene change requested under a dialog waits until the dialog is gone
 	// (the navigator closes itself before it changes the page).
@@ -800,6 +822,7 @@ Common::Error FlaaklypaEngine::run() {
 	_resources = new Resources();
 	_cursor = new Cursor();
 	_music = new Music();
+	_tournament = new Tournament(this);
 
 	// Development aid: "profile_import=<path>" adds an original .pfl file as
 	// a new profile.

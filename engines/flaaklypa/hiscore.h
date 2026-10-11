@@ -172,10 +172,12 @@ int addScore(FlaaklypaEngine *vm, uint32 key, int32 score, const int *medals, in
  * last argument, a callback run after the dialog, is the caller's code
  * after this call. Returns the entry's row in the player's table or -1.
  *
- * TODO: tournament mode (FUN_00419490) is not ported: there the score goes
- * to the tournament's table (FUN_004196c0), the next game of the
- * tournament starts (FUN_00419740) and neither the dialog nor the callback
- * come.
+ * In tournament mode (FUN_00419490) the score only goes into the
+ * tournament's table of the game (Tournament::registerScore(): FUN_004196c0
+ * and FUN_00419740, the next player's round or the results screen, a scene
+ * change at the end of the frame); there are no awards and no dialog, and
+ * -1 comes back at once. The original does not run the callback then: the
+ * callers skip their code after this call in tournament mode.
  */
 int registerScore(FlaaklypaEngine *vm, const Common::String &title, int32 score, const int *medals,
                   uint32 key = 0, int flags = kScorePoints);

@@ -29,6 +29,7 @@
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/flaaklypa.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -199,13 +200,15 @@ void ButterflyScene::initScreen() {
 	defineAnim("catcher", true, true, 0, 0, 0, kZCatcher);
 
 	// Buttons (BUTTON module, z 150): help at (0, 0), exit at (728, 0) and
-	// the album at (24, 541). No album in tournament mode.
+	// the album at (24, 541). No album in tournament mode (FUN_00419490).
 	defineAnim("help_0", false, true, kHotspotHelp, 0, 0, kZButton)->add(0, 0, kZButton);
 	defineAnim("help_1", false, true, kHotspotHelp, 0, 0, kZButton);
 	defineAnim("exit_0", false, true, kHotspotExit, 728, 0, kZButton)->add(728, 0, kZButton);
 	defineAnim("exit_1", false, true, kHotspotExit, 728, 0, kZButton);
-	defineAnim("album_0", false, true, kHotspotAlbum, 24, 541, kZButton)->add(24, 541, kZButton);
-	defineAnim("album_1", false, true, kHotspotAlbum, 24, 541, kZButton);
+	if (!_vm->tournament()->isActive()) {
+		defineAnim("album_0", false, true, kHotspotAlbum, 24, 541, kZButton)->add(24, 541, kZButton);
+		defineAnim("album_1", false, true, kHotspotAlbum, 24, 541, kZButton);
+	}
 	_highlighted = 0;
 
 	static const char *const borders[] = {
@@ -219,6 +222,15 @@ void ButterflyScene::initScreen() {
 	playAnim("startanim");
 	playMusic("subgame5");
 	_inGame = false;
+
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the game starts at once as if the start clip had been clicked
+	// (FUN_0043a820: "timerstart" plays, the net appears).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Butterfly: tournament mode, starting at once");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 // FUN_0043a8c0: the close handler frees the fonts and text areas.
@@ -347,11 +359,17 @@ void ButterflyScene::gameOver() {
 	removeAll(_butterflies);
 	removeAll(_enemies);
 	// FUN_0041b740(7, species, 0x10, 0): the species caught go to the
-	// profile's butterfly collection, silently (not in tournament mode)
-	for (int i = 0; i < kSpeciesCount; i++)
-		if (_caught[i] > 0)
-			awardGive(_vm, kAwardButterfly, i, kAwardSpecificItem);
-	// FUN_0041f9a0(0, score, 0x49e53c, 0x43bb90)
+	// profile's butterfly collection, silently; not in tournament mode
+	// (FUN_00419490)
+	const bool tournament = _vm->tournament()->isActive();
+	if (!tournament) {
+		for (int i = 0; i < kSpeciesCount; i++)
+			if (_caught[i] > 0)
+				awardGive(_vm, kAwardButterfly, i, kAwardSpecificItem);
+	}
+	// FUN_0041f9a0(0, score, 0x49e53c, 0x43bb90). In tournament mode the
+	// score goes to the tournament, which moves on (the next player or the
+	// results), and the callback is not run: no start clip comes back.
 	static const int kMedals[4] = { 1500, 3000, 5000, 7000 };
 	registerScore(_vm, "", _score, kMedals);
 	for (int i = 0; i < 4; i++) {
@@ -359,6 +377,8 @@ void ButterflyScene::gameOver() {
 		if (isAnimAdded(name.c_str()))
 			removeAnim(name.c_str());
 	}
+	if (tournament)
+		return;
 	// The high score dialog's callback (0x43bb90): the start clip again.
 	removeAnim("timerend");
 	addAnim("timerstart", Anim::kDefaultPos, Anim::kDefaultPos, 0);
@@ -377,7 +397,15 @@ void ButterflyScene::onAnimFinished(Anim *a) {
 		_levelStart = 0;
 		memset(_caught, 0, sizeof(_caught));
 		_tick = 0;
-		setLevel(0);
+		// Tournament mode (FUN_00419490): the game starts at the player's
+		// level (FUN_004194a0: 0 easy, 1 medium, 2 hard) * 3, i.e. level
+		// 1, 4 or 7.
+		int level = 0;
+		if (_vm->tournament()->isActive()) {
+			_vm->tournament()->player(nullptr, &level);
+			level *= 3;
+		}
+		setLevel(level);
 		_lastTick = g_engine->getGameMillis();
 		debug(1, "Butterfly: game starts at %u ms", _lastTick);
 	} else if (n == "timerend") {

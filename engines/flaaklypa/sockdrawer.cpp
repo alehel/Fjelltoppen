@@ -26,6 +26,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/sockdrawer.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -156,8 +157,20 @@ void SockdrawerScene::onInit(int arg) {
 	resetTimerDisplay();
 	playMusic("subgame3");
 
-	// TODO: tournament mode (FUN_00419490 != 0): shows "tournament:PLAYERREADY",
-	// starts at level 5 * player index and plays "start" right away.
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the game starts at once (as a click on the start cabinet, but
+	// without FUN_0040d8a0(1)) at the player's level (FUN_004194a0: 0 easy,
+	// 1 medium, 2 hard) * 5, i.e. table entry 0, 5 or 10.
+	if (_vm->tournament()->isActive()) {
+		_vm->tournament()->showPlayerReady();
+		resetGame();
+		int level = 0;
+		_vm->tournament()->player(nullptr, &level);
+		_level = level * 5;
+		debug(1, "Sockdrawer: tournament mode, starting at level %d", _level);
+		startRound();
+		playAnim("start");
+	}
 }
 
 // FUN_0044b860: the hatches, 5 x 4, 114 pixels apart. Each shows the first
@@ -565,6 +578,10 @@ void SockdrawerScene::gameOver() {
 	_vm->messageBox("interfaceh:GAMEOVER", "sockdrawer:ENDMESSAGE", MessageBox::kButtonOk);
 	// FUN_0041f9a0(0, score, 0x49f080, 0x44c3e0)
 	registerScore(_vm, "", _score, kMedals);
+	// In tournament mode the score went to the tournament, which has moved
+	// on (the next player or the results), and the callback is not run.
+	if (_vm->tournament()->isActive())
+		return;
 	// The callback (0x44c3e0) of the high score dialog: close the hatches
 	// and show the start cabinet again.
 	closeAllDrawers();

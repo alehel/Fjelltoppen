@@ -51,6 +51,7 @@ class Music;
 class Profile;
 class Resources;
 class Scene;
+class Tournament;
 
 struct FlaaklypaGameDescription;
 
@@ -95,6 +96,7 @@ private:
 	Scene *_scene;
 	Common::String _nextScene;
 	int _nextSceneArg;
+	bool _nextSceneForced = false;  ///< the pending change comes from gotoScene()
 	bool _gameRunning = false;     ///< DAT_0054bf98, see setGameRunning()
 	float _volumes[3][3];           ///< [VolumeGroup][VolumeChannel]
 	Common::String _subtitleLanguage; ///< empty: the game's language
@@ -123,6 +125,7 @@ private:
 	int64 _playTimeStart = -1;
 	InfoRequest _infoRequest;     ///< DAT_004a6c9c: when the profile was selected (ms), -1 once checked
 	ActivityRequest _activityRequest;
+	Tournament *_tournament = nullptr; ///< the TOURNAMENT module's state
 	bool _profileDirty = false;
 	uint32 _autoshotTime = 0;
 	Graphics::FrameLimiter *_limiter = nullptr;
@@ -167,9 +170,19 @@ public:
 	/**
 	 * Leaves the current scene for another one at the end of the frame
 	 * (FUN_0040cd70). Leaving a sub game while setGameRunning(true) first
-	 * asks "gamec:SUBGAMEABORT"; returns false when the player stays.
+	 * asks "gamec:SUBGAMEABORT"; returns false when the player stays. In
+	 * a tournament leaving a sub game asks "tournament:ABORT" instead and
+	 * returns false either way (Yes ends the tournament and goes to its
+	 * setup screen).
 	 */
 	bool changeScene(const Common::String &name, int arg = 0);
+	/**
+	 * FUN_0040ccd0: leaves the current scene for another one at the end of
+	 * the frame without the sub game abort question (the tournament's own
+	 * scene changes). Later changeScene() calls in the same frame are
+	 * ignored: the original has switched to the new scene already.
+	 */
+	void gotoScene(const Common::String &name, int arg = 0);
 	/** Starts a sub game or activity from a story page. */
 	void startGame(const Common::String &name);
 	/**
@@ -207,6 +220,8 @@ public:
 		showActivity(request);
 	}
 	ActivityRequest &activityRequest() { return _activityRequest; }
+	/** The tournament (TOURNAMENT module, tournament.h). */
+	Tournament *tournament() const { return _tournament; }
 
 	/** ScummVM's subtitles option (the original's subtitle setting, DAT_0053dac4). */
 	bool subtitlesEnabled() const;

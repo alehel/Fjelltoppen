@@ -136,7 +136,7 @@ private:
 	bool _clockRunning;        ///< DAT_00670e78
 	uint32 _clockStart;        ///< DAT_00670d2c
 	int _handFrame;
-	int _levelBase;            ///< DAT_00670d30 (1, or the tournament setting)
+	int _levelBase;            ///< DAT_00670d30 (1, in tournament mode the player's level 0..2)
 	int _levelIndex;           ///< DAT_00670d34, 0..11
 	int _bananas;              ///< DAT_00670d38
 	int _bet;                  ///< DAT_0066fc30

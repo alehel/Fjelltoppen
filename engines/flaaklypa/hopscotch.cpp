@@ -28,6 +28,7 @@
 #include "flaaklypa/hopscotch.h"
 #include "flaaklypa/music.h"
 #include "flaaklypa/resources.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -126,8 +127,13 @@ void HopscotchScene::onInit(int arg) {
 	_state = kStateIdle;
 	setGrid(0, false);
 
-	// TODO: with a player profile the original shows the tournament
-	// "PLAYERREADY" message box (FUN_00419660) and starts the game at once.
+	// In tournament mode (FUN_00419490) the "tournament:PLAYERREADY" box
+	// (FUN_00419660), then the game starts at once (FUN_0043c310).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Hopscotch: tournament round");
+		_vm->tournament()->showPlayerReady();
+		startGame();
+	}
 }
 
 // ---- buttons (BUTTON module) ---------------------------------------------
@@ -482,8 +488,10 @@ void HopscotchScene::startGame() {
 	_vm->setGameRunning(true);
 	resetScore();
 	int level = 0;
-	// TODO: with a profile the start level is three times the profile's
-	// difficulty setting (FUN_004194a0, value at +0x24).
+	// In tournament mode (FUN_00419490) the start level is three times the
+	// player's level (FUN_004194a0: 0, 3 or 6).
+	if (_vm->tournament()->isActive())
+		level = _vm->tournament()->playerLevel() * 3;
 	startLevel(level);
 }
 
@@ -632,11 +640,14 @@ void HopscotchScene::gameOver() {
 	setState(kStateIdle);
 	resetJumper(_lud);
 	resetJumper(_sol);
-	// FUN_0041f9a0(0, score, 0x49e918, 0)
+	// FUN_0041f9a0(0, score, 0x49e918, 0); in tournament mode the score
+	// goes to the tournament, whose next round follows.
 	static const int kMedals[4] = { 3000, 5000, 7000, 10000 };
 	registerScore(_vm, "", _score, kMedals);
-	// Then (not in tournament mode) the score box shows the title again.
-	drawBoxText(_font10, _vm->getString("hopscotch:SCENENAME"));
+	// Then (not in tournament mode, FUN_00419490) the score box shows the
+	// title again.
+	if (!_vm->tournament()->isActive())
+		drawBoxText(_font10, _vm->getString("hopscotch:SCENENAME"));
 }
 
 // ---- score and hourglass -------------------------------------------------

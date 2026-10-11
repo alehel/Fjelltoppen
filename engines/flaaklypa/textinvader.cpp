@@ -28,6 +28,7 @@
 #include "flaaklypa/dialog.h"
 #include "flaaklypa/hiscore.h"
 #include "flaaklypa/textinvader.h"
+#include "flaaklypa/tournament.h"
 
 namespace Flaaklypa {
 
@@ -194,9 +195,14 @@ void TextinvaderScene::onInit(int arg) {
 	playMusic("track22");
 	showStartSign();
 	_lastTick = g_engine->getGameMillis();
-	// TODO: profiles. With an active profile the original shows the
-	// "tournament:PLAYERREADY" message box and starts the game at once
-	// (FUN_0044d720(4, 0, 0)).
+	// Tournament mode (FUN_00419490): "Is <player> ready?" (FUN_00419660),
+	// then the sign turns at once as if clicked (FUN_0044d720(4, 0, 0));
+	// the game starts when it has turned (startGame()).
+	if (_vm->tournament()->isActive()) {
+		debug(1, "Textinvader: tournament mode, starting at once");
+		_vm->tournament()->showPlayerReady();
+		turnSign();
+	}
 }
 
 void TextinvaderScene::onClose() {
@@ -259,13 +265,18 @@ void TextinvaderScene::onMouseDown(int hotspot, int x, int y) {
 		_vm->showHelp();
 		return;
 	}
-	if (hotspot == kHotspotSign && !_running && !_starting) {
-		// The sign turns round and the lights come on.
-		_startTime = g_engine->getGameMillis();
-		_starting = true;
-		_signClip->play();
-		_sounds[kSoundStart]->play();
-	}
+	if (hotspot == kHotspotSign)
+		turnSign();
+}
+
+// FUN_0044d720 (hotspot 4): the sign turns round and the lights come on.
+void TextinvaderScene::turnSign() {
+	if (_running || _starting)
+		return;
+	_startTime = g_engine->getGameMillis();
+	_starting = true;
+	_signClip->play();
+	_sounds[kSoundStart]->play();
 }
 
 // 0x110 -> FUN_0044c920: every finished clip is removed; the turning sign
@@ -282,7 +293,12 @@ void TextinvaderScene::onAnimFinished(Anim *a) {
 
 // FUN_0044c950
 void TextinvaderScene::startGame() {
-	_difficulty = 0; // TODO: profile setting (FUN_004194a0)
+	// DAT_00687500: the tournament player's level (FUN_004194a0: 0 easy,
+	// 1 medium, 2 hard) in tournament mode (FUN_00419490), else 0.
+	_difficulty = 0;
+	if (_vm->tournament()->isActive())
+		_vm->tournament()->player(nullptr, &_difficulty);
+	debug(1, "Textinvader: game starts, difficulty %d", _difficulty);
 	_nextBonus = rnd(3);
 	_target = -1;
 	_speed = kSpeed[_difficulty];
@@ -574,11 +590,13 @@ void TextinvaderScene::gameOver() {
 	// Modal: with _running false the nested frames neither move nor spawn
 	// words; onUpdate() returns once this comes back from its slot loop.
 	_vm->messageBox("interfaceh:GAMEOVER", "textinvader:GAMEOVER", MessageBox::kButtonOk);
-	// FUN_0041f9a0(0, score, 0x49f0a0, 0), then (not in tournament mode)
-	// the start sign comes back (FUN_0044c8b0).
+	// FUN_0041f9a0(0, score, 0x49f0a0, 0), then (not in tournament mode
+	// (FUN_00419490), where the score went to the tournament, which has
+	// moved on) the start sign comes back (FUN_0044c8b0).
 	static const int kMedals[4] = { 2500, 5000, 10000, 20000 };
 	registerScore(_vm, "", _score, kMedals);
-	showStartSign();
+	if (!_vm->tournament()->isActive())
+		showStartSign();
 }
 
 // FUN_0044d680: every n removed words is a level; odd levels add a word to

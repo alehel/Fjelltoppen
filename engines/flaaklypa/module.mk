@@ -67,6 +67,8 @@ MODULE_OBJS = \
 	sound.o \
 	subtitles.o \
 	textinvader.o \
+	tournament.o \
+	tourneyscore.o \
 	town.o \
 	tvroom.o \
 	tvstation.o \
