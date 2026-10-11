@@ -5,6 +5,7 @@ MODULE_OBJS = \
 	archive.o \
 	audiopairs.o \
 	award.o \
+	balloonhunt.o \
 	beemaze.o \
 	birthday.o \
 	bouquet.o \

@@ -5,7 +5,7 @@ hotspot mask, cursor tables, z-sorted Smacker/bitmap elements, animation
 sequences, the two characters with idle/bored/reaction lists, timers,
 music, and Bink audio in Smacker files (added to `video/smk_decoder.cpp`).
 The menu (partly), the scene index, every story page (the race aside),
-the message box, navigator and help dialogs, 15 sub games and several
+the message box, navigator and help dialogs, 16 sub games and several
 activities work (see the checklist at the end), with player profiles
 (save slots), the award dialog and the high score tables with their
 medals. Not done: the remaining sub games and activities, the high score
@@ -68,7 +68,7 @@ Totals for the Gold edition: 6264 files, about 1 GB uncompressed.
 | `.ini` | 244 | Windows INI. `sound.ini` volumes, `help.ini` help text, `track.ini` / `car.ini` / `stage*.ini` race parameters, `scene.ini` scene index, `language.ini` all UI strings, `subtitle/*.ini` subtitles. |
 | `.pfl` | 10 | Player profiles (save games). |
 | `.tun` | 20 | Tunes for the `fence` music editor. |
-| `.nod`, `.ai`, `.l`, `.map`, `.eff`, `.fff` | few | Binary race track collision/path data and `mountain`/`balloonhunt` level maps (`mountain`'s `.l`/`.fff`/`.eff`: see Sub game `mountain`). |
+| `.nod`, `.ai`, `.l`, `.map`, `.eff`, `.fff` | few | Binary race track collision/path data and `mountain`/`balloonhunt` level maps (`mountain`'s `.l`/`.fff`/`.eff`: see Sub game `mountain`; `balloonhunt`'s `.map`: see Sub game `balloonhunt`). |
 
 INI files are Windows-1252. The executable also reads `*.lst` files (not found
 in the data; probably runtime generated).
@@ -1453,6 +1453,182 @@ work. Engine: `mountain.cpp`.
   (`FUN_0040ef90(2)`). Speed steps are per frame like the original's.
   Development aid: `mountain_skip=<x>` / `mountain_skip=n<node>`.
 
+## Sub game `balloonhunt` ("Solans ballongjakt", add-on set 2, from `outtent`, 640x480)
+
+Solan flies his gyrocopter over an island and hits numbered balloons in
+order, drawn by a software 3D renderer of its own (sky and ground planes,
+billboards). Handler `0x429960` (not a function in the Ghidra project;
+byte table 0x429a90, jump table 0x429a5c: 0x103 -> `FUN_00429b10` init,
+0x104 -> `42bdd0` close, 0x105 -> `42f050` (press noted, scroll bar),
+0x106 -> `42f080`, 0x10c -> `42ef20` (Escape; returns 1 for it), 0x110
+-> `42f190` (`solan` done: removed), 0x112 -> `42c110` frame, 0x116 ->
+`42f090` buttons, 0x117 -> `429ab0` scroll bar, 0x119 -> `42dcf0` after
+the scene is drawn, 0x11b / 0x11c -> `42ef50` / `42eff0`); the code runs
+0x429910..0x42f1af (0x42f1b0 is beemaze). No music, no profile values,
+no awards besides the medals. Engine: `balloonhunt.cpp`.
+
+* **Init** (`FUN_00429b10`): mode names `balloonhunt:NORMAL` /
+  `PRACTICE` / `SINGLE`, `tracks.ini`, 640x480, `Amerigo BT_10_`,
+  `autopilot` (lang2), `cursor` and `numbers` (24 glyphs of 10x10 in a
+  row), 16 random masks for the fading sprites (`FUN_0042a410`: 128x128
+  bytes, mask n is 0 where `rand() % 16 < n + 1`), `skynew` (1024x1024),
+  `FUN_0042c080` (projection 320 / tan(fov / 2) with fov (float) pi/2,
+  1 / cos(fov / 2), tables i x 0.01 and i x 1.5 for i < 100), the world
+  (`FUN_0042a470("yo", "yo")`), Solan's 41 pictures (256x256, below),
+  `map3` (the radar, 1024x1024), `compskive` (64x64 compass card),
+  `0000`..`0606` (gyroscope, 65x65: "%02d%02d" of the climb and bank
+  steps), the 24 balloons `01`..`24` (128x128) with `small 01`.. (30x30,
+  table 0x4cbd68, 0x90 bytes: name, small name, rise speed 10, pointers),
+  `mix2.wav`, buttons at z 3. Tournament mode (`FUN_00419490`) would start
+  a points round at the tournament's track (not ported); else the start
+  screen. All bitmaps but the tiles, the sky, the maps and the billboards
+  get their pixel (0, 0) as colour key.
+* **World** (`FUN_0042a470`): one unit = one texel. `fulltile.bmp`
+  (512x3136) is cut into 64x64 tiles row by row (392), each with 32, 16
+  and 8 texel versions (`FUN_0042a9a0`: 2x2 means in RGB565).
+  `maps/yo.MAP`: int32 columns (400), int32 rows (400), then an int32 per
+  cell, row by row: tile + 1 (0 or less: the sea tile 0xb4, past the
+  tiles: the last one), into a 1024 x 1024 map (the rest sea; it wraps
+  every 65536 units). `maps/yo.txt`: a billboard per line, `"<bitmap>" x
+  y z` (`%s %f %f %f`, all times 4; 3190 of `sprite1`..`9`, y 0), bottom
+  aligned, 64x64 units, kept in 8 x 8 cells of 2000 units (cell = x /
+  2000 + 8 x z / 2000, clamped, at most 1000 each); the 50 `sprite4` ones
+  (houses) are the practice balloons' launch sites. The bitmaps are shared
+  by name.
+* **Start screen** (`FUN_0042ba40`): buttons help 0x66 `help out/in`
+  (0, 0) and exit 0x67 `exit out/in` (583, 0) transparent, start 99
+  `strbtnoff/on` (287, 409) labelled `balloonhunt:START`, mode arrows 0xc9
+  `left arrow out/left arrow` (214, 345) and 0xca `right arrow ...` (409,
+  345); the mode name centred in (232, 342) 175x19 z 4; `start button`
+  (202, 331) z 1; `solan` (0, 48) z 4 flies by once. The arrows step the
+  mode with wrapping (`FUN_00469910`); the time trial (`FUN_0042bb70`)
+  adds `bane velger` (253, 374) z 2, `balloonhunt:TRACK2` in (209, 377)
+  44x18, the track number in (397, 377) 26x17 (z 4) and a horizontal
+  scroll bar 0x11 (`FUN_004090e0(0x11, 283, 379, 76, 14, "slider",
+  0x100)`, opaque thumb at z 5 centred on the position, arrows 2000 at
+  (256, 379) / 2001 at (370, 379), value 0..sections - 1 = round((x -
+  283) x range / 76), halves away from zero; a press on the thumb drags
+  it, one on the track widened by half the thumb moves it there; the drag
+  end snaps; event 0x117 -> `FUN_00429ab0`: the number + 1). Start:
+  NORMAL -> `FUN_0042ad60(2, 0)`, PRACTICE -> `(1, 0)`, SINGLE -> `(3,
+  track)`. Escape and exit leave the scene (`FUN_0040cc30`).
+* **Round** (`FUN_0042ad60(mode, track)`, mode `DAT_00608fe0`: 1 practice,
+  2 points, 3 time trial): no backdrop, the looping clips `wind1`,
+  `seashore`, `off limits1`, `forest1`, `sheep` at volume 0, `mix2` looping
+  at 85 % of the sound volume, gas 100, speed 300, zoom 120, the
+  interface bitmaps (z 1), labels (z 2, centred, `Amerigo BT_10_`): points
+  (279, 11) 83x15, time (162, 11) 66x12, level (411, 11) 66x12 and the
+  instrument names `balloonhunt:GAS/SPEED/COMP/GYRO/ALT/NEXT` under the
+  panel; points 0, `FUN_0042b5f0`, the "sub game running" flag, no
+  system cursor, buttons help 0x66 `help-ut/inn` (0, 0) and exit 0x67
+  `exit-ut/inn` (582, 0). Exit / Escape: practice -> back to the start
+  screen (`FUN_0042c580(0)`), else leave (asks).
+* **Levels** (`FUN_0042b5f0`, `tracks.ini`): section number `DAT_005c5f28
+  % count` (20, `[level01]`..), then the number counts up (so it is the
+  level shown, 1 based): `track` (`tracks/<n>.txt`, default `track1`),
+  `size` (balloons, default 64), `startx/starty/startz` (default 6700 /
+  90 / 6700), `startangle` (degrees), speed 300, `time` (s, default 100);
+  past the 20th level two thirds, then a third of the time, rounded up to
+  the next 5 s (5 s more when exact). `tracks/<n>.txt` (`FUN_0042b820`):
+  up to 24 lines `"<name>" x y z` (name unused): x, z times 4, height -4
+  y clamped to 90..1200, balloon picture n % 24, centred. Bonus time =
+  time / max(balloons - 3, 1). Level label, the clock starts.
+* **Flight** (`FUN_0042c7a0`, own clock): x += sin(h) v dt, z += cos(h) v
+  dt. Within 10000 of (6700, 6700) the arrows move ramps left/right (1.5
+  /s) and up/down (3 /s, up only below 1200, down only above 90) towards
+  1 while held and back to 0 (clamped); beyond it the autopilot turns
+  back (the right ramp up when dz sin h - dx cos h <= 0, else the left)
+  and ignores up/down/A/Z. Roll = right - left, pitch = up - down; h +=
+  dt (0.01 trunc(99 left) - 0.01 trunc(99 right)), fmod 2 pi; height +=
+  dt (1.5 trunc(99 up) - 1.5 trunc(99 down)); A / Z +-80 /s speed (50..600),
+  height 90..1200, Page Up / Down +-70 /s radar zoom (35..250). Camera
+  (`FUN_0042cc70`) 3.5 behind, 0.7 above.
+* **Rendering** (`FUN_0042cd00`, into the 16 bit back buffer before the
+  scene's elements, rows 30..379): sky (`FUN_0042d060`): a plane at
+  -4250 around (32768, 32768), rows 30..205 in 88 lines of 2x2 pixels
+  (j = 175, 173, .. 1: d = 320 x 1.414 x 4250 / (j + 1) along the edge
+  rays heading +- pi/4, 16.16 texture steps (right - left) x 102.4 per
+  pixel but stepped per pair, sic). Ground (`FUN_0042cd30`): rows 205..379
+  (i = 0..174): d = 320 x 1.414 x camY / (i + 1), beyond 35000 d = 35000
+  - 5 i; texture coordinate = world x / z in 16.16 (tile = coordinate >>
+  22, texel >> 16 & 63); the 64/32/16/8 texel version below 1000 / 2000
+  / 3000 / beyond. Billboards (`FUN_0042d1d0`): the 3 x 3 cells around
+  the camera, projected (`FUN_0042d390`: depth along the heading, scale
+  320 / depth, x = 320 + right x scale, y = 205 - dy x scale, size x
+  scale, aligned) if 0 < depth (< 2000 for the map's), then the balloons;
+  quicksort on trunc(depth) (`FUN_0042d4e0`), drawn from the back
+  (`FUN_0042d650`: from the next whole pixel, ceil, scaled 128x128,
+  clipped to rows 30..379, key = first texel; the map's fade from depth
+  1300: level trunc((d - 1300) 16 / 700) 1..15 through mask n, looked up
+  with row x 256, sic: past the masks the port draws).
+* **After the scene** (`FUN_0042dcf0`): Solan (`FUN_0042ea50`): bank
+  step trunc(8 roll + 8), 0..16: `staylft` (0), `turnlft7..1`, `frwrd`
+  (8), `turnrht1..7`, `stayrht` (16), the three animated (70 ms a
+  frame); climbing/diving variants: step 8 with pitch > 0.1 `up1/up2`
+  (trunc(2 pitch)) or `stayup1..3`, < -0.1 `down1/2` or `staydown2/1/3`
+  (sic order); 7 / 9 beyond +-0.3 and 6 / 10 beyond +-0.1 `uplft1/2`,
+  `uprht1/2`, `downlft1/2`, `downrht1/2`; its top 235 rows keyed at (192,
+  95). Gyroscope `"%02d%02d"` of trunc(3 pitch + 3), trunc(3 - 3 roll) at
+  (394, 383). The interfaces' parts over the view (rows 30..68 of the
+  top one from its row 31, rows 336..379 of the bottom one) are blitted
+  again over him. Instruments (`FUN_0042e040`):
+  radar (`FUN_0042e2e0`, circle 92 at (275, 376): `map3` at 32 units a
+  pixel, heading up, zoom = the distance to the corners in map pixels;
+  in track rounds the remaining balloons' numbers, last first, inside the
+  circle), compass (`FUN_0042e7b0`, circle 64 at (183, 384), `compskive`
+  turned), a black arrow at (321, 422) (two triangles, radius 10),
+  needles (`FUN_0042d8e0`, triangles by `FUN_0045af64`: rows trunc(y +
+  0.999), spans [trunc, trunc)): speed (132.5, 421) white, (v - 50)
+  0.008568 + 3/4 pi; height (508.5, 421) white, (y - 90) 0.0042454 - pi/4;
+  gas (49.5, 425) black, gas 0.047124 - pi/4 (width 3 / 2.5, length 18 /
+  16). The next balloon's small picture (574, 410) in track rounds, the
+  autopilot sign (282, 413) blinking (sin(t 0.0094245) > 0). The game's
+  cursor (`cursor.bmp` at the mouse) shows for a second after the mouse
+  moved and while a button is held.
+* **Balloons** (`FUN_0042c160`): track rounds: each remaining balloon
+  grows back at 5 /s to the size; within 0.8 x its size of Solan the next
+  one is hit (`baloon-d`): next + 1 (all: `FUN_0042c510`), 11 points, 17
+  more within the bonus time since the last hit, gas + 50 (max 100); a
+  later one: `wrong ballon 1`, it shrinks to 0. Practice: every 6 s a
+  balloon of type rand % 4 rises (10 /s, from y 60, bottom aligned,
+  growing in its first second) from a random house (`FUN_0042c460`, 50
+  slots); within 28 of its centre (y + 32): a point; above 1200 it is gone.
+* **Ends**: `FUN_0042c510`: points round: + (time left) / 200 (at most
+  300), `win`, the next level; time trial: `FUN_0042c580(0)`. Points
+  round (in 0x119): gas - 2 /s; time out -> `gameover`, `FUN_0042c580(2)`
+  (`interfaceh:GAMEOVER` / `balloonhunt:OUTOFTIME`, OK), gas < 0.01 ->
+  `FUN_0042c580(1)` (`OUTOFGAS`). `FUN_0042c580`: mix off, flag off;
+  points: the message, `FUN_0041f9a0(0, points, 0x49d7e8 {2500, 5000,
+  10000, 20000}, 0)` (tournament: the same, then no clean up); time trial:
+  `FUN_0041f8c0("%s %d"` of `balloonhunt:TRACK` and the level number,
+  key = that number (1 based), time = last hit - start, no medals,
+  0x102); then the round's elements go and the start screen comes back.
+  Engine: `registerScore(vm, "", points, medals)` and `registerScore(vm,
+  title, ms, nullptr, track, kScoreTime)`.
+* **Sound**: the ambience clips (`FUN_0042b190`, every frame): `seashore`
+  sound x clamp(1 - shore distance / 600) x clamp(1 - height / 600) x
+  0.55 (distance to a 15 point shore line 0x49d7f8, `FUN_0042b4d0`: past
+  a segment's end the distance to its start, sic), `wind1` x clamp((height
+  - 150) / 550) x 0.65, `forest1` x clamp(1 - d / 400) x clamp(1 - height
+  / 400) (35 points 0x49d870), `sheep` likewise (3 points 0x49d988, the
+  woods' height factor), `off limits1` at the sound volume under the
+  autopilot; `mix2`'s pitch (1 + 0.083 |roll|)(1 - 0.083 pitch)(1 + (v -
+  300) / 1200). Effects play as copies of the blank element (`FUN_00412c20`).
+* **Port notes**: like the original, a round is drawn into a 16 bit
+  (RGB565) back buffer (bitmaps converted with truncation, colour keys
+  compared in 16 bit): the view, Solan, the two interface bitmaps (the
+  original's elements at z 1, drawn here, whose parts over the view it
+  blits again after Solan; the bottom one's hotspot 10 is emulated) and
+  the instruments; converted through a table, it is the scene's
+  backdrop during the round (the original removes the backdrop). The
+  labels, buttons and the game's cursor (`bh_cursor`, z 200, with an
+  empty cursor table so clicks still work) stay elements. (Full screen
+  keyed elements cost about 35 ms a frame in the engine.) Volumes:
+  sound.ini `sound=` as the sound volume, DirectSound percentages linear.
+  The flight keys are held states (reset when a dialog closes). Not done:
+  tournament mode, the loading box. Development aid:
+  `balloonhunt_warp=<n>` (below).
+
 ## Dialogs (`dialog.cpp`)
 
 `Dialog` is the modal box of the DIALOG/BUTTON modules: a bitmap from
@@ -2469,7 +2645,8 @@ Engine: `hiscore.h`.
   15000}); puzzle `FUN_00455890` (no medals). The tables not listed are
   {2500, 5000, 10000, 20000}. All ported ones call `registerScore()` now
   (the callbacks are the code after the call; mountain passes its track as
-  the key); balloonhunt and the add-on set 3 games are not ported.
+  the key, balloonhunt's time trial the track); the add-on set 3 games
+  are not ported.
 * Engine: `registerScore(vm, title, score, medals, key = 0, flags = 0)`
   (title a language.ini key or text, "" = scene title; returns the player
   row or -1), `registerScoreNoCarParts()`, `addScore()` (no dialog),
@@ -3161,7 +3338,7 @@ class with `defineAnim`, the scene table has no entries for them).
 * State across visits: only the three random pick masks (`DAT_005b87a4`,
   `5b8798`, `5b87a0`); the pick counters and the narration counter are reset
   on init.
-* Not done: music volume factors, `balloonhunt` and `mahjong` (not ported). The page
+* Not done: music volume factors. The page
   never starts `town` itself (no reference in its handler); `town`
   (`FUN_00426f30`) is a cutscene that returns here (or to `buildacar` with
   arg 2). `track9` is not restarted when already playing (the original
@@ -3619,6 +3796,12 @@ the finish of track 1; `mountain_skip=n<node>` starts on the first
 segment leaving that node of the `.fff` file, e.g. n786 before the car
 part, n668 before the film clip; a crash restarts there until a
 checkpoint is passed).
+`balloonhunt_warp=<n>` (balloonhunt: at the start of a track round and
+after each of the next n balloons hit, Solan is put 250 units in front of
+the next balloon at its height, flying towards it, so a track or the
+whole time trial ends in seconds; afterwards the round goes on normally,
+e.g. until the fuel or the time runs out; in a practice flight Solan is
+put 300 units before each of the next n new balloons, at height 90).
 `test_colorfill_print=<png>` (colorfill: the activity button writes the
 picture to that file instead of opening ScummVM's print dialog).
 `test_draughts=<side 0>/<side 1>` (draughts: the position at the start,
@@ -3646,7 +3829,7 @@ profiles / tournament mode, `sound.ini` volumes.
 | x | hopscotch | Solan og Ludvig i Paradis | house | data + data1 |
 | x | audiopairs | Reodors Lydmaskin | house | data |
 | x | textinvader | Ordspillet | goodbye | data2 |
-| | balloonhunt | Solans ballongjakt | outtent | data2 (no sceneDefs entry yet) |
+| x | balloonhunt | Solans ballongjakt | outtent | data2 (640x480) |
 | x | whackamole | Dra meg baklengs! | house | data2 |
 | x | beemaze | Ludvigs Labyrint | tvroom | data |
 | x | buildabike | Reodors sykkelverksted | garage | data |
