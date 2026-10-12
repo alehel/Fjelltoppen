@@ -34,6 +34,17 @@ Linux:   ~/.local/share/fjelltoppen (innstillingene i ~/.config/fjelltoppen)
 spillerprofilene.
 
 
+Ta med spillere til en annen maskin
+-----------------------------------
+
+Den blå lampen mellom + og - på hovedmenyen lagrer spilleren som vises
+i en fil (navnet på spilleren og .pfl), eller henter inn en spiller fra
+en slik fil. Slik kan du ta med spillere til en annen maskin.
+
+Spillere fra det opprinnelige spillet kan også hentes inn: de ligger i
+mappen «Profiles» der spillet ble installert.
+
+
 Første start på macOS
 ---------------------
 

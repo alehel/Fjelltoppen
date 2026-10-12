@@ -78,6 +78,10 @@ const MenuScene::Button MenuScene::_buttons[] = {
 	{ 10, 457, 470, nullptr, "remove_1" },
 	{ 11, 240, 519, nullptr, "prev_1" },
 	{ 12, 515, 518, nullptr, "next_1" },
+#ifdef FJELLTOPPEN
+	// Not in the original: the lamp drawn by drawPlayerFileLamp()
+	{ kHotspotPlayerFile, 379, 470, nullptr, "playerfile_1" },
+#endif
 	{  0,   0,   0, nullptr, nullptr }
 };
 
@@ -97,7 +101,10 @@ static const struct {
 	{ 5, "menu:START" }, { 6, "menu:INDEX" }, { 8, "menu:RACE" }, { 7, "menu:TOURNAMENT" },
 	{ 9, "menu:PROFILE_NEW" }, { 10, "menu:PROFILE_REMOVE" }, { 12, "menu:PROFILE_NEXT" },
 	{ 11, "menu:PROFILE_PREV" }, { 4, "menu:HIGHSCORE" }, { 3, "menu:OPTIONS" },
-	{ 13, "menu:CREDITS" }, { 1, "interfaceh:HELP" }, { 2, "menu:EXIT" }
+	{ 13, "menu:CREDITS" }, { 1, "interfaceh:HELP" }, { 2, "menu:EXIT" },
+#ifdef FJELLTOPPEN
+	{ MenuScene::kHotspotPlayerFile, "Lagre eller hent en spiller" }
+#endif
 };
 
 void MenuScene::onInit(int arg) {
@@ -105,6 +112,10 @@ void MenuScene::onInit(int arg) {
 	_tooltip.start(hotspotAt(_vm->mousePos().x, _vm->mousePos().y));
 	addAnim("title", Anim::kDefaultPos, Anim::kDefaultPos, 10);
 
+#ifdef FJELLTOPPEN
+	// Before the buttons: its lit bitmap is drawn, not loaded
+	drawPlayerFileLamp();
+#endif
 	for (const Button *b = _buttons; b->hotspot; b++) {
 		if (b->normal)
 			defineAnim(b->normal, false, true, b->hotspot, b->x, b->y, -10)->add(b->x, b->y, -10);
@@ -304,7 +315,7 @@ void MenuScene::highlight(int hotspot) {
 void MenuScene::onMouseMove(int hotspot, int x, int y) {
 	highlight(hotspot);
 	_tooltip.hotspotChanged(hotspot);
-	if (hotspot > 0 && hotspot < 14)
+	if ((hotspot > 0 && hotspot < 14) || hotspot == kHotspotPlayerFile)
 		setAmp(1);
 }
 
@@ -391,6 +402,11 @@ void MenuScene::onMouseUp(int hotspot, int x, int y) {
 		useProfile();
 		_vm->changeScene("tournament", 0);
 		break;
+#ifdef FJELLTOPPEN
+	case kHotspotPlayerFile:
+		playerFile();
+		break;
+#endif
 	default:
 		break;
 	}

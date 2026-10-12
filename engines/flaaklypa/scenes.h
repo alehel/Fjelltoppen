@@ -39,6 +39,10 @@ class MenuScene : public Scene {
 public:
 	MenuScene(FlaaklypaEngine *vm, const SceneDef *def);
 
+	enum {
+		kHotspotPlayerFile = 20 ///< Fjelltoppen's lamp (playerfile.cpp)
+	};
+
 	void onInit(int arg) override;
 	void onMouseMove(int hotspot, int x, int y) override;
 	void onMouseDown(int hotspot, int x, int y) override;
@@ -72,6 +76,13 @@ private:
 	void removeProfile();
 	void startStory();
 	void showOptions();
+#ifdef FJELLTOPPEN
+	// Players to and from files (playerfile.cpp)
+	void drawPlayerFileLamp();
+	void playerFile();
+	void savePlayerFile();
+	void loadPlayerFile();
+#endif
 
 	int _highlighted;
 	Common::Array<FlaaklypaEngine::ProfileInfo> _profiles;

@@ -25,6 +25,7 @@
 #include "common/events.h"
 #include "common/rect.h"
 #include "common/str.h"
+#include "common/str-array.h"
 #include "graphics/managed_surface.h"
 
 #include "flaaklypa/button.h"
@@ -157,9 +158,31 @@ protected:
 	void onButton(int id) override;
 	void onKey(const Common::KeyState &key) override;
 
+	int _buttonX, _buttonY; ///< where the rightmost button goes, relative to the box
+
 private:
 	int _buttons;
 };
+
+#ifdef FJELLTOPPEN
+/**
+ * A message box with buttons labelled by the caller, left to right (not in
+ * the original, which only has the five standard buttons). run() returns
+ * the index of the button pressed, the last one for Escape, -1 if the box
+ * could not be shown.
+ */
+class ChoiceBox : public MessageBox {
+public:
+	ChoiceBox(FlaaklypaEngine *vm, const Common::String &title, const Common::String &text, const Common::StringArray &labels);
+
+protected:
+	void onButton(int id) override;
+	void onKey(const Common::KeyState &key) override;
+
+private:
+	int _count;
+};
+#endif
 
 /**
  * The right click navigator of the story pages (NAVIGATE module): previous

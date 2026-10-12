@@ -346,7 +346,7 @@ static const struct {
 };
 
 MessageBox::MessageBox(FlaaklypaEngine *vm, const Common::String &title, const Common::String &text, int buttons, int x, int y) :
-	Dialog(vm, true), _buttons(buttons) {
+	Dialog(vm, true), _buttonX(0), _buttonY(0), _buttons(buttons) {
 	// Layout constants of FUN_00421070: content 342 wide, text 330 wide,
 	// nine slice margins of msgbox/backdrop.bmp (386x564) at 16/58/364/501.
 	const int kContentW = 342, kTextW = 330;
@@ -384,6 +384,8 @@ MessageBox::MessageBox(FlaaklypaEngine *vm, const Common::String &title, const C
 	// FUN_00421240: the buttons sit right aligned under the text, 87 apart
 	int bx = inner.left + kContentW - 83;
 	int by = inner.top + textH + 15;
+	_buttonX = bx;
+	_buttonY = by;
 	for (const auto &b : kMsgBoxButtons) {
 		if (!(b.flag & _buttons))
 			continue;
@@ -411,6 +413,33 @@ void MessageBox::onKey(const Common::KeyState &key) {
 			return;
 		}
 }
+
+#ifdef FJELLTOPPEN
+// ---- ChoiceBox -----------------------------------------------------------
+
+ChoiceBox::ChoiceBox(FlaaklypaEngine *vm, const Common::String &title, const Common::String &text, const Common::StringArray &labels) :
+	MessageBox(vm, title, text, 0), _count(labels.size()) {
+	if (isDone()) {
+		close(-1);
+		return;
+	}
+	// Right aligned and 87 apart like the standard buttons; ids from 1
+	int bx = _buttonX;
+	for (int i = _count - 1; i >= 0; i--) {
+		addButton(i + 1, bx, _buttonY, "msgbox", "button_0", "button_1", nullptr, labels[i]);
+		bx -= 87;
+	}
+}
+
+void ChoiceBox::onButton(int id) {
+	close(id - 1);
+}
+
+void ChoiceBox::onKey(const Common::KeyState &key) {
+	if (key.keycode == Common::KEYCODE_ESCAPE)
+		close(_count - 1);
+}
+#endif
 
 // ---- NavigatorDialog -----------------------------------------------------
 

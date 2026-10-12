@@ -59,6 +59,7 @@ MODULE_OBJS = \
 	outtent.o \
 	pee.o \
 	pipeline.o \
+	playerfile.o \
 	profile.o \
 	puzzle.o \
 	puzzledata.o \

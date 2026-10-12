@@ -5115,6 +5115,24 @@ saving and loading are off, autosave too (slot -1).
   second int) else `menu:RACE_LOCKED`, then the race menu. Exit and
   Escape ask `menu:QUIT`.
 
+### Players to and from files (Fjelltoppen only, `playerfile.cpp`)
+
+Not in the original. In the stand-alone build (`FJELLTOPPEN`) a third lamp
+sits halfway between the + and - lamps of the player box (hotspot 20, a
+disc of radius 12 like the others): `drawPlayerFileLamp()` copies the +
+lamp's brass mount from the backdrop (outline found row by row from the
+brass colour, the box below it faded in at the sides), wipes the + off the
+face with a 5x5 median, turns it blue (HSL hue +90 degrees) and draws an
+up and a down arrow; the lit version is `create_1` treated the same way.
+Its `ChoiceBox` ("Ta med spiller") offers "Lagre til fil" (the profile
+shown, flushed first, written as a plain version 0x102 .pfl named after
+the player into a folder chosen with ScummVM's browser, native where the
+backend has one), "Hent fra fil" (a .pfl, or a ScummVM save of a profile:
+compressed, extended header after it; a player of the same name, compared
+without case, is replaced after a question; the new one is shown) and
+"Avbryt". The original keeps its profiles in `<Data Path>\Profiles`
+(FUN_0040ff90 at startup).
+
 ## Race menu (`racemenu`, "Bilspillmeny", menu button 8)
 
 Handler `FUN_0047ad50` (`racemenu.cpp`, code 0x47aa50..0x47c630, byte
@@ -5641,7 +5659,9 @@ date); both log their result. At debug level 2 the jigsaw logs each piece
 ("Jigsaw: piece <n> rot <r> at <x>,<y> ... place <x>,<y> ... grab <x>,<y>",
 an uncovered point on it) after each release, and sliding the board after
 the shuffle, for scripted drags and moves. `profile_import=<path>` adds an original
-.pfl file as a new profile and makes it the active one. Use
+.pfl file as a new profile and makes it the active one.
+`test_profile_file=<path>` answers the file browser of Fjelltoppen's
+player file lamp (the folder to save in, or the file to load). Use
 `savepath=/tmp/...` in test configs so test profiles stay out of the
 real save directory. Without `start_scene` the game starts with the logo
 like the original.
