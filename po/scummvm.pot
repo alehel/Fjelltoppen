@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: ScummVM 2026.3.1git\n"
+"Project-Id-Version: ScummVM 2026.4.1git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2026-10-10 07:47+0000\n"
+"POT-Creation-Date: 2026-10-12 18:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -128,7 +128,7 @@ msgstr ""
 #: backends/platform/android/options.cpp:293
 #: backends/platform/wii/options.cpp:47 engines/asylum/asylum.cpp:204
 #: engines/buried/saveload.cpp:83 engines/cine/saveload.cpp:857
-#: engines/colony/intro.cpp:196 engines/director/lingo/xlibs/j/jitdraw3.cpp:123
+#: engines/colony/intro.cpp:250 engines/director/lingo/xlibs/j/jitdraw3.cpp:123
 #: engines/drascula/saveload.cpp:51 engines/grim/inputdialog.cpp:84
 #: engines/hypno/metaengine.cpp:282 engines/macs2/actionbar.cpp:893
 #: engines/mads/nebular/mac_menus.cpp:824
@@ -325,7 +325,7 @@ msgstr ""
 #: gui/launcher.cpp:534 gui/launcher.cpp:1970 gui/options.cpp:3500
 #: gui/options.cpp:3874 base/main.cpp:612
 #: backends/events/default/default-events.cpp:207 engines/buried/buried.cpp:598
-#: engines/chamber/metaengine.cpp:95 engines/colony/intro.cpp:194
+#: engines/chamber/metaengine.cpp:95 engines/colony/intro.cpp:248
 #: engines/director/events.cpp:122
 #: engines/director/lingo/xlibs/j/jitdraw3.cpp:139
 #: engines/efh/metaengine.cpp:362 engines/grim/grim.cpp:366
@@ -345,7 +345,7 @@ msgstr ""
 #: gui/fluidsynth-dialog.cpp:210 gui/launcher.cpp:428 gui/launcher.cpp:457
 #: gui/launcher.cpp:534 gui/launcher.cpp:1971 gui/options.cpp:3500
 #: gui/options.cpp:3874 engines/buried/buried.cpp:598
-#: engines/chamber/metaengine.cpp:101 engines/colony/intro.cpp:195
+#: engines/chamber/metaengine.cpp:101 engines/colony/intro.cpp:249
 #: engines/director/events.cpp:122
 #: engines/director/lingo/xlibs/j/jitdraw3.cpp:139
 #: engines/efh/metaengine.cpp:368 engines/grim/grim.cpp:366
@@ -573,7 +573,7 @@ msgid "GFX"
 msgstr ""
 
 #: gui/editgamedialog.cpp:166 gui/options.cpp:2077 gui/options.cpp:2258
-#: backends/graphics/atari/atari-graphics.cpp:1050
+#: backends/graphics/atari/atari-graphics.cpp:1058
 #: backends/graphics/sdl/sdl-graphics.cpp:491
 msgid "Graphics"
 msgstr ""
@@ -2885,22 +2885,22 @@ msgstr ""
 msgid "Report game"
 msgstr ""
 
-#: gui/unknown-game-dialog.cpp:100
+#: gui/unknown-game-dialog.cpp:98
 msgid ""
 "Use the button below to copy the required game information into your "
 "clipboard."
 msgstr ""
 
-#: gui/unknown-game-dialog.cpp:105
+#: gui/unknown-game-dialog.cpp:103
 msgid "You can also directly report your game to the Bug Tracker."
 msgstr ""
 
-#: gui/unknown-game-dialog.cpp:155
+#: gui/unknown-game-dialog.cpp:153
 msgid ""
 "All necessary information about your game has been copied into the clipboard"
 msgstr ""
 
-#: gui/unknown-game-dialog.cpp:157
+#: gui/unknown-game-dialog.cpp:155
 msgid "Copying the game information to the clipboard has failed!"
 msgstr ""
 
@@ -3216,7 +3216,7 @@ msgstr ""
 #: backends/events/default/default-events.cpp:231
 #: backends/events/default/default-events.cpp:372
 #: engines/adl/metaengine.cpp:352 engines/buried/metaengine.cpp:154
-#: engines/chamber/metaengine.cpp:88 engines/colony/intro.cpp:246
+#: engines/chamber/metaengine.cpp:88 engines/colony/intro.cpp:300
 #: engines/drascula/metaengine.cpp:304 engines/hdb/metaengine.cpp:275
 #: engines/hypno/metaengine.cpp:308 engines/lab/metaengine.cpp:172
 #: engines/macs2/actionbar.cpp:893 engines/mohawk/myst_stacks/menu.cpp:317
@@ -4048,7 +4048,7 @@ msgstr ""
 msgid "Choose a new folder"
 msgstr ""
 
-#: backends/graphics/atari/atari-graphics.cpp:1054
+#: backends/graphics/atari/atari-graphics.cpp:1062
 #: backends/graphics/sdl/sdl-graphics.cpp:518 engines/scumm/help.cpp:103
 msgid "Toggle aspect ratio correction"
 msgstr ""
@@ -7511,19 +7511,19 @@ msgid ""
 "beginning using new savegames."
 msgstr ""
 
-#: engines/colony/intro.cpp:210
+#: engines/colony/intro.cpp:264
 msgid "Save this game?"
 msgstr ""
 
-#: engines/colony/intro.cpp:244
+#: engines/colony/intro.cpp:298
 msgid "New Game"
 msgstr ""
 
-#: engines/colony/intro.cpp:245
+#: engines/colony/intro.cpp:299
 msgid "Load Game"
 msgstr ""
 
-#: engines/colony/intro.cpp:1527
+#: engines/colony/intro.cpp:1581
 msgid "You have been terminated."
 msgstr ""
 
@@ -9424,6 +9424,119 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
+#: engines/hopkins/base_enhancements.cpp:313
+msgid "Player"
+msgstr ""
+
+#. I18N: Exits the game
+#: engines/hopkins/base_enhancements.cpp:314 engines/lab/metaengine.cpp:166
+#: engines/lab/metaengine.cpp:191 engines/sherlock/metaengine.cpp:395
+#: engines/sherlock/metaengine.cpp:494 engines/sherlock/metaengine.cpp:538
+#: engines/sherlock/metaengine.cpp:549 engines/sherlock/metaengine.cpp:601
+#: engines/sherlock/metaengine.cpp:680 engines/supernova/metaengine.cpp:297
+#: engines/supernova/metaengine.cpp:373
+#: engines/ultima/ultima4/metaengine.cpp:54 engines/voyeur/metaengine.cpp:198
+#: engines/voyeur/metaengine.cpp:229 engines/wintermute/keymapper_tables.h:757
+#: engines/wintermute/keymapper_tables.h:1887
+msgid "Exit"
+msgstr ""
+
+#: engines/hopkins/base_enhancements.cpp:315
+msgid "Guard"
+msgstr ""
+
+#: engines/hopkins/base_enhancements.cpp:316
+msgid "Door"
+msgstr ""
+
+#: engines/hopkins/base_enhancements.cpp:317
+msgid "Game paused"
+msgstr ""
+
+#: engines/hopkins/base_enhancements.cpp:325
+msgid "M: close  A: autoplay  Esc: menu"
+msgstr ""
+
+#: engines/hopkins/base_enhancements.cpp:326
+msgid "M/Esc: close  A: autoplay"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:51
+msgid "Exit 1: Containers room"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:51
+msgid "Containers"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:52
+msgid "Exit 2: Turbines room"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:52
+msgid "Turbines"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:53
+msgid "Exit 3: Office"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:53
+msgid "Office"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:54
+msgid "Exit 4: Laboratory"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:54
+msgid "Laboratory"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:55
+msgid "Exit 5: Resurrection room"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:55
+msgid "Resurrection"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:56
+msgid "Exit 6: Dome"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:56
+msgid "Dome"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:656
+msgid "WBASE AUTOPLAY"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:659
+msgid "Fight your way to:"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:671
+msgid "Up/Down: choose"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:673
+msgid "Enter/Space: start"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:676
+msgid "A: resume / M: map"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:676
+msgid "Select a destination"
+msgstr ""
+
+#: engines/hopkins/base_enhancements_autoplay.cpp:677
+msgid "Esc/A: cancel"
+msgstr ""
+
 #: engines/hopkins/metaengine.cpp:48 engines/hopkins/metaengine.cpp:60
 msgid "Gore Mode"
 msgstr ""
@@ -10145,18 +10258,6 @@ msgstr ""
 #: engines/lab/metaengine.cpp:156 engines/queen/metaengine.cpp:148
 #: engines/sherlock/metaengine.cpp:334 engines/sherlock/metaengine.cpp:779
 msgid "Journal keymappings"
-msgstr ""
-
-#. I18N: Exits the game
-#: engines/lab/metaengine.cpp:166 engines/lab/metaengine.cpp:191
-#: engines/sherlock/metaengine.cpp:395 engines/sherlock/metaengine.cpp:494
-#: engines/sherlock/metaengine.cpp:538 engines/sherlock/metaengine.cpp:549
-#: engines/sherlock/metaengine.cpp:601 engines/sherlock/metaengine.cpp:680
-#: engines/supernova/metaengine.cpp:297 engines/supernova/metaengine.cpp:373
-#: engines/ultima/ultima4/metaengine.cpp:54 engines/voyeur/metaengine.cpp:198
-#: engines/voyeur/metaengine.cpp:229 engines/wintermute/keymapper_tables.h:757
-#: engines/wintermute/keymapper_tables.h:1887
-msgid "Exit"
 msgstr ""
 
 #: engines/lab/metaengine.cpp:179

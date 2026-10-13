@@ -1,7 +1,15 @@
 For a more comprehensive changelog of the latest experimental code, see:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2026.4.0 (2026-10-XX)
+#### 2027.1.0 (2027-01-XX)
+
+ New games:
+   - Added support for Shadowgate.
+   - Added support for Deja Vu: A Nightmare Comes True!!
+   - Added support for Deja Vu II: Lost in Last Vegas.
+   - Added support for Uninvited.
+
+#### 2026.4.0 "Never-slop" (2026-10-10)
 
  New games:
    - Added support for Mortadelo y Filemón: Una Aventura de Cine Edición Original.
@@ -51,6 +59,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Harvester.
    - Added support for Lord Avalot d'Argent.
    - Added support for Dungeon Master.
+   - Added support for Eagle Eye Mysteries.
+   - Added support for Eagle Eye Mysteries in London.
 
  General:
    - Optimised mixing and rate converters, for better performance.
@@ -139,7 +149,12 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed time-based puzzles sometimes getting stuck after restarting ScummVM.
 
  Voyeur:
-   - Match original first person movement with mouse when looking at mansion
+   - Match original first person movement with mouse when looking at mansion.
+
+ Android port:
+   - Support Android 17.
+   - Add TTS support.
+   - Add external MIDI device support.
 
  Atari port:
    - Added integration with nFM library.

@@ -1,7 +1,7 @@
 Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
-#### 2026.4.0 "TBD" (XX.10.2026)
+#### 2026.4.0 "Never-slop" (10.10.2026)
 
  Neue Spiele:
    - Unterstützung für Mortadelo y Filemón: Una Aventura de Cine Edición Original hinzugefügt.
@@ -49,6 +49,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Der Schatz im Silbersee hinzugefügt.
    - Unterstützung für The Fool's Errand hinzugefügt.
    - Unterstützung für Harvester hinzugefügt.
+   - Unterstützung für Lord Avalot d'Argent hinzugefügt.
+   - Unterstützung für Dungeon Master hinzugefügt.
 
  Allgemein:
    - Zur Verbesserung der Perforamcen wurden die Audio-Mixer und -Konverter optimiert.
@@ -138,6 +140,11 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Voyeur:
    - Die Bewegung aus der Ego-Perspektive beim Anblick der Villa entspricht jetzt dem Original.
+
+ Android-Portierung:
+   - Unterstützung für Android 17 hinzugefügt.
+   - Unterstützung für Text-to-Speech hinzugefügt.
+   - Unterstützung für externe MIDI-Geräte hinzugefügt.
 
  Atari-Portierung:
    - Unterstützung für die nFM-Bibliothek hinzugefügt.
