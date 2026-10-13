@@ -77,7 +77,10 @@ The workflow `.github/workflows/fjelltoppen.yml` then builds the four
 packages (macOS, Windows, Linux x86_64 and aarch64) with the scripts above
 and publishes a GitHub release with them and `release-notes.md`. A version
 with a dash (`v0.2.0-beta1`) is a pre-release; a tag that is not on
-`flaaklypa` fails the workflow. Run by hand from the Actions tab (which
+`flaaklypa` fails the workflow. A release can also be written by hand on
+GitHub ("Draft a new release", a new tag on `flaaklypa`): publishing it
+pushes the tag, and the workflow adds the packages to it, keeping its
+title and text. Run by hand from the Actions tab (which
 GitHub only offers for workflows on the default branch), it only builds.
 
 ## Icons

@@ -2,8 +2,9 @@ name: Fjelltoppen release
 # Builds Fjelltoppen, the stand-alone Flaaklypa Grand Prix runner, for every
 # platform with the scripts in dists/fjelltoppen, and publishes a release
 # with the packages for a tag on the flaaklypa branch. The tag is the
-# version: v0.2.0, or v0.2.0-beta1 for a pre-release. Run by hand, it only
-# builds.
+# version: v0.2.0, or v0.2.0-beta1 for a pre-release. A release published
+# by hand on GitHub (which pushes its tag) keeps its title and text and gets
+# the packages added. Run by hand, it only builds.
 on:
   push:
     tags:
@@ -114,6 +115,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.check.outputs.version }}
         run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber packages/*
+            exit
+          fi
           prerelease=
           case "$VERSION" in *-*) prerelease=--prerelease ;; esac
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag $prerelease \

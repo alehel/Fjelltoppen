@@ -74,7 +74,7 @@ Om Fjelltoppen
 
 Fjelltoppen bygger på ScummVM (https://www.scummvm.org) og er fri
 programvare under GNU General Public License versjon 3 eller senere.
-Kildekoden finnes på https://github.com/alehel/scummvm (grenen
+Kildekoden finnes på https://github.com/alehel/Fjelltoppen (grenen
 «flaaklypa»).
 
 Flåklypa Grand Prix ble laget av Capricornus Computer Game Productions
